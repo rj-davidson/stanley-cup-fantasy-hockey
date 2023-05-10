@@ -9,6 +9,9 @@ import (
 // Entry is the predicate function for entry builders.
 type Entry func(*sql.Selector)
 
+// Game is the predicate function for game builders.
+type Game func(*sql.Selector)
+
 // League is the predicate function for league builders.
 type League func(*sql.Selector)
 

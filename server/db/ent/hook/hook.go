@@ -21,6 +21,18 @@ func (f EntryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EntryMutation", m)
 }
 
+// The GameFunc type is an adapter to allow the use of ordinary
+// function as Game mutator.
+type GameFunc func(context.Context, *ent.GameMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GameFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GameMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GameMutation", m)
+}
+
 // The LeagueFunc type is an adapter to allow the use of ordinary
 // function as League mutator.
 type LeagueFunc func(context.Context, *ent.LeagueMutation) (ent.Value, error)

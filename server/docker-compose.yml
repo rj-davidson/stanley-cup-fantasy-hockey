@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yF3f!mhexfc9
+      POSTGRES_DB: database-nhl-fantasy
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["./main"] #, "-init-data"]
+    ports:
+      - '8080:8080'
+    depends_on:
+      - db
+
+volumes:
+  db-data:

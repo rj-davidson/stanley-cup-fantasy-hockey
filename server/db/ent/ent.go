@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/league"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
@@ -77,6 +78,7 @@ func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			entry.Table:  entry.ValidColumn,
+			game.Table:   game.ValidColumn,
 			league.Table: league.ValidColumn,
 			player.Table: player.ValidColumn,
 			team.Table:   team.ValidColumn,

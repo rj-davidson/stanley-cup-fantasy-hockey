@@ -298,12 +298,12 @@ func (lq *LeagueQuery) WithEntries(opts ...func(*EntryQuery)) *LeagueQuery {
 // Example:
 //
 //	var v []struct {
-//		Season int `json:"season,omitempty"`
+//		Name string `json:"name,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.League.Query().
-//		GroupBy(league.FieldSeason).
+//		GroupBy(league.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (lq *LeagueQuery) GroupBy(field string, fields ...string) *LeagueGroupBy {
@@ -321,11 +321,11 @@ func (lq *LeagueQuery) GroupBy(field string, fields ...string) *LeagueGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Season int `json:"season,omitempty"`
+//		Name string `json:"name,omitempty"`
 //	}
 //
 //	client.League.Query().
-//		Select(league.FieldSeason).
+//		Select(league.FieldName).
 //		Scan(ctx, &v)
 func (lq *LeagueQuery) Select(fields ...string) *LeagueSelect {
 	lq.ctx.Fields = append(lq.ctx.Fields, fields...)

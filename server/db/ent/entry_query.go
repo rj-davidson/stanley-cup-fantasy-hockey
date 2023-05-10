@@ -571,6 +571,7 @@ func (eq *EntryQuery) loadLeague(ctx context.Context, query *LeagueQuery, nodes 
 	}
 	return nil
 }
+
 func (eq *EntryQuery) loadForwards(ctx context.Context, query *PlayerQuery, nodes []*Entry, init func(*Entry), assign func(*Entry, *Player)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Entry)
@@ -602,6 +603,7 @@ func (eq *EntryQuery) loadForwards(ctx context.Context, query *PlayerQuery, node
 	}
 	return nil
 }
+
 func (eq *EntryQuery) loadDefenders(ctx context.Context, query *PlayerQuery, nodes []*Entry, init func(*Entry), assign func(*Entry, *Player)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Entry)
@@ -633,6 +635,7 @@ func (eq *EntryQuery) loadDefenders(ctx context.Context, query *PlayerQuery, nod
 	}
 	return nil
 }
+
 func (eq *EntryQuery) loadGoalies(ctx context.Context, query *PlayerQuery, nodes []*Entry, init func(*Entry), assign func(*Entry, *Player)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Entry)

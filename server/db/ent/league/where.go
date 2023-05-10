@@ -53,6 +53,11 @@ func IDLTE(id int) predicate.League {
 	return predicate.League(sql.FieldLTE(FieldID, id))
 }
 
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.League {
+	return predicate.League(sql.FieldEQ(FieldName, v))
+}
+
 // Season applies equality check predicate on the "season" field. It's identical to SeasonEQ.
 func Season(v int) predicate.League {
 	return predicate.League(sql.FieldEQ(FieldSeason, v))
@@ -78,26 +83,6 @@ func NumGoalies(v int) predicate.League {
 	return predicate.League(sql.FieldEQ(FieldNumGoalies, v))
 }
 
-// PointsForGoal applies equality check predicate on the "points_for_goal" field. It's identical to PointsForGoalEQ.
-func PointsForGoal(v int) predicate.League {
-	return predicate.League(sql.FieldEQ(FieldPointsForGoal, v))
-}
-
-// PointsForAssist applies equality check predicate on the "points_for_assist" field. It's identical to PointsForAssistEQ.
-func PointsForAssist(v int) predicate.League {
-	return predicate.League(sql.FieldEQ(FieldPointsForAssist, v))
-}
-
-// GoaliePointsForShutout applies equality check predicate on the "goalie_points_for_shutout" field. It's identical to GoaliePointsForShutoutEQ.
-func GoaliePointsForShutout(v int) predicate.League {
-	return predicate.League(sql.FieldEQ(FieldGoaliePointsForShutout, v))
-}
-
-// GoaliePointsForWin applies equality check predicate on the "goalie_points_for_win" field. It's identical to GoaliePointsForWinEQ.
-func GoaliePointsForWin(v int) predicate.League {
-	return predicate.League(sql.FieldEQ(FieldGoaliePointsForWin, v))
-}
-
 // EditKey applies equality check predicate on the "edit_key" field. It's identical to EditKeyEQ.
 func EditKey(v string) predicate.League {
 	return predicate.League(sql.FieldEQ(FieldEditKey, v))
@@ -106,6 +91,71 @@ func EditKey(v string) predicate.League {
 // Code applies equality check predicate on the "code" field. It's identical to CodeEQ.
 func Code(v string) predicate.League {
 	return predicate.League(sql.FieldEQ(FieldCode, v))
+}
+
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.League {
+	return predicate.League(sql.FieldEQ(FieldName, v))
+}
+
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.League {
+	return predicate.League(sql.FieldNEQ(FieldName, v))
+}
+
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.League {
+	return predicate.League(sql.FieldIn(FieldName, vs...))
+}
+
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.League {
+	return predicate.League(sql.FieldNotIn(FieldName, vs...))
+}
+
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.League {
+	return predicate.League(sql.FieldGT(FieldName, v))
+}
+
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.League {
+	return predicate.League(sql.FieldGTE(FieldName, v))
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.League {
+	return predicate.League(sql.FieldLT(FieldName, v))
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.League {
+	return predicate.League(sql.FieldLTE(FieldName, v))
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.League {
+	return predicate.League(sql.FieldContains(FieldName, v))
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.League {
+	return predicate.League(sql.FieldHasPrefix(FieldName, v))
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.League {
+	return predicate.League(sql.FieldHasSuffix(FieldName, v))
+}
+
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.League {
+	return predicate.League(sql.FieldEqualFold(FieldName, v))
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.League {
+	return predicate.League(sql.FieldContainsFold(FieldName, v))
 }
 
 // SeasonEQ applies the EQ predicate on the "season" field.
@@ -276,166 +326,6 @@ func NumGoaliesLT(v int) predicate.League {
 // NumGoaliesLTE applies the LTE predicate on the "num_goalies" field.
 func NumGoaliesLTE(v int) predicate.League {
 	return predicate.League(sql.FieldLTE(FieldNumGoalies, v))
-}
-
-// PointsForGoalEQ applies the EQ predicate on the "points_for_goal" field.
-func PointsForGoalEQ(v int) predicate.League {
-	return predicate.League(sql.FieldEQ(FieldPointsForGoal, v))
-}
-
-// PointsForGoalNEQ applies the NEQ predicate on the "points_for_goal" field.
-func PointsForGoalNEQ(v int) predicate.League {
-	return predicate.League(sql.FieldNEQ(FieldPointsForGoal, v))
-}
-
-// PointsForGoalIn applies the In predicate on the "points_for_goal" field.
-func PointsForGoalIn(vs ...int) predicate.League {
-	return predicate.League(sql.FieldIn(FieldPointsForGoal, vs...))
-}
-
-// PointsForGoalNotIn applies the NotIn predicate on the "points_for_goal" field.
-func PointsForGoalNotIn(vs ...int) predicate.League {
-	return predicate.League(sql.FieldNotIn(FieldPointsForGoal, vs...))
-}
-
-// PointsForGoalGT applies the GT predicate on the "points_for_goal" field.
-func PointsForGoalGT(v int) predicate.League {
-	return predicate.League(sql.FieldGT(FieldPointsForGoal, v))
-}
-
-// PointsForGoalGTE applies the GTE predicate on the "points_for_goal" field.
-func PointsForGoalGTE(v int) predicate.League {
-	return predicate.League(sql.FieldGTE(FieldPointsForGoal, v))
-}
-
-// PointsForGoalLT applies the LT predicate on the "points_for_goal" field.
-func PointsForGoalLT(v int) predicate.League {
-	return predicate.League(sql.FieldLT(FieldPointsForGoal, v))
-}
-
-// PointsForGoalLTE applies the LTE predicate on the "points_for_goal" field.
-func PointsForGoalLTE(v int) predicate.League {
-	return predicate.League(sql.FieldLTE(FieldPointsForGoal, v))
-}
-
-// PointsForAssistEQ applies the EQ predicate on the "points_for_assist" field.
-func PointsForAssistEQ(v int) predicate.League {
-	return predicate.League(sql.FieldEQ(FieldPointsForAssist, v))
-}
-
-// PointsForAssistNEQ applies the NEQ predicate on the "points_for_assist" field.
-func PointsForAssistNEQ(v int) predicate.League {
-	return predicate.League(sql.FieldNEQ(FieldPointsForAssist, v))
-}
-
-// PointsForAssistIn applies the In predicate on the "points_for_assist" field.
-func PointsForAssistIn(vs ...int) predicate.League {
-	return predicate.League(sql.FieldIn(FieldPointsForAssist, vs...))
-}
-
-// PointsForAssistNotIn applies the NotIn predicate on the "points_for_assist" field.
-func PointsForAssistNotIn(vs ...int) predicate.League {
-	return predicate.League(sql.FieldNotIn(FieldPointsForAssist, vs...))
-}
-
-// PointsForAssistGT applies the GT predicate on the "points_for_assist" field.
-func PointsForAssistGT(v int) predicate.League {
-	return predicate.League(sql.FieldGT(FieldPointsForAssist, v))
-}
-
-// PointsForAssistGTE applies the GTE predicate on the "points_for_assist" field.
-func PointsForAssistGTE(v int) predicate.League {
-	return predicate.League(sql.FieldGTE(FieldPointsForAssist, v))
-}
-
-// PointsForAssistLT applies the LT predicate on the "points_for_assist" field.
-func PointsForAssistLT(v int) predicate.League {
-	return predicate.League(sql.FieldLT(FieldPointsForAssist, v))
-}
-
-// PointsForAssistLTE applies the LTE predicate on the "points_for_assist" field.
-func PointsForAssistLTE(v int) predicate.League {
-	return predicate.League(sql.FieldLTE(FieldPointsForAssist, v))
-}
-
-// GoaliePointsForShutoutEQ applies the EQ predicate on the "goalie_points_for_shutout" field.
-func GoaliePointsForShutoutEQ(v int) predicate.League {
-	return predicate.League(sql.FieldEQ(FieldGoaliePointsForShutout, v))
-}
-
-// GoaliePointsForShutoutNEQ applies the NEQ predicate on the "goalie_points_for_shutout" field.
-func GoaliePointsForShutoutNEQ(v int) predicate.League {
-	return predicate.League(sql.FieldNEQ(FieldGoaliePointsForShutout, v))
-}
-
-// GoaliePointsForShutoutIn applies the In predicate on the "goalie_points_for_shutout" field.
-func GoaliePointsForShutoutIn(vs ...int) predicate.League {
-	return predicate.League(sql.FieldIn(FieldGoaliePointsForShutout, vs...))
-}
-
-// GoaliePointsForShutoutNotIn applies the NotIn predicate on the "goalie_points_for_shutout" field.
-func GoaliePointsForShutoutNotIn(vs ...int) predicate.League {
-	return predicate.League(sql.FieldNotIn(FieldGoaliePointsForShutout, vs...))
-}
-
-// GoaliePointsForShutoutGT applies the GT predicate on the "goalie_points_for_shutout" field.
-func GoaliePointsForShutoutGT(v int) predicate.League {
-	return predicate.League(sql.FieldGT(FieldGoaliePointsForShutout, v))
-}
-
-// GoaliePointsForShutoutGTE applies the GTE predicate on the "goalie_points_for_shutout" field.
-func GoaliePointsForShutoutGTE(v int) predicate.League {
-	return predicate.League(sql.FieldGTE(FieldGoaliePointsForShutout, v))
-}
-
-// GoaliePointsForShutoutLT applies the LT predicate on the "goalie_points_for_shutout" field.
-func GoaliePointsForShutoutLT(v int) predicate.League {
-	return predicate.League(sql.FieldLT(FieldGoaliePointsForShutout, v))
-}
-
-// GoaliePointsForShutoutLTE applies the LTE predicate on the "goalie_points_for_shutout" field.
-func GoaliePointsForShutoutLTE(v int) predicate.League {
-	return predicate.League(sql.FieldLTE(FieldGoaliePointsForShutout, v))
-}
-
-// GoaliePointsForWinEQ applies the EQ predicate on the "goalie_points_for_win" field.
-func GoaliePointsForWinEQ(v int) predicate.League {
-	return predicate.League(sql.FieldEQ(FieldGoaliePointsForWin, v))
-}
-
-// GoaliePointsForWinNEQ applies the NEQ predicate on the "goalie_points_for_win" field.
-func GoaliePointsForWinNEQ(v int) predicate.League {
-	return predicate.League(sql.FieldNEQ(FieldGoaliePointsForWin, v))
-}
-
-// GoaliePointsForWinIn applies the In predicate on the "goalie_points_for_win" field.
-func GoaliePointsForWinIn(vs ...int) predicate.League {
-	return predicate.League(sql.FieldIn(FieldGoaliePointsForWin, vs...))
-}
-
-// GoaliePointsForWinNotIn applies the NotIn predicate on the "goalie_points_for_win" field.
-func GoaliePointsForWinNotIn(vs ...int) predicate.League {
-	return predicate.League(sql.FieldNotIn(FieldGoaliePointsForWin, vs...))
-}
-
-// GoaliePointsForWinGT applies the GT predicate on the "goalie_points_for_win" field.
-func GoaliePointsForWinGT(v int) predicate.League {
-	return predicate.League(sql.FieldGT(FieldGoaliePointsForWin, v))
-}
-
-// GoaliePointsForWinGTE applies the GTE predicate on the "goalie_points_for_win" field.
-func GoaliePointsForWinGTE(v int) predicate.League {
-	return predicate.League(sql.FieldGTE(FieldGoaliePointsForWin, v))
-}
-
-// GoaliePointsForWinLT applies the LT predicate on the "goalie_points_for_win" field.
-func GoaliePointsForWinLT(v int) predicate.League {
-	return predicate.League(sql.FieldLT(FieldGoaliePointsForWin, v))
-}
-
-// GoaliePointsForWinLTE applies the LTE predicate on the "goalie_points_for_win" field.
-func GoaliePointsForWinLTE(v int) predicate.League {
-	return predicate.League(sql.FieldLTE(FieldGoaliePointsForWin, v))
 }
 
 // EditKeyEQ applies the EQ predicate on the "edit_key" field.

@@ -43,9 +43,13 @@ type Player struct {
 type PlayerEdges struct {
 	// Team holds the value of the team edge.
 	Team *Team `json:"team,omitempty"`
+	// HomeGamesAsGoalie holds the value of the homeGamesAsGoalie edge.
+	HomeGamesAsGoalie []*Game `json:"homeGamesAsGoalie,omitempty"`
+	// AwayGamesAsGoalie holds the value of the awayGamesAsGoalie edge.
+	AwayGamesAsGoalie []*Game `json:"awayGamesAsGoalie,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [3]bool
 }
 
 // TeamOrErr returns the Team value or an error if the edge
@@ -59,6 +63,24 @@ func (e PlayerEdges) TeamOrErr() (*Team, error) {
 		return e.Team, nil
 	}
 	return nil, &NotLoadedError{edge: "team"}
+}
+
+// HomeGamesAsGoalieOrErr returns the HomeGamesAsGoalie value or an error if the edge
+// was not loaded in eager-loading.
+func (e PlayerEdges) HomeGamesAsGoalieOrErr() ([]*Game, error) {
+	if e.loadedTypes[1] {
+		return e.HomeGamesAsGoalie, nil
+	}
+	return nil, &NotLoadedError{edge: "homeGamesAsGoalie"}
+}
+
+// AwayGamesAsGoalieOrErr returns the AwayGamesAsGoalie value or an error if the edge
+// was not loaded in eager-loading.
+func (e PlayerEdges) AwayGamesAsGoalieOrErr() ([]*Game, error) {
+	if e.loadedTypes[2] {
+		return e.AwayGamesAsGoalie, nil
+	}
+	return nil, &NotLoadedError{edge: "awayGamesAsGoalie"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -179,6 +201,16 @@ func (pl *Player) Value(name string) (ent.Value, error) {
 // QueryTeam queries the "team" edge of the Player entity.
 func (pl *Player) QueryTeam() *TeamQuery {
 	return NewPlayerClient(pl.config).QueryTeam(pl)
+}
+
+// QueryHomeGamesAsGoalie queries the "homeGamesAsGoalie" edge of the Player entity.
+func (pl *Player) QueryHomeGamesAsGoalie() *GameQuery {
+	return NewPlayerClient(pl.config).QueryHomeGamesAsGoalie(pl)
+}
+
+// QueryAwayGamesAsGoalie queries the "awayGamesAsGoalie" edge of the Player entity.
+func (pl *Player) QueryAwayGamesAsGoalie() *GameQuery {
+	return NewPlayerClient(pl.config).QueryAwayGamesAsGoalie(pl)
 }
 
 // Update returns a builder for updating this Player.

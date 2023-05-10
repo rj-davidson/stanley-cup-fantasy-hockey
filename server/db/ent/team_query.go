@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/predicate"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
@@ -19,11 +20,13 @@ import (
 // TeamQuery is the builder for querying Team entities.
 type TeamQuery struct {
 	config
-	ctx         *QueryContext
-	order       []team.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.Team
-	withPlayers *PlayerQuery
+	ctx           *QueryContext
+	order         []team.OrderOption
+	inters        []Interceptor
+	predicates    []predicate.Team
+	withPlayers   *PlayerQuery
+	withHomeGames *GameQuery
+	withAwayGames *GameQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,6 +78,50 @@ func (tq *TeamQuery) QueryPlayers() *PlayerQuery {
 			sqlgraph.From(team.Table, team.FieldID, selector),
 			sqlgraph.To(player.Table, player.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, team.PlayersTable, team.PlayersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryHomeGames chains the current query on the "homeGames" edge.
+func (tq *TeamQuery) QueryHomeGames() *GameQuery {
+	query := (&GameClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, selector),
+			sqlgraph.To(game.Table, game.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.HomeGamesTable, team.HomeGamesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAwayGames chains the current query on the "awayGames" edge.
+func (tq *TeamQuery) QueryAwayGames() *GameQuery {
+	query := (&GameClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, selector),
+			sqlgraph.To(game.Table, game.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.AwayGamesTable, team.AwayGamesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -269,12 +316,14 @@ func (tq *TeamQuery) Clone() *TeamQuery {
 		return nil
 	}
 	return &TeamQuery{
-		config:      tq.config,
-		ctx:         tq.ctx.Clone(),
-		order:       append([]team.OrderOption{}, tq.order...),
-		inters:      append([]Interceptor{}, tq.inters...),
-		predicates:  append([]predicate.Team{}, tq.predicates...),
-		withPlayers: tq.withPlayers.Clone(),
+		config:        tq.config,
+		ctx:           tq.ctx.Clone(),
+		order:         append([]team.OrderOption{}, tq.order...),
+		inters:        append([]Interceptor{}, tq.inters...),
+		predicates:    append([]predicate.Team{}, tq.predicates...),
+		withPlayers:   tq.withPlayers.Clone(),
+		withHomeGames: tq.withHomeGames.Clone(),
+		withAwayGames: tq.withAwayGames.Clone(),
 		// clone intermediate query.
 		sql:  tq.sql.Clone(),
 		path: tq.path,
@@ -289,6 +338,28 @@ func (tq *TeamQuery) WithPlayers(opts ...func(*PlayerQuery)) *TeamQuery {
 		opt(query)
 	}
 	tq.withPlayers = query
+	return tq
+}
+
+// WithHomeGames tells the query-builder to eager-load the nodes that are connected to
+// the "homeGames" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TeamQuery) WithHomeGames(opts ...func(*GameQuery)) *TeamQuery {
+	query := (&GameClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withHomeGames = query
+	return tq
+}
+
+// WithAwayGames tells the query-builder to eager-load the nodes that are connected to
+// the "awayGames" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TeamQuery) WithAwayGames(opts ...func(*GameQuery)) *TeamQuery {
+	query := (&GameClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withAwayGames = query
 	return tq
 }
 
@@ -370,8 +441,10 @@ func (tq *TeamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Team, e
 	var (
 		nodes       = []*Team{}
 		_spec       = tq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [3]bool{
 			tq.withPlayers != nil,
+			tq.withHomeGames != nil,
+			tq.withAwayGames != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -396,6 +469,20 @@ func (tq *TeamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Team, e
 		if err := tq.loadPlayers(ctx, query, nodes,
 			func(n *Team) { n.Edges.Players = []*Player{} },
 			func(n *Team, e *Player) { n.Edges.Players = append(n.Edges.Players, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withHomeGames; query != nil {
+		if err := tq.loadHomeGames(ctx, query, nodes,
+			func(n *Team) { n.Edges.HomeGames = []*Game{} },
+			func(n *Team, e *Game) { n.Edges.HomeGames = append(n.Edges.HomeGames, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withAwayGames; query != nil {
+		if err := tq.loadAwayGames(ctx, query, nodes,
+			func(n *Team) { n.Edges.AwayGames = []*Game{} },
+			func(n *Team, e *Game) { n.Edges.AwayGames = append(n.Edges.AwayGames, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -428,6 +515,70 @@ func (tq *TeamQuery) loadPlayers(ctx context.Context, query *PlayerQuery, nodes 
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "team_players" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+
+func (tq *TeamQuery) loadHomeGames(ctx context.Context, query *GameQuery, nodes []*Team, init func(*Team), assign func(*Team, *Game)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Team)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Game(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(team.HomeGamesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.team_home_games
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "team_home_games" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "team_home_games" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+
+func (tq *TeamQuery) loadAwayGames(ctx context.Context, query *GameQuery, nodes []*Team, init func(*Team), assign func(*Team, *Game)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Team)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Game(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(team.AwayGamesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.team_away_games
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "team_away_games" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "team_away_games" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

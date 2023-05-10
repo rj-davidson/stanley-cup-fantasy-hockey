@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/predicate"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
@@ -69,6 +70,36 @@ func (tu *TeamUpdate) AddPlayers(p ...*Player) *TeamUpdate {
 	return tu.AddPlayerIDs(ids...)
 }
 
+// AddHomeGameIDs adds the "homeGames" edge to the Game entity by IDs.
+func (tu *TeamUpdate) AddHomeGameIDs(ids ...int) *TeamUpdate {
+	tu.mutation.AddHomeGameIDs(ids...)
+	return tu
+}
+
+// AddHomeGames adds the "homeGames" edges to the Game entity.
+func (tu *TeamUpdate) AddHomeGames(g ...*Game) *TeamUpdate {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tu.AddHomeGameIDs(ids...)
+}
+
+// AddAwayGameIDs adds the "awayGames" edge to the Game entity by IDs.
+func (tu *TeamUpdate) AddAwayGameIDs(ids ...int) *TeamUpdate {
+	tu.mutation.AddAwayGameIDs(ids...)
+	return tu
+}
+
+// AddAwayGames adds the "awayGames" edges to the Game entity.
+func (tu *TeamUpdate) AddAwayGames(g ...*Game) *TeamUpdate {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tu.AddAwayGameIDs(ids...)
+}
+
 // Mutation returns the TeamMutation object of the builder.
 func (tu *TeamUpdate) Mutation() *TeamMutation {
 	return tu.mutation
@@ -93,6 +124,48 @@ func (tu *TeamUpdate) RemovePlayers(p ...*Player) *TeamUpdate {
 		ids[i] = p[i].ID
 	}
 	return tu.RemovePlayerIDs(ids...)
+}
+
+// ClearHomeGames clears all "homeGames" edges to the Game entity.
+func (tu *TeamUpdate) ClearHomeGames() *TeamUpdate {
+	tu.mutation.ClearHomeGames()
+	return tu
+}
+
+// RemoveHomeGameIDs removes the "homeGames" edge to Game entities by IDs.
+func (tu *TeamUpdate) RemoveHomeGameIDs(ids ...int) *TeamUpdate {
+	tu.mutation.RemoveHomeGameIDs(ids...)
+	return tu
+}
+
+// RemoveHomeGames removes "homeGames" edges to Game entities.
+func (tu *TeamUpdate) RemoveHomeGames(g ...*Game) *TeamUpdate {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tu.RemoveHomeGameIDs(ids...)
+}
+
+// ClearAwayGames clears all "awayGames" edges to the Game entity.
+func (tu *TeamUpdate) ClearAwayGames() *TeamUpdate {
+	tu.mutation.ClearAwayGames()
+	return tu
+}
+
+// RemoveAwayGameIDs removes the "awayGames" edge to Game entities by IDs.
+func (tu *TeamUpdate) RemoveAwayGameIDs(ids ...int) *TeamUpdate {
+	tu.mutation.RemoveAwayGameIDs(ids...)
+	return tu
+}
+
+// RemoveAwayGames removes "awayGames" edges to Game entities.
+func (tu *TeamUpdate) RemoveAwayGames(g ...*Game) *TeamUpdate {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tu.RemoveAwayGameIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -185,6 +258,96 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if tu.mutation.HomeGamesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.HomeGamesTable,
+			Columns: []string{team.HomeGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedHomeGamesIDs(); len(nodes) > 0 && !tu.mutation.HomeGamesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.HomeGamesTable,
+			Columns: []string{team.HomeGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.HomeGamesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.HomeGamesTable,
+			Columns: []string{team.HomeGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.AwayGamesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.AwayGamesTable,
+			Columns: []string{team.AwayGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedAwayGamesIDs(); len(nodes) > 0 && !tu.mutation.AwayGamesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.AwayGamesTable,
+			Columns: []string{team.AwayGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.AwayGamesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.AwayGamesTable,
+			Columns: []string{team.AwayGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{team.Label}
@@ -246,6 +409,36 @@ func (tuo *TeamUpdateOne) AddPlayers(p ...*Player) *TeamUpdateOne {
 	return tuo.AddPlayerIDs(ids...)
 }
 
+// AddHomeGameIDs adds the "homeGames" edge to the Game entity by IDs.
+func (tuo *TeamUpdateOne) AddHomeGameIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.AddHomeGameIDs(ids...)
+	return tuo
+}
+
+// AddHomeGames adds the "homeGames" edges to the Game entity.
+func (tuo *TeamUpdateOne) AddHomeGames(g ...*Game) *TeamUpdateOne {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tuo.AddHomeGameIDs(ids...)
+}
+
+// AddAwayGameIDs adds the "awayGames" edge to the Game entity by IDs.
+func (tuo *TeamUpdateOne) AddAwayGameIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.AddAwayGameIDs(ids...)
+	return tuo
+}
+
+// AddAwayGames adds the "awayGames" edges to the Game entity.
+func (tuo *TeamUpdateOne) AddAwayGames(g ...*Game) *TeamUpdateOne {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tuo.AddAwayGameIDs(ids...)
+}
+
 // Mutation returns the TeamMutation object of the builder.
 func (tuo *TeamUpdateOne) Mutation() *TeamMutation {
 	return tuo.mutation
@@ -270,6 +463,48 @@ func (tuo *TeamUpdateOne) RemovePlayers(p ...*Player) *TeamUpdateOne {
 		ids[i] = p[i].ID
 	}
 	return tuo.RemovePlayerIDs(ids...)
+}
+
+// ClearHomeGames clears all "homeGames" edges to the Game entity.
+func (tuo *TeamUpdateOne) ClearHomeGames() *TeamUpdateOne {
+	tuo.mutation.ClearHomeGames()
+	return tuo
+}
+
+// RemoveHomeGameIDs removes the "homeGames" edge to Game entities by IDs.
+func (tuo *TeamUpdateOne) RemoveHomeGameIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.RemoveHomeGameIDs(ids...)
+	return tuo
+}
+
+// RemoveHomeGames removes "homeGames" edges to Game entities.
+func (tuo *TeamUpdateOne) RemoveHomeGames(g ...*Game) *TeamUpdateOne {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tuo.RemoveHomeGameIDs(ids...)
+}
+
+// ClearAwayGames clears all "awayGames" edges to the Game entity.
+func (tuo *TeamUpdateOne) ClearAwayGames() *TeamUpdateOne {
+	tuo.mutation.ClearAwayGames()
+	return tuo
+}
+
+// RemoveAwayGameIDs removes the "awayGames" edge to Game entities by IDs.
+func (tuo *TeamUpdateOne) RemoveAwayGameIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.RemoveAwayGameIDs(ids...)
+	return tuo
+}
+
+// RemoveAwayGames removes "awayGames" edges to Game entities.
+func (tuo *TeamUpdateOne) RemoveAwayGames(g ...*Game) *TeamUpdateOne {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tuo.RemoveAwayGameIDs(ids...)
 }
 
 // Where appends a list predicates to the TeamUpdate builder.
@@ -385,6 +620,96 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.HomeGamesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.HomeGamesTable,
+			Columns: []string{team.HomeGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedHomeGamesIDs(); len(nodes) > 0 && !tuo.mutation.HomeGamesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.HomeGamesTable,
+			Columns: []string{team.HomeGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.HomeGamesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.HomeGamesTable,
+			Columns: []string{team.HomeGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.AwayGamesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.AwayGamesTable,
+			Columns: []string{team.AwayGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedAwayGamesIDs(); len(nodes) > 0 && !tuo.mutation.AwayGamesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.AwayGamesTable,
+			Columns: []string{team.AwayGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.AwayGamesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.AwayGamesTable,
+			Columns: []string{team.AwayGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

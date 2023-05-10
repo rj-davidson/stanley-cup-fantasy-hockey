@@ -20,6 +20,10 @@ const (
 	FieldEliminated = "eliminated"
 	// EdgePlayers holds the string denoting the players edge name in mutations.
 	EdgePlayers = "players"
+	// EdgeHomeGames holds the string denoting the homegames edge name in mutations.
+	EdgeHomeGames = "homeGames"
+	// EdgeAwayGames holds the string denoting the awaygames edge name in mutations.
+	EdgeAwayGames = "awayGames"
 	// Table holds the table name of the team in the database.
 	Table = "teams"
 	// PlayersTable is the table that holds the players relation/edge.
@@ -29,6 +33,20 @@ const (
 	PlayersInverseTable = "players"
 	// PlayersColumn is the table column denoting the players relation/edge.
 	PlayersColumn = "team_players"
+	// HomeGamesTable is the table that holds the homeGames relation/edge.
+	HomeGamesTable = "games"
+	// HomeGamesInverseTable is the table name for the Game entity.
+	// It exists in this package in order to avoid circular dependency with the "game" package.
+	HomeGamesInverseTable = "games"
+	// HomeGamesColumn is the table column denoting the homeGames relation/edge.
+	HomeGamesColumn = "team_home_games"
+	// AwayGamesTable is the table that holds the awayGames relation/edge.
+	AwayGamesTable = "games"
+	// AwayGamesInverseTable is the table name for the Game entity.
+	// It exists in this package in order to avoid circular dependency with the "game" package.
+	AwayGamesInverseTable = "games"
+	// AwayGamesColumn is the table column denoting the awayGames relation/edge.
+	AwayGamesColumn = "team_away_games"
 )
 
 // Columns holds all SQL columns for team fields.
@@ -52,6 +70,8 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultEliminated holds the default value on creation for the "eliminated" field.
 	DefaultEliminated bool
+	// IDValidator is a validator for the "id" field. It is called by the builders before save.
+	IDValidator func(int) error
 )
 
 // OrderOption defines the ordering options for the Team queries.
@@ -90,10 +110,55 @@ func ByPlayers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newPlayersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByHomeGamesCount orders the results by homeGames count.
+func ByHomeGamesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newHomeGamesStep(), opts...)
+	}
+}
+
+// ByHomeGames orders the results by homeGames terms.
+func ByHomeGames(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newHomeGamesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByAwayGamesCount orders the results by awayGames count.
+func ByAwayGamesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAwayGamesStep(), opts...)
+	}
+}
+
+// ByAwayGames orders the results by awayGames terms.
+func ByAwayGames(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAwayGamesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 func newPlayersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PlayersInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, PlayersTable, PlayersColumn),
+	)
+}
+
+func newHomeGamesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(HomeGamesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, HomeGamesTable, HomeGamesColumn),
+	)
+}
+
+func newAwayGamesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AwayGamesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AwayGamesTable, AwayGamesColumn),
 	)
 }

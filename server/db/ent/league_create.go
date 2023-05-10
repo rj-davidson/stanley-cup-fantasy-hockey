@@ -20,6 +20,12 @@ type LeagueCreate struct {
 	hooks    []Hook
 }
 
+// SetName sets the "name" field.
+func (lc *LeagueCreate) SetName(s string) *LeagueCreate {
+	lc.mutation.SetName(s)
+	return lc
+}
+
 // SetSeason sets the "season" field.
 func (lc *LeagueCreate) SetSeason(i int) *LeagueCreate {
 	lc.mutation.SetSeason(i)
@@ -47,30 +53,6 @@ func (lc *LeagueCreate) SetNumDefenders(i int) *LeagueCreate {
 // SetNumGoalies sets the "num_goalies" field.
 func (lc *LeagueCreate) SetNumGoalies(i int) *LeagueCreate {
 	lc.mutation.SetNumGoalies(i)
-	return lc
-}
-
-// SetPointsForGoal sets the "points_for_goal" field.
-func (lc *LeagueCreate) SetPointsForGoal(i int) *LeagueCreate {
-	lc.mutation.SetPointsForGoal(i)
-	return lc
-}
-
-// SetPointsForAssist sets the "points_for_assist" field.
-func (lc *LeagueCreate) SetPointsForAssist(i int) *LeagueCreate {
-	lc.mutation.SetPointsForAssist(i)
-	return lc
-}
-
-// SetGoaliePointsForShutout sets the "goalie_points_for_shutout" field.
-func (lc *LeagueCreate) SetGoaliePointsForShutout(i int) *LeagueCreate {
-	lc.mutation.SetGoaliePointsForShutout(i)
-	return lc
-}
-
-// SetGoaliePointsForWin sets the "goalie_points_for_win" field.
-func (lc *LeagueCreate) SetGoaliePointsForWin(i int) *LeagueCreate {
-	lc.mutation.SetGoaliePointsForWin(i)
 	return lc
 }
 
@@ -135,6 +117,9 @@ func (lc *LeagueCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (lc *LeagueCreate) check() error {
+	if _, ok := lc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "League.name"`)}
+	}
 	if _, ok := lc.mutation.Season(); !ok {
 		return &ValidationError{Name: "season", err: errors.New(`ent: missing required field "League.season"`)}
 	}
@@ -149,18 +134,6 @@ func (lc *LeagueCreate) check() error {
 	}
 	if _, ok := lc.mutation.NumGoalies(); !ok {
 		return &ValidationError{Name: "num_goalies", err: errors.New(`ent: missing required field "League.num_goalies"`)}
-	}
-	if _, ok := lc.mutation.PointsForGoal(); !ok {
-		return &ValidationError{Name: "points_for_goal", err: errors.New(`ent: missing required field "League.points_for_goal"`)}
-	}
-	if _, ok := lc.mutation.PointsForAssist(); !ok {
-		return &ValidationError{Name: "points_for_assist", err: errors.New(`ent: missing required field "League.points_for_assist"`)}
-	}
-	if _, ok := lc.mutation.GoaliePointsForShutout(); !ok {
-		return &ValidationError{Name: "goalie_points_for_shutout", err: errors.New(`ent: missing required field "League.goalie_points_for_shutout"`)}
-	}
-	if _, ok := lc.mutation.GoaliePointsForWin(); !ok {
-		return &ValidationError{Name: "goalie_points_for_win", err: errors.New(`ent: missing required field "League.goalie_points_for_win"`)}
 	}
 	if _, ok := lc.mutation.EditKey(); !ok {
 		return &ValidationError{Name: "edit_key", err: errors.New(`ent: missing required field "League.edit_key"`)}
@@ -194,6 +167,10 @@ func (lc *LeagueCreate) createSpec() (*League, *sqlgraph.CreateSpec) {
 		_node = &League{config: lc.config}
 		_spec = sqlgraph.NewCreateSpec(league.Table, sqlgraph.NewFieldSpec(league.FieldID, field.TypeInt))
 	)
+	if value, ok := lc.mutation.Name(); ok {
+		_spec.SetField(league.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
 	if value, ok := lc.mutation.Season(); ok {
 		_spec.SetField(league.FieldSeason, field.TypeInt, value)
 		_node.Season = value
@@ -213,22 +190,6 @@ func (lc *LeagueCreate) createSpec() (*League, *sqlgraph.CreateSpec) {
 	if value, ok := lc.mutation.NumGoalies(); ok {
 		_spec.SetField(league.FieldNumGoalies, field.TypeInt, value)
 		_node.NumGoalies = value
-	}
-	if value, ok := lc.mutation.PointsForGoal(); ok {
-		_spec.SetField(league.FieldPointsForGoal, field.TypeInt, value)
-		_node.PointsForGoal = value
-	}
-	if value, ok := lc.mutation.PointsForAssist(); ok {
-		_spec.SetField(league.FieldPointsForAssist, field.TypeInt, value)
-		_node.PointsForAssist = value
-	}
-	if value, ok := lc.mutation.GoaliePointsForShutout(); ok {
-		_spec.SetField(league.FieldGoaliePointsForShutout, field.TypeInt, value)
-		_node.GoaliePointsForShutout = value
-	}
-	if value, ok := lc.mutation.GoaliePointsForWin(); ok {
-		_spec.SetField(league.FieldGoaliePointsForWin, field.TypeInt, value)
-		_node.GoaliePointsForWin = value
 	}
 	if value, ok := lc.mutation.EditKey(); ok {
 		_spec.SetField(league.FieldEditKey, field.TypeString, value)

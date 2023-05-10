@@ -32,9 +32,13 @@ type Team struct {
 type TeamEdges struct {
 	// Players holds the value of the players edge.
 	Players []*Player `json:"players,omitempty"`
+	// HomeGames holds the value of the homeGames edge.
+	HomeGames []*Game `json:"homeGames,omitempty"`
+	// AwayGames holds the value of the awayGames edge.
+	AwayGames []*Game `json:"awayGames,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [3]bool
 }
 
 // PlayersOrErr returns the Players value or an error if the edge
@@ -44,6 +48,24 @@ func (e TeamEdges) PlayersOrErr() ([]*Player, error) {
 		return e.Players, nil
 	}
 	return nil, &NotLoadedError{edge: "players"}
+}
+
+// HomeGamesOrErr returns the HomeGames value or an error if the edge
+// was not loaded in eager-loading.
+func (e TeamEdges) HomeGamesOrErr() ([]*Game, error) {
+	if e.loadedTypes[1] {
+		return e.HomeGames, nil
+	}
+	return nil, &NotLoadedError{edge: "homeGames"}
+}
+
+// AwayGamesOrErr returns the AwayGames value or an error if the edge
+// was not loaded in eager-loading.
+func (e TeamEdges) AwayGamesOrErr() ([]*Game, error) {
+	if e.loadedTypes[2] {
+		return e.AwayGames, nil
+	}
+	return nil, &NotLoadedError{edge: "awayGames"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -112,6 +134,16 @@ func (t *Team) Value(name string) (ent.Value, error) {
 // QueryPlayers queries the "players" edge of the Team entity.
 func (t *Team) QueryPlayers() *PlayerQuery {
 	return NewTeamClient(t.config).QueryPlayers(t)
+}
+
+// QueryHomeGames queries the "homeGames" edge of the Team entity.
+func (t *Team) QueryHomeGames() *GameQuery {
+	return NewTeamClient(t.config).QueryHomeGames(t)
+}
+
+// QueryAwayGames queries the "awayGames" edge of the Team entity.
+func (t *Team) QueryAwayGames() *GameQuery {
+	return NewTeamClient(t.config).QueryAwayGames(t)
 }
 
 // Update returns a builder for updating this Team.

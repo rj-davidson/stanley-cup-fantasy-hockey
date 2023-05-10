@@ -346,6 +346,52 @@ func HasTeamWith(preds ...predicate.Team) predicate.Player {
 	})
 }
 
+// HasHomeGamesAsGoalie applies the HasEdge predicate on the "homeGamesAsGoalie" edge.
+func HasHomeGamesAsGoalie() predicate.Player {
+	return predicate.Player(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, HomeGamesAsGoalieTable, HomeGamesAsGoalieColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasHomeGamesAsGoalieWith applies the HasEdge predicate on the "homeGamesAsGoalie" edge with a given conditions (other predicates).
+func HasHomeGamesAsGoalieWith(preds ...predicate.Game) predicate.Player {
+	return predicate.Player(func(s *sql.Selector) {
+		step := newHomeGamesAsGoalieStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAwayGamesAsGoalie applies the HasEdge predicate on the "awayGamesAsGoalie" edge.
+func HasAwayGamesAsGoalie() predicate.Player {
+	return predicate.Player(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AwayGamesAsGoalieTable, AwayGamesAsGoalieColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAwayGamesAsGoalieWith applies the HasEdge predicate on the "awayGamesAsGoalie" edge with a given conditions (other predicates).
+func HasAwayGamesAsGoalieWith(preds ...predicate.Game) predicate.Player {
+	return predicate.Player(func(s *sql.Selector) {
+		step := newAwayGamesAsGoalieStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Player) predicate.Player {
 	return predicate.Player(func(s *sql.Selector) {

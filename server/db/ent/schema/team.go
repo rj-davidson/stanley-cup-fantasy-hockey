@@ -14,6 +14,7 @@ type Team struct {
 // Fields of the Team.
 func (Team) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id").Positive().Unique().Immutable(),
 		field.String("name").Unique(),
 		field.String("logo_filepath").Unique(),
 		field.Bool("eliminated").Default(false),
@@ -24,5 +25,7 @@ func (Team) Fields() []ent.Field {
 func (Team) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("players", Player.Type),
+		edge.To("homeGames", Game.Type),
+		edge.To("awayGames", Game.Type),
 	}
 }

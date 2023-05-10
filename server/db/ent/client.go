@@ -15,6 +15,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/league"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
@@ -27,6 +28,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Entry is the client for interacting with the Entry builders.
 	Entry *EntryClient
+	// Game is the client for interacting with the Game builders.
+	Game *GameClient
 	// League is the client for interacting with the League builders.
 	League *LeagueClient
 	// Player is the client for interacting with the Player builders.
@@ -47,6 +50,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Entry = NewEntryClient(c.config)
+	c.Game = NewGameClient(c.config)
 	c.League = NewLeagueClient(c.config)
 	c.Player = NewPlayerClient(c.config)
 	c.Team = NewTeamClient(c.config)
@@ -133,6 +137,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:    ctx,
 		config: cfg,
 		Entry:  NewEntryClient(cfg),
+		Game:   NewGameClient(cfg),
 		League: NewLeagueClient(cfg),
 		Player: NewPlayerClient(cfg),
 		Team:   NewTeamClient(cfg),
@@ -156,6 +161,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:    ctx,
 		config: cfg,
 		Entry:  NewEntryClient(cfg),
+		Game:   NewGameClient(cfg),
 		League: NewLeagueClient(cfg),
 		Player: NewPlayerClient(cfg),
 		Team:   NewTeamClient(cfg),
@@ -188,6 +194,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Entry.Use(hooks...)
+	c.Game.Use(hooks...)
 	c.League.Use(hooks...)
 	c.Player.Use(hooks...)
 	c.Team.Use(hooks...)
@@ -197,6 +204,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Entry.Intercept(interceptors...)
+	c.Game.Intercept(interceptors...)
 	c.League.Intercept(interceptors...)
 	c.Player.Intercept(interceptors...)
 	c.Team.Intercept(interceptors...)
@@ -207,6 +215,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *EntryMutation:
 		return c.Entry.mutate(ctx, m)
+	case *GameMutation:
+		return c.Game.mutate(ctx, m)
 	case *LeagueMutation:
 		return c.League.mutate(ctx, m)
 	case *PlayerMutation:
@@ -397,6 +407,188 @@ func (c *EntryClient) mutate(ctx context.Context, m *EntryMutation) (Value, erro
 		return (&EntryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Entry mutation op: %q", m.Op())
+	}
+}
+
+// GameClient is a client for the Game schema.
+type GameClient struct {
+	config
+}
+
+// NewGameClient returns a client for the Game from the given config.
+func NewGameClient(c config) *GameClient {
+	return &GameClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `game.Hooks(f(g(h())))`.
+func (c *GameClient) Use(hooks ...Hook) {
+	c.hooks.Game = append(c.hooks.Game, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `game.Intercept(f(g(h())))`.
+func (c *GameClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Game = append(c.inters.Game, interceptors...)
+}
+
+// Create returns a builder for creating a Game entity.
+func (c *GameClient) Create() *GameCreate {
+	mutation := newGameMutation(c.config, OpCreate)
+	return &GameCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Game entities.
+func (c *GameClient) CreateBulk(builders ...*GameCreate) *GameCreateBulk {
+	return &GameCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Game.
+func (c *GameClient) Update() *GameUpdate {
+	mutation := newGameMutation(c.config, OpUpdate)
+	return &GameUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GameClient) UpdateOne(ga *Game) *GameUpdateOne {
+	mutation := newGameMutation(c.config, OpUpdateOne, withGame(ga))
+	return &GameUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GameClient) UpdateOneID(id int) *GameUpdateOne {
+	mutation := newGameMutation(c.config, OpUpdateOne, withGameID(id))
+	return &GameUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Game.
+func (c *GameClient) Delete() *GameDelete {
+	mutation := newGameMutation(c.config, OpDelete)
+	return &GameDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GameClient) DeleteOne(ga *Game) *GameDeleteOne {
+	return c.DeleteOneID(ga.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GameClient) DeleteOneID(id int) *GameDeleteOne {
+	builder := c.Delete().Where(game.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GameDeleteOne{builder}
+}
+
+// Query returns a query builder for Game.
+func (c *GameClient) Query() *GameQuery {
+	return &GameQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGame},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Game entity by its id.
+func (c *GameClient) Get(ctx context.Context, id int) (*Game, error) {
+	return c.Query().Where(game.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GameClient) GetX(ctx context.Context, id int) *Game {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAwayTeam queries the awayTeam edge of a Game.
+func (c *GameClient) QueryAwayTeam(ga *Game) *TeamQuery {
+	query := (&TeamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ga.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(game.Table, game.FieldID, id),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, game.AwayTeamTable, game.AwayTeamColumn),
+		)
+		fromV = sqlgraph.Neighbors(ga.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryHomeTeam queries the homeTeam edge of a Game.
+func (c *GameClient) QueryHomeTeam(ga *Game) *TeamQuery {
+	query := (&TeamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ga.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(game.Table, game.FieldID, id),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, game.HomeTeamTable, game.HomeTeamColumn),
+		)
+		fromV = sqlgraph.Neighbors(ga.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAwayGoalie queries the awayGoalie edge of a Game.
+func (c *GameClient) QueryAwayGoalie(ga *Game) *PlayerQuery {
+	query := (&PlayerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ga.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(game.Table, game.FieldID, id),
+			sqlgraph.To(player.Table, player.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, game.AwayGoalieTable, game.AwayGoalieColumn),
+		)
+		fromV = sqlgraph.Neighbors(ga.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryHomeGoalie queries the homeGoalie edge of a Game.
+func (c *GameClient) QueryHomeGoalie(ga *Game) *PlayerQuery {
+	query := (&PlayerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ga.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(game.Table, game.FieldID, id),
+			sqlgraph.To(player.Table, player.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, game.HomeGoalieTable, game.HomeGoalieColumn),
+		)
+		fromV = sqlgraph.Neighbors(ga.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *GameClient) Hooks() []Hook {
+	return c.hooks.Game
+}
+
+// Interceptors returns the client interceptors.
+func (c *GameClient) Interceptors() []Interceptor {
+	return c.inters.Game
+}
+
+func (c *GameClient) mutate(ctx context.Context, m *GameMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GameCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GameUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GameUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GameDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Game mutation op: %q", m.Op())
 	}
 }
 
@@ -643,6 +835,38 @@ func (c *PlayerClient) QueryTeam(pl *Player) *TeamQuery {
 	return query
 }
 
+// QueryHomeGamesAsGoalie queries the homeGamesAsGoalie edge of a Player.
+func (c *PlayerClient) QueryHomeGamesAsGoalie(pl *Player) *GameQuery {
+	query := (&GameClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pl.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(player.Table, player.FieldID, id),
+			sqlgraph.To(game.Table, game.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, player.HomeGamesAsGoalieTable, player.HomeGamesAsGoalieColumn),
+		)
+		fromV = sqlgraph.Neighbors(pl.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAwayGamesAsGoalie queries the awayGamesAsGoalie edge of a Player.
+func (c *PlayerClient) QueryAwayGamesAsGoalie(pl *Player) *GameQuery {
+	query := (&GameClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pl.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(player.Table, player.FieldID, id),
+			sqlgraph.To(game.Table, game.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, player.AwayGamesAsGoalieTable, player.AwayGamesAsGoalieColumn),
+		)
+		fromV = sqlgraph.Neighbors(pl.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *PlayerClient) Hooks() []Hook {
 	return c.hooks.Player
@@ -777,6 +1001,38 @@ func (c *TeamClient) QueryPlayers(t *Team) *PlayerQuery {
 	return query
 }
 
+// QueryHomeGames queries the homeGames edge of a Team.
+func (c *TeamClient) QueryHomeGames(t *Team) *GameQuery {
+	query := (&GameClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, id),
+			sqlgraph.To(game.Table, game.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.HomeGamesTable, team.HomeGamesColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAwayGames queries the awayGames edge of a Team.
+func (c *TeamClient) QueryAwayGames(t *Team) *GameQuery {
+	query := (&GameClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, id),
+			sqlgraph.To(game.Table, game.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.AwayGamesTable, team.AwayGamesColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *TeamClient) Hooks() []Hook {
 	return c.hooks.Team
@@ -805,9 +1061,9 @@ func (c *TeamClient) mutate(ctx context.Context, m *TeamMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Entry, League, Player, Team []ent.Hook
+		Entry, Game, League, Player, Team []ent.Hook
 	}
 	inters struct {
-		Entry, League, Player, Team []ent.Interceptor
+		Entry, Game, League, Player, Team []ent.Interceptor
 	}
 )

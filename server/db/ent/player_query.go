@@ -4,12 +4,14 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/predicate"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
@@ -18,12 +20,14 @@ import (
 // PlayerQuery is the builder for querying Player entities.
 type PlayerQuery struct {
 	config
-	ctx        *QueryContext
-	order      []player.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Player
-	withTeam   *TeamQuery
-	withFKs    bool
+	ctx                   *QueryContext
+	order                 []player.OrderOption
+	inters                []Interceptor
+	predicates            []predicate.Player
+	withTeam              *TeamQuery
+	withHomeGamesAsGoalie *GameQuery
+	withAwayGamesAsGoalie *GameQuery
+	withFKs               bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,6 +79,50 @@ func (pq *PlayerQuery) QueryTeam() *TeamQuery {
 			sqlgraph.From(player.Table, player.FieldID, selector),
 			sqlgraph.To(team.Table, team.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, player.TeamTable, player.TeamColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryHomeGamesAsGoalie chains the current query on the "homeGamesAsGoalie" edge.
+func (pq *PlayerQuery) QueryHomeGamesAsGoalie() *GameQuery {
+	query := (&GameClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(player.Table, player.FieldID, selector),
+			sqlgraph.To(game.Table, game.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, player.HomeGamesAsGoalieTable, player.HomeGamesAsGoalieColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAwayGamesAsGoalie chains the current query on the "awayGamesAsGoalie" edge.
+func (pq *PlayerQuery) QueryAwayGamesAsGoalie() *GameQuery {
+	query := (&GameClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(player.Table, player.FieldID, selector),
+			sqlgraph.To(game.Table, game.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, player.AwayGamesAsGoalieTable, player.AwayGamesAsGoalieColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -269,12 +317,14 @@ func (pq *PlayerQuery) Clone() *PlayerQuery {
 		return nil
 	}
 	return &PlayerQuery{
-		config:     pq.config,
-		ctx:        pq.ctx.Clone(),
-		order:      append([]player.OrderOption{}, pq.order...),
-		inters:     append([]Interceptor{}, pq.inters...),
-		predicates: append([]predicate.Player{}, pq.predicates...),
-		withTeam:   pq.withTeam.Clone(),
+		config:                pq.config,
+		ctx:                   pq.ctx.Clone(),
+		order:                 append([]player.OrderOption{}, pq.order...),
+		inters:                append([]Interceptor{}, pq.inters...),
+		predicates:            append([]predicate.Player{}, pq.predicates...),
+		withTeam:              pq.withTeam.Clone(),
+		withHomeGamesAsGoalie: pq.withHomeGamesAsGoalie.Clone(),
+		withAwayGamesAsGoalie: pq.withAwayGamesAsGoalie.Clone(),
 		// clone intermediate query.
 		sql:  pq.sql.Clone(),
 		path: pq.path,
@@ -289,6 +339,28 @@ func (pq *PlayerQuery) WithTeam(opts ...func(*TeamQuery)) *PlayerQuery {
 		opt(query)
 	}
 	pq.withTeam = query
+	return pq
+}
+
+// WithHomeGamesAsGoalie tells the query-builder to eager-load the nodes that are connected to
+// the "homeGamesAsGoalie" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PlayerQuery) WithHomeGamesAsGoalie(opts ...func(*GameQuery)) *PlayerQuery {
+	query := (&GameClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withHomeGamesAsGoalie = query
+	return pq
+}
+
+// WithAwayGamesAsGoalie tells the query-builder to eager-load the nodes that are connected to
+// the "awayGamesAsGoalie" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PlayerQuery) WithAwayGamesAsGoalie(opts ...func(*GameQuery)) *PlayerQuery {
+	query := (&GameClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withAwayGamesAsGoalie = query
 	return pq
 }
 
@@ -371,8 +443,10 @@ func (pq *PlayerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Playe
 		nodes       = []*Player{}
 		withFKs     = pq.withFKs
 		_spec       = pq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [3]bool{
 			pq.withTeam != nil,
+			pq.withHomeGamesAsGoalie != nil,
+			pq.withAwayGamesAsGoalie != nil,
 		}
 	)
 	if pq.withTeam != nil {
@@ -402,6 +476,20 @@ func (pq *PlayerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Playe
 	if query := pq.withTeam; query != nil {
 		if err := pq.loadTeam(ctx, query, nodes, nil,
 			func(n *Player, e *Team) { n.Edges.Team = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withHomeGamesAsGoalie; query != nil {
+		if err := pq.loadHomeGamesAsGoalie(ctx, query, nodes,
+			func(n *Player) { n.Edges.HomeGamesAsGoalie = []*Game{} },
+			func(n *Player, e *Game) { n.Edges.HomeGamesAsGoalie = append(n.Edges.HomeGamesAsGoalie, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withAwayGamesAsGoalie; query != nil {
+		if err := pq.loadAwayGamesAsGoalie(ctx, query, nodes,
+			func(n *Player) { n.Edges.AwayGamesAsGoalie = []*Game{} },
+			func(n *Player, e *Game) { n.Edges.AwayGamesAsGoalie = append(n.Edges.AwayGamesAsGoalie, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -437,6 +525,70 @@ func (pq *PlayerQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes []*
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+
+func (pq *PlayerQuery) loadHomeGamesAsGoalie(ctx context.Context, query *GameQuery, nodes []*Player, init func(*Player), assign func(*Player, *Game)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Player)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Game(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(player.HomeGamesAsGoalieColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.player_home_games_as_goalie
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "player_home_games_as_goalie" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "player_home_games_as_goalie" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+
+func (pq *PlayerQuery) loadAwayGamesAsGoalie(ctx context.Context, query *GameQuery, nodes []*Player, init func(*Player), assign func(*Player, *Game)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Player)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Game(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(player.AwayGamesAsGoalieColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.player_away_games_as_goalie
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "player_away_games_as_goalie" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "player_away_games_as_goalie" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

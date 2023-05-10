@@ -16,6 +16,8 @@ type League struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
 	// Season holds the value of the "season" field.
 	Season int `json:"season,omitempty"`
 	// Public holds the value of the "public" field.
@@ -26,14 +28,6 @@ type League struct {
 	NumDefenders int `json:"num_defenders,omitempty"`
 	// NumGoalies holds the value of the "num_goalies" field.
 	NumGoalies int `json:"num_goalies,omitempty"`
-	// PointsForGoal holds the value of the "points_for_goal" field.
-	PointsForGoal int `json:"points_for_goal,omitempty"`
-	// PointsForAssist holds the value of the "points_for_assist" field.
-	PointsForAssist int `json:"points_for_assist,omitempty"`
-	// GoaliePointsForShutout holds the value of the "goalie_points_for_shutout" field.
-	GoaliePointsForShutout int `json:"goalie_points_for_shutout,omitempty"`
-	// GoaliePointsForWin holds the value of the "goalie_points_for_win" field.
-	GoaliePointsForWin int `json:"goalie_points_for_win,omitempty"`
 	// EditKey holds the value of the "edit_key" field.
 	EditKey string `json:"edit_key,omitempty"`
 	// Code holds the value of the "code" field.
@@ -69,9 +63,9 @@ func (*League) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case league.FieldPublic:
 			values[i] = new(sql.NullBool)
-		case league.FieldID, league.FieldSeason, league.FieldNumForwards, league.FieldNumDefenders, league.FieldNumGoalies, league.FieldPointsForGoal, league.FieldPointsForAssist, league.FieldGoaliePointsForShutout, league.FieldGoaliePointsForWin:
+		case league.FieldID, league.FieldSeason, league.FieldNumForwards, league.FieldNumDefenders, league.FieldNumGoalies:
 			values[i] = new(sql.NullInt64)
-		case league.FieldEditKey, league.FieldCode:
+		case league.FieldName, league.FieldEditKey, league.FieldCode:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -94,6 +88,12 @@ func (l *League) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			l.ID = int(value.Int64)
+		case league.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				l.Name = value.String
+			}
 		case league.FieldSeason:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field season", values[i])
@@ -123,30 +123,6 @@ func (l *League) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field num_goalies", values[i])
 			} else if value.Valid {
 				l.NumGoalies = int(value.Int64)
-			}
-		case league.FieldPointsForGoal:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field points_for_goal", values[i])
-			} else if value.Valid {
-				l.PointsForGoal = int(value.Int64)
-			}
-		case league.FieldPointsForAssist:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field points_for_assist", values[i])
-			} else if value.Valid {
-				l.PointsForAssist = int(value.Int64)
-			}
-		case league.FieldGoaliePointsForShutout:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field goalie_points_for_shutout", values[i])
-			} else if value.Valid {
-				l.GoaliePointsForShutout = int(value.Int64)
-			}
-		case league.FieldGoaliePointsForWin:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field goalie_points_for_win", values[i])
-			} else if value.Valid {
-				l.GoaliePointsForWin = int(value.Int64)
 			}
 		case league.FieldEditKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -201,6 +177,9 @@ func (l *League) String() string {
 	var builder strings.Builder
 	builder.WriteString("League(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", l.ID))
+	builder.WriteString("name=")
+	builder.WriteString(l.Name)
+	builder.WriteString(", ")
 	builder.WriteString("season=")
 	builder.WriteString(fmt.Sprintf("%v", l.Season))
 	builder.WriteString(", ")
@@ -215,18 +194,6 @@ func (l *League) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("num_goalies=")
 	builder.WriteString(fmt.Sprintf("%v", l.NumGoalies))
-	builder.WriteString(", ")
-	builder.WriteString("points_for_goal=")
-	builder.WriteString(fmt.Sprintf("%v", l.PointsForGoal))
-	builder.WriteString(", ")
-	builder.WriteString("points_for_assist=")
-	builder.WriteString(fmt.Sprintf("%v", l.PointsForAssist))
-	builder.WriteString(", ")
-	builder.WriteString("goalie_points_for_shutout=")
-	builder.WriteString(fmt.Sprintf("%v", l.GoaliePointsForShutout))
-	builder.WriteString(", ")
-	builder.WriteString("goalie_points_for_win=")
-	builder.WriteString(fmt.Sprintf("%v", l.GoaliePointsForWin))
 	builder.WriteString(", ")
 	builder.WriteString("edit_key=")
 	builder.WriteString(l.EditKey)

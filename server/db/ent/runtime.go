@@ -3,6 +3,8 @@
 package ent
 
 import (
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/schema"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
@@ -11,10 +13,26 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	gameFields := schema.Game{}.Fields()
+	_ = gameFields
+	// gameDescID is the schema descriptor for id field.
+	gameDescID := gameFields[0].Descriptor()
+	// game.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	game.IDValidator = gameDescID.Validators[0].(func(int) error)
+	playerFields := schema.Player{}.Fields()
+	_ = playerFields
+	// playerDescID is the schema descriptor for id field.
+	playerDescID := playerFields[0].Descriptor()
+	// player.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	player.IDValidator = playerDescID.Validators[0].(func(int) error)
 	teamFields := schema.Team{}.Fields()
 	_ = teamFields
 	// teamDescEliminated is the schema descriptor for eliminated field.
-	teamDescEliminated := teamFields[2].Descriptor()
+	teamDescEliminated := teamFields[3].Descriptor()
 	// team.DefaultEliminated holds the default value on creation for the eliminated field.
 	team.DefaultEliminated = teamDescEliminated.Default.(bool)
+	// teamDescID is the schema descriptor for id field.
+	teamDescID := teamFields[0].Descriptor()
+	// team.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	team.IDValidator = teamDescID.Validators[0].(func(int) error)
 }

@@ -14,9 +14,10 @@ func NewTeamModel(client *ent.Client) *TeamModel {
 	return &TeamModel{client: client}
 }
 
-func (tm *TeamModel) CreateTeam(name, logoFilepath string, eliminated bool) (*ent.Team, error) {
+func (tm *TeamModel) CreateTeam(name, logoFilepath string, id int, eliminated bool) (*ent.Team, error) {
 	return tm.client.Team.
 		Create().
+		SetID(id).
 		SetName(name).
 		SetLogoFilepath(logoFilepath).
 		SetEliminated(eliminated).
@@ -55,4 +56,21 @@ func (tm *TeamModel) ListTeams() ([]*ent.Team, error) {
 	return tm.client.Team.
 		Query().
 		All(context.Background())
+}
+
+func (tm *TeamModel) ListTeamIDs() ([]int, error) {
+	teams, err := tm.client.Team.
+		Query().
+		All(context.Background())
+
+	if err != nil {
+		return nil, err
+	}
+
+	teamNames := make([]int, len(teams))
+	for i, team := range teams {
+		teamNames[i] = team.ID
+	}
+
+	return teamNames, nil
 }

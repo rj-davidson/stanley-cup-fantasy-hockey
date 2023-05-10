@@ -15,15 +15,17 @@ func NewPlayerModel(client *ent.Client) *PlayerModel {
 	return &PlayerModel{client: client}
 }
 
-func (pm *PlayerModel) CreatePlayer(name, position string, goals, assists, shutouts, wins int) (*ent.Player, error) {
+func (pm *PlayerModel) CreatePlayer(name, position string, goals, assists, shutouts, wins, id int, team *ent.Team) (*ent.Player, error) {
 	return pm.client.Player.
 		Create().
+		SetID(id).
 		SetName(name).
 		SetPosition(player.Position(position)).
 		SetGoals(goals).
 		SetAssists(assists).
 		SetShutouts(shutouts).
 		SetWins(wins).
+		SetTeam(team).
 		Save(context.Background())
 }
 
@@ -39,7 +41,7 @@ func (pm *PlayerModel) GetPlayersByID(ids []int) ([]*ent.Player, error) {
 		All(context.Background())
 }
 
-func (pm *PlayerModel) UpdatePlayer(id int, name, position string, goals, assists, shutouts, wins int) (*ent.Player, error) {
+func (pm *PlayerModel) UpdatePlayer(id int, name, position string, goals, assists, shutouts, wins int, team *ent.Team) (*ent.Player, error) {
 	p, err := pm.client.Player.
 		UpdateOneID(id).
 		SetName(name).
@@ -48,6 +50,7 @@ func (pm *PlayerModel) UpdatePlayer(id int, name, position string, goals, assist
 		SetAssists(assists).
 		SetShutouts(shutouts).
 		SetWins(wins).
+		SetTeam(team).
 		Save(context.Background())
 	if err != nil {
 		return nil, err
@@ -69,4 +72,21 @@ func (pm *PlayerModel) ListPlayers() ([]*ent.Player, error) {
 	return pm.client.Player.
 		Query().
 		All(context.Background())
+}
+
+func (pm *PlayerModel) ListPlayerIDs() ([]int, error) {
+	players, err := pm.client.Player.
+		Query().
+		All(context.Background())
+
+	if err != nil {
+		return nil, err
+	}
+
+	playerIDs := make([]int, len(players))
+	for i, player := range players {
+		playerIDs[i] = player.ID
+	}
+
+	return playerIDs, nil
 }

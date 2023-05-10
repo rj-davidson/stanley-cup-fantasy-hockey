@@ -29,18 +29,58 @@ var (
 			},
 		},
 	}
+	// GamesColumns holds the columns for the "games" table.
+	GamesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "home_win", Type: field.TypeBool},
+		{Name: "home_score", Type: field.TypeInt},
+		{Name: "away_score", Type: field.TypeInt},
+		{Name: "player_home_games_as_goalie", Type: field.TypeInt},
+		{Name: "player_away_games_as_goalie", Type: field.TypeInt},
+		{Name: "team_home_games", Type: field.TypeInt},
+		{Name: "team_away_games", Type: field.TypeInt},
+	}
+	// GamesTable holds the schema information for the "games" table.
+	GamesTable = &schema.Table{
+		Name:       "games",
+		Columns:    GamesColumns,
+		PrimaryKey: []*schema.Column{GamesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "games_players_homeGamesAsGoalie",
+				Columns:    []*schema.Column{GamesColumns[4]},
+				RefColumns: []*schema.Column{PlayersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "games_players_awayGamesAsGoalie",
+				Columns:    []*schema.Column{GamesColumns[5]},
+				RefColumns: []*schema.Column{PlayersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "games_teams_homeGames",
+				Columns:    []*schema.Column{GamesColumns[6]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "games_teams_awayGames",
+				Columns:    []*schema.Column{GamesColumns[7]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// LeaguesColumns holds the columns for the "leagues" table.
 	LeaguesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
 		{Name: "season", Type: field.TypeInt},
 		{Name: "public", Type: field.TypeBool},
 		{Name: "num_forwards", Type: field.TypeInt},
 		{Name: "num_defenders", Type: field.TypeInt},
 		{Name: "num_goalies", Type: field.TypeInt},
-		{Name: "points_for_goal", Type: field.TypeInt},
-		{Name: "points_for_assist", Type: field.TypeInt},
-		{Name: "goalie_points_for_shutout", Type: field.TypeInt},
-		{Name: "goalie_points_for_win", Type: field.TypeInt},
 		{Name: "edit_key", Type: field.TypeString},
 		{Name: "code", Type: field.TypeString, Unique: true},
 	}
@@ -54,7 +94,7 @@ var (
 	PlayersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString},
-		{Name: "position", Type: field.TypeEnum, Enums: []string{"F", "D", "G"}},
+		{Name: "position", Type: field.TypeEnum, Enums: []string{"Forward", "Defenseman", "Goalie"}},
 		{Name: "goals", Type: field.TypeInt},
 		{Name: "assists", Type: field.TypeInt},
 		{Name: "shutouts", Type: field.TypeInt},
@@ -112,6 +152,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		EntriesTable,
+		GamesTable,
 		LeaguesTable,
 		PlayersTable,
 		TeamsTable,
@@ -120,6 +161,10 @@ var (
 
 func init() {
 	EntriesTable.ForeignKeys[0].RefTable = LeaguesTable
+	GamesTable.ForeignKeys[0].RefTable = PlayersTable
+	GamesTable.ForeignKeys[1].RefTable = PlayersTable
+	GamesTable.ForeignKeys[2].RefTable = TeamsTable
+	GamesTable.ForeignKeys[3].RefTable = TeamsTable
 	PlayersTable.ForeignKeys[0].RefTable = EntriesTable
 	PlayersTable.ForeignKeys[1].RefTable = EntriesTable
 	PlayersTable.ForeignKeys[2].RefTable = EntriesTable

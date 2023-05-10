@@ -150,6 +150,7 @@ func ByGoalies(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newGoaliesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
 func newLeagueStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -157,6 +158,7 @@ func newLeagueStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, LeagueTable, LeagueColumn),
 	)
 }
+
 func newForwardsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -164,6 +166,7 @@ func newForwardsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, ForwardsTable, ForwardsColumn),
 	)
 }
+
 func newDefendersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -171,6 +174,7 @@ func newDefendersStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, DefendersTable, DefendersColumn),
 	)
 }
+
 func newGoaliesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),

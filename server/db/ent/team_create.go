@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
@@ -46,6 +47,12 @@ func (tc *TeamCreate) SetNillableEliminated(b *bool) *TeamCreate {
 	return tc
 }
 
+// SetID sets the "id" field.
+func (tc *TeamCreate) SetID(i int) *TeamCreate {
+	tc.mutation.SetID(i)
+	return tc
+}
+
 // AddPlayerIDs adds the "players" edge to the Player entity by IDs.
 func (tc *TeamCreate) AddPlayerIDs(ids ...int) *TeamCreate {
 	tc.mutation.AddPlayerIDs(ids...)
@@ -59,6 +66,36 @@ func (tc *TeamCreate) AddPlayers(p ...*Player) *TeamCreate {
 		ids[i] = p[i].ID
 	}
 	return tc.AddPlayerIDs(ids...)
+}
+
+// AddHomeGameIDs adds the "homeGames" edge to the Game entity by IDs.
+func (tc *TeamCreate) AddHomeGameIDs(ids ...int) *TeamCreate {
+	tc.mutation.AddHomeGameIDs(ids...)
+	return tc
+}
+
+// AddHomeGames adds the "homeGames" edges to the Game entity.
+func (tc *TeamCreate) AddHomeGames(g ...*Game) *TeamCreate {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tc.AddHomeGameIDs(ids...)
+}
+
+// AddAwayGameIDs adds the "awayGames" edge to the Game entity by IDs.
+func (tc *TeamCreate) AddAwayGameIDs(ids ...int) *TeamCreate {
+	tc.mutation.AddAwayGameIDs(ids...)
+	return tc
+}
+
+// AddAwayGames adds the "awayGames" edges to the Game entity.
+func (tc *TeamCreate) AddAwayGames(g ...*Game) *TeamCreate {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tc.AddAwayGameIDs(ids...)
 }
 
 // Mutation returns the TeamMutation object of the builder.
@@ -113,6 +150,11 @@ func (tc *TeamCreate) check() error {
 	if _, ok := tc.mutation.Eliminated(); !ok {
 		return &ValidationError{Name: "eliminated", err: errors.New(`ent: missing required field "Team.eliminated"`)}
 	}
+	if v, ok := tc.mutation.ID(); ok {
+		if err := team.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Team.id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -127,8 +169,10 @@ func (tc *TeamCreate) sqlSave(ctx context.Context) (*Team, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int(id)
+	}
 	tc.mutation.id = &_node.ID
 	tc.mutation.done = true
 	return _node, nil
@@ -139,6 +183,10 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 		_node = &Team{config: tc.config}
 		_spec = sqlgraph.NewCreateSpec(team.Table, sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt))
 	)
+	if id, ok := tc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := tc.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -160,6 +208,38 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.HomeGamesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.HomeGamesTable,
+			Columns: []string{team.HomeGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.AwayGamesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.AwayGamesTable,
+			Columns: []string{team.AwayGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -211,7 +291,7 @@ func (tcb *TeamCreateBulk) Save(ctx context.Context) ([]*Team, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int(id)
 				}

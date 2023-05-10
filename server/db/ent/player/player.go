@@ -28,6 +28,10 @@ const (
 	FieldWins = "wins"
 	// EdgeTeam holds the string denoting the team edge name in mutations.
 	EdgeTeam = "team"
+	// EdgeHomeGamesAsGoalie holds the string denoting the homegamesasgoalie edge name in mutations.
+	EdgeHomeGamesAsGoalie = "homeGamesAsGoalie"
+	// EdgeAwayGamesAsGoalie holds the string denoting the awaygamesasgoalie edge name in mutations.
+	EdgeAwayGamesAsGoalie = "awayGamesAsGoalie"
 	// Table holds the table name of the player in the database.
 	Table = "players"
 	// TeamTable is the table that holds the team relation/edge.
@@ -37,6 +41,20 @@ const (
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.
 	TeamColumn = "team_players"
+	// HomeGamesAsGoalieTable is the table that holds the homeGamesAsGoalie relation/edge.
+	HomeGamesAsGoalieTable = "games"
+	// HomeGamesAsGoalieInverseTable is the table name for the Game entity.
+	// It exists in this package in order to avoid circular dependency with the "game" package.
+	HomeGamesAsGoalieInverseTable = "games"
+	// HomeGamesAsGoalieColumn is the table column denoting the homeGamesAsGoalie relation/edge.
+	HomeGamesAsGoalieColumn = "player_home_games_as_goalie"
+	// AwayGamesAsGoalieTable is the table that holds the awayGamesAsGoalie relation/edge.
+	AwayGamesAsGoalieTable = "games"
+	// AwayGamesAsGoalieInverseTable is the table name for the Game entity.
+	// It exists in this package in order to avoid circular dependency with the "game" package.
+	AwayGamesAsGoalieInverseTable = "games"
+	// AwayGamesAsGoalieColumn is the table column denoting the awayGamesAsGoalie relation/edge.
+	AwayGamesAsGoalieColumn = "player_away_games_as_goalie"
 )
 
 // Columns holds all SQL columns for player fields.
@@ -74,14 +92,17 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// IDValidator is a validator for the "id" field. It is called by the builders before save.
+var IDValidator func(int) error
+
 // Position defines the type for the "position" enum field.
 type Position string
 
 // Position values.
 const (
-	PositionF Position = "F"
-	PositionD Position = "D"
-	PositionG Position = "G"
+	PositionForward    Position = "Forward"
+	PositionDefenseman Position = "Defenseman"
+	PositionGoalie     Position = "Goalie"
 )
 
 func (po Position) String() string {
@@ -91,7 +112,7 @@ func (po Position) String() string {
 // PositionValidator is a validator for the "position" field enum values. It is called by the builders before save.
 func PositionValidator(po Position) error {
 	switch po {
-	case PositionF, PositionD, PositionG:
+	case PositionForward, PositionDefenseman, PositionGoalie:
 		return nil
 	default:
 		return fmt.Errorf("player: invalid enum value for position field: %q", po)
@@ -142,10 +163,55 @@ func ByTeamField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newTeamStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByHomeGamesAsGoalieCount orders the results by homeGamesAsGoalie count.
+func ByHomeGamesAsGoalieCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newHomeGamesAsGoalieStep(), opts...)
+	}
+}
+
+// ByHomeGamesAsGoalie orders the results by homeGamesAsGoalie terms.
+func ByHomeGamesAsGoalie(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newHomeGamesAsGoalieStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByAwayGamesAsGoalieCount orders the results by awayGamesAsGoalie count.
+func ByAwayGamesAsGoalieCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAwayGamesAsGoalieStep(), opts...)
+	}
+}
+
+// ByAwayGamesAsGoalie orders the results by awayGamesAsGoalie terms.
+func ByAwayGamesAsGoalie(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAwayGamesAsGoalieStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 func newTeamStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TeamInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, TeamTable, TeamColumn),
+	)
+}
+
+func newHomeGamesAsGoalieStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(HomeGamesAsGoalieInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, HomeGamesAsGoalieTable, HomeGamesAsGoalieColumn),
+	)
+}
+
+func newAwayGamesAsGoalieStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AwayGamesAsGoalieInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AwayGamesAsGoalieTable, AwayGamesAsGoalieColumn),
 	)
 }

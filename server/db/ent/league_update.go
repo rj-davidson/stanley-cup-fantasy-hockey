@@ -28,6 +28,12 @@ func (lu *LeagueUpdate) Where(ps ...predicate.League) *LeagueUpdate {
 	return lu
 }
 
+// SetName sets the "name" field.
+func (lu *LeagueUpdate) SetName(s string) *LeagueUpdate {
+	lu.mutation.SetName(s)
+	return lu
+}
+
 // SetPublic sets the "public" field.
 func (lu *LeagueUpdate) SetPublic(b bool) *LeagueUpdate {
 	lu.mutation.SetPublic(b)
@@ -70,58 +76,6 @@ func (lu *LeagueUpdate) SetNumGoalies(i int) *LeagueUpdate {
 // AddNumGoalies adds i to the "num_goalies" field.
 func (lu *LeagueUpdate) AddNumGoalies(i int) *LeagueUpdate {
 	lu.mutation.AddNumGoalies(i)
-	return lu
-}
-
-// SetPointsForGoal sets the "points_for_goal" field.
-func (lu *LeagueUpdate) SetPointsForGoal(i int) *LeagueUpdate {
-	lu.mutation.ResetPointsForGoal()
-	lu.mutation.SetPointsForGoal(i)
-	return lu
-}
-
-// AddPointsForGoal adds i to the "points_for_goal" field.
-func (lu *LeagueUpdate) AddPointsForGoal(i int) *LeagueUpdate {
-	lu.mutation.AddPointsForGoal(i)
-	return lu
-}
-
-// SetPointsForAssist sets the "points_for_assist" field.
-func (lu *LeagueUpdate) SetPointsForAssist(i int) *LeagueUpdate {
-	lu.mutation.ResetPointsForAssist()
-	lu.mutation.SetPointsForAssist(i)
-	return lu
-}
-
-// AddPointsForAssist adds i to the "points_for_assist" field.
-func (lu *LeagueUpdate) AddPointsForAssist(i int) *LeagueUpdate {
-	lu.mutation.AddPointsForAssist(i)
-	return lu
-}
-
-// SetGoaliePointsForShutout sets the "goalie_points_for_shutout" field.
-func (lu *LeagueUpdate) SetGoaliePointsForShutout(i int) *LeagueUpdate {
-	lu.mutation.ResetGoaliePointsForShutout()
-	lu.mutation.SetGoaliePointsForShutout(i)
-	return lu
-}
-
-// AddGoaliePointsForShutout adds i to the "goalie_points_for_shutout" field.
-func (lu *LeagueUpdate) AddGoaliePointsForShutout(i int) *LeagueUpdate {
-	lu.mutation.AddGoaliePointsForShutout(i)
-	return lu
-}
-
-// SetGoaliePointsForWin sets the "goalie_points_for_win" field.
-func (lu *LeagueUpdate) SetGoaliePointsForWin(i int) *LeagueUpdate {
-	lu.mutation.ResetGoaliePointsForWin()
-	lu.mutation.SetGoaliePointsForWin(i)
-	return lu
-}
-
-// AddGoaliePointsForWin adds i to the "goalie_points_for_win" field.
-func (lu *LeagueUpdate) AddGoaliePointsForWin(i int) *LeagueUpdate {
-	lu.mutation.AddGoaliePointsForWin(i)
 	return lu
 }
 
@@ -214,6 +168,9 @@ func (lu *LeagueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if value, ok := lu.mutation.Name(); ok {
+		_spec.SetField(league.FieldName, field.TypeString, value)
+	}
 	if value, ok := lu.mutation.Public(); ok {
 		_spec.SetField(league.FieldPublic, field.TypeBool, value)
 	}
@@ -234,30 +191,6 @@ func (lu *LeagueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := lu.mutation.AddedNumGoalies(); ok {
 		_spec.AddField(league.FieldNumGoalies, field.TypeInt, value)
-	}
-	if value, ok := lu.mutation.PointsForGoal(); ok {
-		_spec.SetField(league.FieldPointsForGoal, field.TypeInt, value)
-	}
-	if value, ok := lu.mutation.AddedPointsForGoal(); ok {
-		_spec.AddField(league.FieldPointsForGoal, field.TypeInt, value)
-	}
-	if value, ok := lu.mutation.PointsForAssist(); ok {
-		_spec.SetField(league.FieldPointsForAssist, field.TypeInt, value)
-	}
-	if value, ok := lu.mutation.AddedPointsForAssist(); ok {
-		_spec.AddField(league.FieldPointsForAssist, field.TypeInt, value)
-	}
-	if value, ok := lu.mutation.GoaliePointsForShutout(); ok {
-		_spec.SetField(league.FieldGoaliePointsForShutout, field.TypeInt, value)
-	}
-	if value, ok := lu.mutation.AddedGoaliePointsForShutout(); ok {
-		_spec.AddField(league.FieldGoaliePointsForShutout, field.TypeInt, value)
-	}
-	if value, ok := lu.mutation.GoaliePointsForWin(); ok {
-		_spec.SetField(league.FieldGoaliePointsForWin, field.TypeInt, value)
-	}
-	if value, ok := lu.mutation.AddedGoaliePointsForWin(); ok {
-		_spec.AddField(league.FieldGoaliePointsForWin, field.TypeInt, value)
 	}
 	if value, ok := lu.mutation.EditKey(); ok {
 		_spec.SetField(league.FieldEditKey, field.TypeString, value)
@@ -330,6 +263,12 @@ type LeagueUpdateOne struct {
 	mutation *LeagueMutation
 }
 
+// SetName sets the "name" field.
+func (luo *LeagueUpdateOne) SetName(s string) *LeagueUpdateOne {
+	luo.mutation.SetName(s)
+	return luo
+}
+
 // SetPublic sets the "public" field.
 func (luo *LeagueUpdateOne) SetPublic(b bool) *LeagueUpdateOne {
 	luo.mutation.SetPublic(b)
@@ -372,58 +311,6 @@ func (luo *LeagueUpdateOne) SetNumGoalies(i int) *LeagueUpdateOne {
 // AddNumGoalies adds i to the "num_goalies" field.
 func (luo *LeagueUpdateOne) AddNumGoalies(i int) *LeagueUpdateOne {
 	luo.mutation.AddNumGoalies(i)
-	return luo
-}
-
-// SetPointsForGoal sets the "points_for_goal" field.
-func (luo *LeagueUpdateOne) SetPointsForGoal(i int) *LeagueUpdateOne {
-	luo.mutation.ResetPointsForGoal()
-	luo.mutation.SetPointsForGoal(i)
-	return luo
-}
-
-// AddPointsForGoal adds i to the "points_for_goal" field.
-func (luo *LeagueUpdateOne) AddPointsForGoal(i int) *LeagueUpdateOne {
-	luo.mutation.AddPointsForGoal(i)
-	return luo
-}
-
-// SetPointsForAssist sets the "points_for_assist" field.
-func (luo *LeagueUpdateOne) SetPointsForAssist(i int) *LeagueUpdateOne {
-	luo.mutation.ResetPointsForAssist()
-	luo.mutation.SetPointsForAssist(i)
-	return luo
-}
-
-// AddPointsForAssist adds i to the "points_for_assist" field.
-func (luo *LeagueUpdateOne) AddPointsForAssist(i int) *LeagueUpdateOne {
-	luo.mutation.AddPointsForAssist(i)
-	return luo
-}
-
-// SetGoaliePointsForShutout sets the "goalie_points_for_shutout" field.
-func (luo *LeagueUpdateOne) SetGoaliePointsForShutout(i int) *LeagueUpdateOne {
-	luo.mutation.ResetGoaliePointsForShutout()
-	luo.mutation.SetGoaliePointsForShutout(i)
-	return luo
-}
-
-// AddGoaliePointsForShutout adds i to the "goalie_points_for_shutout" field.
-func (luo *LeagueUpdateOne) AddGoaliePointsForShutout(i int) *LeagueUpdateOne {
-	luo.mutation.AddGoaliePointsForShutout(i)
-	return luo
-}
-
-// SetGoaliePointsForWin sets the "goalie_points_for_win" field.
-func (luo *LeagueUpdateOne) SetGoaliePointsForWin(i int) *LeagueUpdateOne {
-	luo.mutation.ResetGoaliePointsForWin()
-	luo.mutation.SetGoaliePointsForWin(i)
-	return luo
-}
-
-// AddGoaliePointsForWin adds i to the "goalie_points_for_win" field.
-func (luo *LeagueUpdateOne) AddGoaliePointsForWin(i int) *LeagueUpdateOne {
-	luo.mutation.AddGoaliePointsForWin(i)
 	return luo
 }
 
@@ -546,6 +433,9 @@ func (luo *LeagueUpdateOne) sqlSave(ctx context.Context) (_node *League, err err
 			}
 		}
 	}
+	if value, ok := luo.mutation.Name(); ok {
+		_spec.SetField(league.FieldName, field.TypeString, value)
+	}
 	if value, ok := luo.mutation.Public(); ok {
 		_spec.SetField(league.FieldPublic, field.TypeBool, value)
 	}
@@ -566,30 +456,6 @@ func (luo *LeagueUpdateOne) sqlSave(ctx context.Context) (_node *League, err err
 	}
 	if value, ok := luo.mutation.AddedNumGoalies(); ok {
 		_spec.AddField(league.FieldNumGoalies, field.TypeInt, value)
-	}
-	if value, ok := luo.mutation.PointsForGoal(); ok {
-		_spec.SetField(league.FieldPointsForGoal, field.TypeInt, value)
-	}
-	if value, ok := luo.mutation.AddedPointsForGoal(); ok {
-		_spec.AddField(league.FieldPointsForGoal, field.TypeInt, value)
-	}
-	if value, ok := luo.mutation.PointsForAssist(); ok {
-		_spec.SetField(league.FieldPointsForAssist, field.TypeInt, value)
-	}
-	if value, ok := luo.mutation.AddedPointsForAssist(); ok {
-		_spec.AddField(league.FieldPointsForAssist, field.TypeInt, value)
-	}
-	if value, ok := luo.mutation.GoaliePointsForShutout(); ok {
-		_spec.SetField(league.FieldGoaliePointsForShutout, field.TypeInt, value)
-	}
-	if value, ok := luo.mutation.AddedGoaliePointsForShutout(); ok {
-		_spec.AddField(league.FieldGoaliePointsForShutout, field.TypeInt, value)
-	}
-	if value, ok := luo.mutation.GoaliePointsForWin(); ok {
-		_spec.SetField(league.FieldGoaliePointsForWin, field.TypeInt, value)
-	}
-	if value, ok := luo.mutation.AddedGoaliePointsForWin(); ok {
-		_spec.AddField(league.FieldGoaliePointsForWin, field.TypeInt, value)
 	}
 	if value, ok := luo.mutation.EditKey(); ok {
 		_spec.SetField(league.FieldEditKey, field.TypeString, value)

@@ -1,0 +1,32 @@
+# Go
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Test binary, build file
+*.test
+/build
+
+# Dependency directories
+/vendor/
+/go.sum
+/go.mod
+
+# Next.js
+node_modules/
+.next/
+out/
+.cache/
+.next.js/
+*.log
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+.DS_Store
+
+# Environemtn
+.env
+/server/.env

@@ -12,6 +12,8 @@ const (
 	Label = "league"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
 	// FieldSeason holds the string denoting the season field in the database.
 	FieldSeason = "season"
 	// FieldPublic holds the string denoting the public field in the database.
@@ -22,14 +24,6 @@ const (
 	FieldNumDefenders = "num_defenders"
 	// FieldNumGoalies holds the string denoting the num_goalies field in the database.
 	FieldNumGoalies = "num_goalies"
-	// FieldPointsForGoal holds the string denoting the points_for_goal field in the database.
-	FieldPointsForGoal = "points_for_goal"
-	// FieldPointsForAssist holds the string denoting the points_for_assist field in the database.
-	FieldPointsForAssist = "points_for_assist"
-	// FieldGoaliePointsForShutout holds the string denoting the goalie_points_for_shutout field in the database.
-	FieldGoaliePointsForShutout = "goalie_points_for_shutout"
-	// FieldGoaliePointsForWin holds the string denoting the goalie_points_for_win field in the database.
-	FieldGoaliePointsForWin = "goalie_points_for_win"
 	// FieldEditKey holds the string denoting the edit_key field in the database.
 	FieldEditKey = "edit_key"
 	// FieldCode holds the string denoting the code field in the database.
@@ -50,15 +44,12 @@ const (
 // Columns holds all SQL columns for league fields.
 var Columns = []string{
 	FieldID,
+	FieldName,
 	FieldSeason,
 	FieldPublic,
 	FieldNumForwards,
 	FieldNumDefenders,
 	FieldNumGoalies,
-	FieldPointsForGoal,
-	FieldPointsForAssist,
-	FieldGoaliePointsForShutout,
-	FieldGoaliePointsForWin,
 	FieldEditKey,
 	FieldCode,
 }
@@ -79,6 +70,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByName orders the results by the name field.
+func ByName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
 // BySeason orders the results by the season field.
@@ -106,26 +102,6 @@ func ByNumGoalies(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldNumGoalies, opts...).ToFunc()
 }
 
-// ByPointsForGoal orders the results by the points_for_goal field.
-func ByPointsForGoal(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPointsForGoal, opts...).ToFunc()
-}
-
-// ByPointsForAssist orders the results by the points_for_assist field.
-func ByPointsForAssist(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPointsForAssist, opts...).ToFunc()
-}
-
-// ByGoaliePointsForShutout orders the results by the goalie_points_for_shutout field.
-func ByGoaliePointsForShutout(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldGoaliePointsForShutout, opts...).ToFunc()
-}
-
-// ByGoaliePointsForWin orders the results by the goalie_points_for_win field.
-func ByGoaliePointsForWin(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldGoaliePointsForWin, opts...).ToFunc()
-}
-
 // ByEditKey orders the results by the edit_key field.
 func ByEditKey(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEditKey, opts...).ToFunc()
@@ -149,6 +125,7 @@ func ByEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
 func newEntriesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
