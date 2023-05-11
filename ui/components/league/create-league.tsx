@@ -30,7 +30,7 @@ export default function CreateLeagueForm(props: Props) {
     const league: League = {
       name,
       season,
-      is_public: isPublic,
+      public: isPublic,
       num_forwards: parseInt(numForwards),
       num_defenders: parseInt(numDefenders),
       num_goalies: parseInt(numGoalies),
@@ -39,6 +39,13 @@ export default function CreateLeagueForm(props: Props) {
     };
     props.onCreateLeague(league);
   };
+
+  const isFormComplete =
+    name.trim() !== '' &&
+    numForwards.trim() !== '' &&
+    numDefenders.trim() !== '' &&
+    numGoalies.trim() !== '' &&
+    editKey.trim() !== '';
 
   return (
     <Stack spacing={2}>
@@ -49,19 +56,12 @@ export default function CreateLeagueForm(props: Props) {
         onChange={(e) => setName(e.target.value)}
       />
       <FormControl>
-        <InputLabel>Season</InputLabel>
         <Select
           value={season}
           onChange={(e) => setSeason(e.target.value as number)}
         >
           <MenuItem value={new Date().getFullYear()}>
             {new Date().getFullYear()}
-          </MenuItem>
-          <MenuItem value={new Date().getFullYear() + 1}>
-            {new Date().getFullYear() + 1}
-          </MenuItem>
-          <MenuItem value={new Date().getFullYear() + 2}>
-            {new Date().getFullYear() + 2}
           </MenuItem>
         </Select>
       </FormControl>
@@ -110,8 +110,13 @@ export default function CreateLeagueForm(props: Props) {
         value={code}
         onChange={(e) => setCode(e.target.value)}
       />
-      <Button variant="contained" color="primary" onClick={handleCreateLeague}>
-        Create League
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleCreateLeague}
+        disabled={!isFormComplete}
+      >
+        Confirm League Settings
       </Button>
     </Stack>
   );

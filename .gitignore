@@ -30,3 +30,8 @@ out/
 # Environemtn
 .env
 /server/.env
+
+# JetBrains-specific
+.idea/
+*.iml
+*.iws

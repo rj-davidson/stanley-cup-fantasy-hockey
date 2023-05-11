@@ -1,11 +1,8 @@
 import React from 'react';
+import { Grid } from '@mui/material';
 
 const Header = () => {
-    return (
-        <header>
-            <h1>Fantasy Hockey</h1>
-        </header>
-    );
+  return <Grid marginTop={2}> </Grid>;
 };
 
 export default Header;

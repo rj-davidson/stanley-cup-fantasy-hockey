@@ -33,6 +33,25 @@ func (lm *LeagueModel) CreateLeague(season int, isPublic bool, numForwards, numD
 	return l, nil
 }
 
+func (lm *LeagueModel) CreateLeagueWithEntries(season int, isPublic bool, numForwards, numDefenders, numGoalies int, name, editKey, code string, entries []*ent.Entry) (*ent.League, error) {
+	l, err := lm.client.League.
+		Create().
+		SetName(name).
+		SetSeason(season).
+		SetPublic(isPublic).
+		SetNumForwards(numForwards).
+		SetNumDefenders(numDefenders).
+		SetNumGoalies(numGoalies).
+		SetEditKey(editKey).
+		SetCode(code).
+		AddEntries(entries...).
+		Save(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return l, nil
+}
+
 func (lm *LeagueModel) GetLeagueByID(id int) (*ent.League, error) {
 	return lm.client.League.
 		Get(context.Background(), id)
