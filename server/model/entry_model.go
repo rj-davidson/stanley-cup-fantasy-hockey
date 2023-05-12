@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/league"
 )
 
 type EntryModel struct {
@@ -16,7 +18,7 @@ func NewEntryModel(client *ent.Client) *EntryModel {
 }
 
 func (em *EntryModel) CreateEntry(ownerName string, league *ent.League, forwards, defenders, goalies []*ent.Player) (*ent.Entry, error) {
-	entry, err := em.client.Entry.
+	e, err := em.client.Entry.
 		Create().
 		SetOwnerName(ownerName).
 		SetLeague(league).
@@ -28,7 +30,7 @@ func (em *EntryModel) CreateEntry(ownerName string, league *ent.League, forwards
 	if err != nil {
 		return nil, err
 	}
-	return entry, nil
+	return e, nil
 }
 
 func (em *EntryModel) GetEntryByID(id int) (*ent.Entry, error) {
@@ -37,7 +39,7 @@ func (em *EntryModel) GetEntryByID(id int) (*ent.Entry, error) {
 }
 
 func (em *EntryModel) UpdateEntry(id int, ownerName string, leagueID int, forwardsIDs, defendersIDs, goaliesIDs []int) (*ent.Entry, error) {
-	league, err := em.client.League.Get(context.Background(), leagueID)
+	l, err := em.client.League.Get(context.Background(), leagueID)
 	if err != nil {
 		return nil, errors.New("invalid league ID")
 	}
@@ -54,7 +56,7 @@ func (em *EntryModel) UpdateEntry(id int, ownerName string, leagueID int, forwar
 	e, err := em.client.Entry.
 		UpdateOneID(id).
 		SetOwnerName(ownerName).
-		SetLeague(league).
+		SetLeague(l).
 		ClearForwards().
 		AddForwards(forwards...).
 		ClearDefenders().
@@ -67,6 +69,17 @@ func (em *EntryModel) UpdateEntry(id int, ownerName string, leagueID int, forwar
 		return nil, err
 	}
 	return e, nil
+}
+
+func (em *EntryModel) GetEntriesByLeagueID(leagueID int) ([]*ent.Entry, error) {
+	entries, err := em.client.Entry.
+		Query().
+		Where(entry.HasLeagueWith(league.ID(leagueID))).
+		All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return entries, nil
 }
 
 func (em *EntryModel) DeleteEntry(id int) error {

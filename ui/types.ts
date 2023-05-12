@@ -15,7 +15,6 @@ export interface League {
   num_defenders: number;
   num_goalies: number;
   entries: Entry[];
-  edit_key: string;
 }
 
 export interface Player {

@@ -105,7 +105,7 @@ func initializeRoutes(app *fiber.App, client *ent.Client) {
 
 	la.RegisterRoutes(app)
 	app.Get("/leagues", handlers.ListLeagues(lm))
-	app.Get("/leagues/:id", handlers.GetLeagueByID(lm))
+	app.Get("/leagues/:id", handlers.GetLeagueByID(lm, em))
 	app.Post("/leagues", handlers.CreateLeague(lm, em, pm))
 
 	pa.RegisterRoutes(app)
