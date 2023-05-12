@@ -99,14 +99,14 @@ func initializeData(client *ent.Client) {
 func initializeRoutes(app *fiber.App, client *ent.Client) {
 	lm := model.NewLeagueModel(client)
 	la := api.NewLeagueAPI(lm)
+	pm := model.NewPlayerModel(client)
+	pa := api.NewPlayerAPI(pm)
+	em := model.NewEntryModel(client)
 
 	la.RegisterRoutes(app)
 	app.Get("/leagues", handlers.ListLeagues(lm))
 	app.Get("/leagues/:id", handlers.GetLeagueByID(lm))
-	app.Post("/leagues", handlers.CreateLeague(lm))
-
-	pm := model.NewPlayerModel(client)
-	pa := api.NewPlayerAPI(pm)
+	app.Post("/leagues", handlers.CreateLeague(lm, em, pm))
 
 	pa.RegisterRoutes(app)
 	app.Get("/players", handlers.ListPlayers(pm))

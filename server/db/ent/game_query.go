@@ -567,7 +567,6 @@ func (gq *GameQuery) loadAwayTeam(ctx context.Context, query *TeamQuery, nodes [
 	}
 	return nil
 }
-
 func (gq *GameQuery) loadHomeTeam(ctx context.Context, query *TeamQuery, nodes []*Game, init func(*Game), assign func(*Game, *Team)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Game)
@@ -600,7 +599,6 @@ func (gq *GameQuery) loadHomeTeam(ctx context.Context, query *TeamQuery, nodes [
 	}
 	return nil
 }
-
 func (gq *GameQuery) loadAwayGoalie(ctx context.Context, query *PlayerQuery, nodes []*Game, init func(*Game), assign func(*Game, *Player)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Game)
@@ -633,7 +631,6 @@ func (gq *GameQuery) loadAwayGoalie(ctx context.Context, query *PlayerQuery, nod
 	}
 	return nil
 }
-
 func (gq *GameQuery) loadHomeGoalie(ctx context.Context, query *PlayerQuery, nodes []*Game, init func(*Game), assign func(*Game, *Player)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Game)

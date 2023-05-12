@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { League, Player } from '@/types';
+import { Entry, League, Player } from '@/types';
 import { useRouter } from 'next/router';
 import {
   Typography,
@@ -28,13 +28,13 @@ const CreateLeaguePage = () => {
         const data = await response.json();
 
         const forwardPlayers = data.filter(
-          (player: Player) => player.position === 'F',
+          (player: Player) => player.position === 'Forward',
         );
         const defensemenPlayers = data.filter(
-          (player: Player) => player.position === 'D',
+          (player: Player) => player.position === 'Defenseman',
         );
         const goaliePlayers = data.filter(
-          (player: Player) => player.position === 'G',
+          (player: Player) => player.position === 'Goalie',
         );
 
         setForwards(forwardPlayers);
@@ -51,11 +51,8 @@ const CreateLeaguePage = () => {
   const handleSaveLeague = async (newLeague: League) => {
     setIsLoading(true);
     try {
-      // Here you would call your API to create the league
-      // await yourApi.createLeague(newLeague);
-
-      // Set the league variable with the created league
-      setLeague(newLeague);
+      // ensure entries is initialized as an empty array
+      setLeague({ ...newLeague, entries: [] });
     } catch (error) {
       console.error('Failed to create league:', error);
     } finally {
@@ -63,7 +60,22 @@ const CreateLeaguePage = () => {
     }
   };
 
-  const handleAddEntry = () => {
+  const handleFinalizeEntry = (newEntry: Entry) => {
+    if (league) {
+      // @ts-ignore
+      setLeague((currentLeague) => {
+        if (currentLeague) {
+          return {
+            ...currentLeague,
+            entries: [...currentLeague.entries, newEntry],
+          };
+        }
+      });
+      setEntryForms((prevCount) => prevCount - 1);
+    }
+  };
+
+  const handleAddEntryForm = () => {
     setEntryForms((prevCount) => prevCount + 1);
   };
 
@@ -79,11 +91,21 @@ const CreateLeaguePage = () => {
 
     try {
       setIsLoading(true);
-      // Here you would call your API to submit the league
-      // await yourApi.submitLeague(league);
 
-      // Redirect to /league after successfully submitting the league
-      router.push('/league');
+      const response = await fetch('http://localhost:8080/leagues', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(league),
+      });
+
+      if (response.ok) {
+        // Redirect to /league after successfully submitting the league
+        router.push('/league');
+      } else {
+        console.error('Failed to submit league:', response.status);
+      }
     } catch (error) {
       console.error('Failed to submit league:', error);
     } finally {
@@ -100,17 +122,17 @@ const CreateLeaguePage = () => {
           {isLoading && <CircularProgress />}
         </Grid>
         <Stack>
-          <Typography variant="h4">Add Entries</Typography>
           <Grid
             container
             spacing={2}
             visibility={league ? 'visible' : 'hidden'}
           >
+            <Typography variant="h4">Add Entries</Typography>
             {[...Array(entryForms)].map((_, index) => (
               <Grid item key={index} xs={12} sm={6} lg={4}>
                 <Card sx={{ padding: 3 }}>
                   <CreateEntryForm
-                    onCreateEntry={handleAddEntry}
+                    onCreateEntry={handleFinalizeEntry}
                     forwards={forwards}
                     defenders={defensemen}
                     goalies={goalies}
@@ -121,10 +143,20 @@ const CreateLeaguePage = () => {
                 </Card>
               </Grid>
             ))}
+
+            {league?.entries.map((entry, index) => (
+              <Grid item key={index} xs={12} sm={6} lg={4}>
+                <Card sx={{ padding: 3 }}>
+                  <Typography variant="h6">{entry.owner_name}</Typography>
+                </Card>
+              </Grid>
+            ))}
+
             <Grid item xs={12}>
-              <Button variant="outlined" onClick={handleAddEntry}>
+              <Button variant="outlined" onClick={handleAddEntryForm}>
                 Add Entry
               </Button>
+
               <Button
                 variant="contained"
                 color="primary"

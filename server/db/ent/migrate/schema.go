@@ -12,7 +12,6 @@ var (
 	EntriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "owner_name", Type: field.TypeString},
-		{Name: "point_total", Type: field.TypeInt},
 		{Name: "league_entries", Type: field.TypeInt, Nullable: true},
 	}
 	// EntriesTable holds the schema information for the "entries" table.
@@ -23,7 +22,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "entries_leagues_entries",
-				Columns:    []*schema.Column{EntriesColumns[3]},
+				Columns:    []*schema.Column{EntriesColumns[2]},
 				RefColumns: []*schema.Column{LeaguesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -81,8 +80,6 @@ var (
 		{Name: "num_forwards", Type: field.TypeInt},
 		{Name: "num_defenders", Type: field.TypeInt},
 		{Name: "num_goalies", Type: field.TypeInt},
-		{Name: "edit_key", Type: field.TypeString},
-		{Name: "code", Type: field.TypeString, Unique: true},
 	}
 	// LeaguesTable holds the schema information for the "leagues" table.
 	LeaguesTable = &schema.Table{

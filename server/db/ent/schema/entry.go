@@ -15,7 +15,6 @@ type Entry struct {
 func (Entry) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("owner_name"),
-		field.Int("point_total"),
 	}
 }
 

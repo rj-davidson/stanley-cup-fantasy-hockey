@@ -32,7 +32,7 @@ func (la *LeagueAPI) createLeague(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	newLeague, err := la.model.CreateLeague(league.Season, league.Public, league.NumForwards, league.NumDefenders, league.NumGoalies, league.Name, league.EditKey, league.Code)
+	newLeague, err := la.model.CreateLeague(league.Season, league.Public, league.NumForwards, league.NumDefenders, league.NumGoalies, league.Name)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -65,7 +65,7 @@ func (la *LeagueAPI) updateLeague(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	updatedLeague, err := la.model.UpdateLeague(id, league.Season, league.Public, league.NumForwards, league.NumDefenders, league.NumGoalies, league.EditKey, league.Code)
+	updatedLeague, err := la.model.UpdateLeague(id, league.Public, league.NumForwards, league.NumDefenders, league.NumGoalies)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

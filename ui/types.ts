@@ -1,9 +1,9 @@
 export interface Entry {
   id?: number;
   owner_name: string;
-  forwards?: number[];
-  defenders?: number[];
-  goalies?: number[];
+  forwards?: Player[];
+  defenders?: Player[];
+  goalies?: Player[];
 }
 
 export interface League {
@@ -14,9 +14,8 @@ export interface League {
   num_forwards: number;
   num_defenders: number;
   num_goalies: number;
-  entries?: Entry[];
+  entries: Entry[];
   edit_key: string;
-  code: string;
 }
 
 export interface Player {

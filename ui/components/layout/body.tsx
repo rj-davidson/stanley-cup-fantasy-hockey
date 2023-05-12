@@ -5,8 +5,14 @@ import { Container, Grid } from '@mui/material';
 const useStyles = makeStyles(() => ({
   root: {
     flexGrow: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh',
     paddingTop: '20px',
     paddingBottom: '20px',
+  },
+  content: {
+    flex: 1,
   },
 }));
 
@@ -19,8 +25,9 @@ export default function Body({ children }: Props) {
 
   return (
     <Container maxWidth="lg" className={classes.root}>
-      <Grid marginTop={7}> </Grid>
-      {children}
+      <Grid item className={classes.content} paddingTop={10}>
+        {children}
+      </Grid>
     </Container>
   );
 }

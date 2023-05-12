@@ -35,19 +35,6 @@ func (eu *EntryUpdate) SetOwnerName(s string) *EntryUpdate {
 	return eu
 }
 
-// SetPointTotal sets the "point_total" field.
-func (eu *EntryUpdate) SetPointTotal(i int) *EntryUpdate {
-	eu.mutation.ResetPointTotal()
-	eu.mutation.SetPointTotal(i)
-	return eu
-}
-
-// AddPointTotal adds i to the "point_total" field.
-func (eu *EntryUpdate) AddPointTotal(i int) *EntryUpdate {
-	eu.mutation.AddPointTotal(i)
-	return eu
-}
-
 // SetLeagueID sets the "league" edge to the League entity by ID.
 func (eu *EntryUpdate) SetLeagueID(id int) *EntryUpdate {
 	eu.mutation.SetLeagueID(id)
@@ -224,12 +211,6 @@ func (eu *EntryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := eu.mutation.OwnerName(); ok {
 		_spec.SetField(entry.FieldOwnerName, field.TypeString, value)
-	}
-	if value, ok := eu.mutation.PointTotal(); ok {
-		_spec.SetField(entry.FieldPointTotal, field.TypeInt, value)
-	}
-	if value, ok := eu.mutation.AddedPointTotal(); ok {
-		_spec.AddField(entry.FieldPointTotal, field.TypeInt, value)
 	}
 	if eu.mutation.LeagueCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -418,19 +399,6 @@ type EntryUpdateOne struct {
 // SetOwnerName sets the "owner_name" field.
 func (euo *EntryUpdateOne) SetOwnerName(s string) *EntryUpdateOne {
 	euo.mutation.SetOwnerName(s)
-	return euo
-}
-
-// SetPointTotal sets the "point_total" field.
-func (euo *EntryUpdateOne) SetPointTotal(i int) *EntryUpdateOne {
-	euo.mutation.ResetPointTotal()
-	euo.mutation.SetPointTotal(i)
-	return euo
-}
-
-// AddPointTotal adds i to the "point_total" field.
-func (euo *EntryUpdateOne) AddPointTotal(i int) *EntryUpdateOne {
-	euo.mutation.AddPointTotal(i)
 	return euo
 }
 
@@ -640,12 +608,6 @@ func (euo *EntryUpdateOne) sqlSave(ctx context.Context) (_node *Entry, err error
 	}
 	if value, ok := euo.mutation.OwnerName(); ok {
 		_spec.SetField(entry.FieldOwnerName, field.TypeString, value)
-	}
-	if value, ok := euo.mutation.PointTotal(); ok {
-		_spec.SetField(entry.FieldPointTotal, field.TypeInt, value)
-	}
-	if value, ok := euo.mutation.AddedPointTotal(); ok {
-		_spec.AddField(entry.FieldPointTotal, field.TypeInt, value)
 	}
 	if euo.mutation.LeagueCleared() {
 		edge := &sqlgraph.EdgeSpec{

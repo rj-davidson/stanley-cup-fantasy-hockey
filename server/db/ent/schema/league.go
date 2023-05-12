@@ -20,9 +20,6 @@ func (League) Fields() []ent.Field {
 		field.Int("num_forwards"),
 		field.Int("num_defenders"),
 		field.Int("num_goalies"),
-		field.String("edit_key"),
-		field.String("code").
-			Unique(),
 	}
 }
 

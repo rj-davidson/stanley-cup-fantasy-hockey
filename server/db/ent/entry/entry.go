@@ -14,8 +14,6 @@ const (
 	FieldID = "id"
 	// FieldOwnerName holds the string denoting the owner_name field in the database.
 	FieldOwnerName = "owner_name"
-	// FieldPointTotal holds the string denoting the point_total field in the database.
-	FieldPointTotal = "point_total"
 	// EdgeLeague holds the string denoting the league edge name in mutations.
 	EdgeLeague = "league"
 	// EdgeForwards holds the string denoting the forwards edge name in mutations.
@@ -60,7 +58,6 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldOwnerName,
-	FieldPointTotal,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "entries"
@@ -95,11 +92,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByOwnerName orders the results by the owner_name field.
 func ByOwnerName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOwnerName, opts...).ToFunc()
-}
-
-// ByPointTotal orders the results by the point_total field.
-func ByPointTotal(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPointTotal, opts...).ToFunc()
 }
 
 // ByLeagueField orders the results by league field.
@@ -150,7 +142,6 @@ func ByGoalies(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newGoaliesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-
 func newLeagueStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -158,7 +149,6 @@ func newLeagueStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, LeagueTable, LeagueColumn),
 	)
 }
-
 func newForwardsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -166,7 +156,6 @@ func newForwardsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, ForwardsTable, ForwardsColumn),
 	)
 }
-
 func newDefendersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -174,7 +163,6 @@ func newDefendersStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, DefendersTable, DefendersColumn),
 	)
 }
-
 func newGoaliesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),

@@ -92,8 +92,10 @@ func ValidColumn(column string) bool {
 	return false
 }
 
-// IDValidator is a validator for the "id" field. It is called by the builders before save.
-var IDValidator func(int) error
+var (
+	// IDValidator is a validator for the "id" field. It is called by the builders before save.
+	IDValidator func(int) error
+)
 
 // Position defines the type for the "position" enum field.
 type Position string
@@ -191,7 +193,6 @@ func ByAwayGamesAsGoalie(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption
 		sqlgraph.OrderByNeighborTerms(s, newAwayGamesAsGoalieStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-
 func newTeamStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -199,7 +200,6 @@ func newTeamStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, TeamTable, TeamColumn),
 	)
 }
-
 func newHomeGamesAsGoalieStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -207,7 +207,6 @@ func newHomeGamesAsGoalieStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, HomeGamesAsGoalieTable, HomeGamesAsGoalieColumn),
 	)
 }
-
 func newAwayGamesAsGoalieStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),

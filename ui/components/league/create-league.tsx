@@ -34,8 +34,8 @@ export default function CreateLeagueForm(props: Props) {
       num_forwards: parseInt(numForwards),
       num_defenders: parseInt(numDefenders),
       num_goalies: parseInt(numGoalies),
+      entries: [],
       edit_key: editKey,
-      code,
     };
     props.onCreateLeague(league);
   };
@@ -103,12 +103,6 @@ export default function CreateLeagueForm(props: Props) {
         label="Admin Password (For Editing League)"
         value={editKey}
         onChange={(e) => setEditKey(e.target.value)}
-      />
-      <TextField
-        required
-        label="League Code (For Joining League)"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
       />
       <Button
         variant="contained"

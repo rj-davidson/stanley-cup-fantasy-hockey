@@ -520,7 +520,6 @@ func (tq *TeamQuery) loadPlayers(ctx context.Context, query *PlayerQuery, nodes 
 	}
 	return nil
 }
-
 func (tq *TeamQuery) loadHomeGames(ctx context.Context, query *GameQuery, nodes []*Team, init func(*Team), assign func(*Team, *Game)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Team)
@@ -552,7 +551,6 @@ func (tq *TeamQuery) loadHomeGames(ctx context.Context, query *GameQuery, nodes 
 	}
 	return nil
 }
-
 func (tq *TeamQuery) loadAwayGames(ctx context.Context, query *GameQuery, nodes []*Team, init func(*Team), assign func(*Team, *Game)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Team)

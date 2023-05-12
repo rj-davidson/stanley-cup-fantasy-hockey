@@ -24,10 +24,6 @@ const (
 	FieldNumDefenders = "num_defenders"
 	// FieldNumGoalies holds the string denoting the num_goalies field in the database.
 	FieldNumGoalies = "num_goalies"
-	// FieldEditKey holds the string denoting the edit_key field in the database.
-	FieldEditKey = "edit_key"
-	// FieldCode holds the string denoting the code field in the database.
-	FieldCode = "code"
 	// EdgeEntries holds the string denoting the entries edge name in mutations.
 	EdgeEntries = "entries"
 	// Table holds the table name of the league in the database.
@@ -50,8 +46,6 @@ var Columns = []string{
 	FieldNumForwards,
 	FieldNumDefenders,
 	FieldNumGoalies,
-	FieldEditKey,
-	FieldCode,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -102,16 +96,6 @@ func ByNumGoalies(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldNumGoalies, opts...).ToFunc()
 }
 
-// ByEditKey orders the results by the edit_key field.
-func ByEditKey(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEditKey, opts...).ToFunc()
-}
-
-// ByCode orders the results by the code field.
-func ByCode(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCode, opts...).ToFunc()
-}
-
 // ByEntriesCount orders the results by entries count.
 func ByEntriesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -125,7 +109,6 @@ func ByEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-
 func newEntriesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Stack, TextField, Button, Autocomplete } from '@mui/material';
-import { Entry, Player } from '@/types';
+import { Entry, League, Player } from '@/types';
 
 interface Props {
   onCreateEntry: (entry: Entry) => void;
@@ -33,13 +33,18 @@ export default function CreateEntryForm(props: Props) {
     return allPlayers.every((player) => player !== null);
   };
 
-  const handleCreateEntry = () => {
+  const handleFinalizeEntry = () => {
     if (!allPlayersSelected()) {
       alert('Please select all players before saving the entry.');
       return;
     }
-
-    // handle entry creation
+    const entry: Entry = {
+      owner_name: ownerName,
+      forwards: selectedForwards.map((p) => p),
+      defenders: selectedDefenders.map((p) => p),
+      goalies: selectedGoalies.map((p) => p),
+    };
+    props.onCreateEntry(entry);
   };
 
   const handlePlayerChange =
@@ -80,19 +85,19 @@ export default function CreateEntryForm(props: Props) {
         onChange={(e) => setOwnerName(e.target.value)}
       />
       {playerSelect(
-        'Forwards',
+        'Forward',
         props.forwards,
         selectedForwards,
         setSelectedForwards,
       )}
       {playerSelect(
-        'Defenders',
+        'Defenseman',
         props.defenders,
         selectedDefenders,
         setSelectedDefenders,
       )}
       {playerSelect(
-        'Goalies',
+        'Goalie',
         props.goalies,
         selectedGoalies,
         setSelectedGoalies,
@@ -100,7 +105,7 @@ export default function CreateEntryForm(props: Props) {
       <Button
         variant="contained"
         color="primary"
-        onClick={handleCreateEntry}
+        onClick={handleFinalizeEntry}
         disabled={!allPlayersSelected()}
       >
         Finalize Entry

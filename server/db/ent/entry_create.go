@@ -27,12 +27,6 @@ func (ec *EntryCreate) SetOwnerName(s string) *EntryCreate {
 	return ec
 }
 
-// SetPointTotal sets the "point_total" field.
-func (ec *EntryCreate) SetPointTotal(i int) *EntryCreate {
-	ec.mutation.SetPointTotal(i)
-	return ec
-}
-
 // SetLeagueID sets the "league" edge to the League entity by ID.
 func (ec *EntryCreate) SetLeagueID(id int) *EntryCreate {
 	ec.mutation.SetLeagueID(id)
@@ -134,9 +128,6 @@ func (ec *EntryCreate) check() error {
 	if _, ok := ec.mutation.OwnerName(); !ok {
 		return &ValidationError{Name: "owner_name", err: errors.New(`ent: missing required field "Entry.owner_name"`)}
 	}
-	if _, ok := ec.mutation.PointTotal(); !ok {
-		return &ValidationError{Name: "point_total", err: errors.New(`ent: missing required field "Entry.point_total"`)}
-	}
 	return nil
 }
 
@@ -166,10 +157,6 @@ func (ec *EntryCreate) createSpec() (*Entry, *sqlgraph.CreateSpec) {
 	if value, ok := ec.mutation.OwnerName(); ok {
 		_spec.SetField(entry.FieldOwnerName, field.TypeString, value)
 		_node.OwnerName = value
-	}
-	if value, ok := ec.mutation.PointTotal(); ok {
-		_spec.SetField(entry.FieldPointTotal, field.TypeInt, value)
-		_node.PointTotal = value
 	}
 	if nodes := ec.mutation.LeagueIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

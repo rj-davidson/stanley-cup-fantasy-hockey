@@ -56,18 +56,6 @@ func (lc *LeagueCreate) SetNumGoalies(i int) *LeagueCreate {
 	return lc
 }
 
-// SetEditKey sets the "edit_key" field.
-func (lc *LeagueCreate) SetEditKey(s string) *LeagueCreate {
-	lc.mutation.SetEditKey(s)
-	return lc
-}
-
-// SetCode sets the "code" field.
-func (lc *LeagueCreate) SetCode(s string) *LeagueCreate {
-	lc.mutation.SetCode(s)
-	return lc
-}
-
 // AddEntryIDs adds the "entries" edge to the Entry entity by IDs.
 func (lc *LeagueCreate) AddEntryIDs(ids ...int) *LeagueCreate {
 	lc.mutation.AddEntryIDs(ids...)
@@ -135,12 +123,6 @@ func (lc *LeagueCreate) check() error {
 	if _, ok := lc.mutation.NumGoalies(); !ok {
 		return &ValidationError{Name: "num_goalies", err: errors.New(`ent: missing required field "League.num_goalies"`)}
 	}
-	if _, ok := lc.mutation.EditKey(); !ok {
-		return &ValidationError{Name: "edit_key", err: errors.New(`ent: missing required field "League.edit_key"`)}
-	}
-	if _, ok := lc.mutation.Code(); !ok {
-		return &ValidationError{Name: "code", err: errors.New(`ent: missing required field "League.code"`)}
-	}
 	return nil
 }
 
@@ -190,14 +172,6 @@ func (lc *LeagueCreate) createSpec() (*League, *sqlgraph.CreateSpec) {
 	if value, ok := lc.mutation.NumGoalies(); ok {
 		_spec.SetField(league.FieldNumGoalies, field.TypeInt, value)
 		_node.NumGoalies = value
-	}
-	if value, ok := lc.mutation.EditKey(); ok {
-		_spec.SetField(league.FieldEditKey, field.TypeString, value)
-		_node.EditKey = value
-	}
-	if value, ok := lc.mutation.Code(); ok {
-		_spec.SetField(league.FieldCode, field.TypeString, value)
-		_node.Code = value
 	}
 	if nodes := lc.mutation.EntriesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -79,18 +79,6 @@ func (lu *LeagueUpdate) AddNumGoalies(i int) *LeagueUpdate {
 	return lu
 }
 
-// SetEditKey sets the "edit_key" field.
-func (lu *LeagueUpdate) SetEditKey(s string) *LeagueUpdate {
-	lu.mutation.SetEditKey(s)
-	return lu
-}
-
-// SetCode sets the "code" field.
-func (lu *LeagueUpdate) SetCode(s string) *LeagueUpdate {
-	lu.mutation.SetCode(s)
-	return lu
-}
-
 // AddEntryIDs adds the "entries" edge to the Entry entity by IDs.
 func (lu *LeagueUpdate) AddEntryIDs(ids ...int) *LeagueUpdate {
 	lu.mutation.AddEntryIDs(ids...)
@@ -191,12 +179,6 @@ func (lu *LeagueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := lu.mutation.AddedNumGoalies(); ok {
 		_spec.AddField(league.FieldNumGoalies, field.TypeInt, value)
-	}
-	if value, ok := lu.mutation.EditKey(); ok {
-		_spec.SetField(league.FieldEditKey, field.TypeString, value)
-	}
-	if value, ok := lu.mutation.Code(); ok {
-		_spec.SetField(league.FieldCode, field.TypeString, value)
 	}
 	if lu.mutation.EntriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -311,18 +293,6 @@ func (luo *LeagueUpdateOne) SetNumGoalies(i int) *LeagueUpdateOne {
 // AddNumGoalies adds i to the "num_goalies" field.
 func (luo *LeagueUpdateOne) AddNumGoalies(i int) *LeagueUpdateOne {
 	luo.mutation.AddNumGoalies(i)
-	return luo
-}
-
-// SetEditKey sets the "edit_key" field.
-func (luo *LeagueUpdateOne) SetEditKey(s string) *LeagueUpdateOne {
-	luo.mutation.SetEditKey(s)
-	return luo
-}
-
-// SetCode sets the "code" field.
-func (luo *LeagueUpdateOne) SetCode(s string) *LeagueUpdateOne {
-	luo.mutation.SetCode(s)
 	return luo
 }
 
@@ -456,12 +426,6 @@ func (luo *LeagueUpdateOne) sqlSave(ctx context.Context) (_node *League, err err
 	}
 	if value, ok := luo.mutation.AddedNumGoalies(); ok {
 		_spec.AddField(league.FieldNumGoalies, field.TypeInt, value)
-	}
-	if value, ok := luo.mutation.EditKey(); ok {
-		_spec.SetField(league.FieldEditKey, field.TypeString, value)
-	}
-	if value, ok := luo.mutation.Code(); ok {
-		_spec.SetField(league.FieldCode, field.TypeString, value)
 	}
 	if luo.mutation.EntriesCleared() {
 		edge := &sqlgraph.EdgeSpec{

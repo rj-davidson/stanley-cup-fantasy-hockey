@@ -8,15 +8,15 @@ import (
 )
 
 type LeagueModel struct {
-	client *ent.Client
+	Client *ent.Client
 }
 
 func NewLeagueModel(client *ent.Client) *LeagueModel {
-	return &LeagueModel{client: client}
+	return &LeagueModel{Client: client}
 }
 
-func (lm *LeagueModel) CreateLeague(season int, isPublic bool, numForwards, numDefenders, numGoalies int, name, editKey, code string) (*ent.League, error) {
-	l, err := lm.client.League.
+func (lm *LeagueModel) CreateLeague(season int, isPublic bool, numForwards, numDefenders, numGoalies int, name string) (*ent.League, error) {
+	l, err := lm.Client.League.
 		Create().
 		SetName(name).
 		SetSeason(season).
@@ -24,8 +24,6 @@ func (lm *LeagueModel) CreateLeague(season int, isPublic bool, numForwards, numD
 		SetNumForwards(numForwards).
 		SetNumDefenders(numDefenders).
 		SetNumGoalies(numGoalies).
-		SetEditKey(editKey).
-		SetCode(code).
 		Save(context.Background())
 	if err != nil {
 		return nil, err
@@ -33,8 +31,8 @@ func (lm *LeagueModel) CreateLeague(season int, isPublic bool, numForwards, numD
 	return l, nil
 }
 
-func (lm *LeagueModel) CreateLeagueWithEntries(season int, isPublic bool, numForwards, numDefenders, numGoalies int, name, editKey, code string, entries []*ent.Entry) (*ent.League, error) {
-	l, err := lm.client.League.
+func (lm *LeagueModel) CreateLeagueWithEntries(season int, isPublic bool, numForwards, numDefenders, numGoalies int, name string, entries []*ent.Entry) (*ent.League, error) {
+	l, err := lm.Client.League.
 		Create().
 		SetName(name).
 		SetSeason(season).
@@ -42,8 +40,6 @@ func (lm *LeagueModel) CreateLeagueWithEntries(season int, isPublic bool, numFor
 		SetNumForwards(numForwards).
 		SetNumDefenders(numDefenders).
 		SetNumGoalies(numGoalies).
-		SetEditKey(editKey).
-		SetCode(code).
 		AddEntries(entries...).
 		Save(context.Background())
 	if err != nil {
@@ -53,19 +49,17 @@ func (lm *LeagueModel) CreateLeagueWithEntries(season int, isPublic bool, numFor
 }
 
 func (lm *LeagueModel) GetLeagueByID(id int) (*ent.League, error) {
-	return lm.client.League.
+	return lm.Client.League.
 		Get(context.Background(), id)
 }
 
-func (lm *LeagueModel) UpdateLeague(id, season int, isPublic bool, numForwards, numDefenders, numGoalies int, editKey, code string) (*ent.League, error) {
-	l, err := lm.client.League.
+func (lm *LeagueModel) UpdateLeague(id int, isPublic bool, numForwards, numDefenders, numGoalies int) (*ent.League, error) {
+	l, err := lm.Client.League.
 		UpdateOneID(id).
 		SetPublic(isPublic).
 		SetNumForwards(numForwards).
 		SetNumDefenders(numDefenders).
 		SetNumGoalies(numGoalies).
-		SetEditKey(editKey).
-		SetCode(code).
 		Save(context.Background())
 	if err != nil {
 		return nil, err
@@ -74,7 +68,7 @@ func (lm *LeagueModel) UpdateLeague(id, season int, isPublic bool, numForwards, 
 }
 
 func (lm *LeagueModel) DeleteLeague(id int) error {
-	err := lm.client.League.
+	err := lm.Client.League.
 		DeleteOneID(id).
 		Exec(context.Background())
 	if err != nil {
@@ -84,7 +78,7 @@ func (lm *LeagueModel) DeleteLeague(id int) error {
 }
 
 func (lm *LeagueModel) ListLeagues() ([]*ent.League, error) {
-	return lm.client.League.
+	return lm.Client.League.
 		Query().
 		All(context.Background())
 }

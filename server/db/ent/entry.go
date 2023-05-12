@@ -19,8 +19,6 @@ type Entry struct {
 	ID int `json:"id,omitempty"`
 	// OwnerName holds the value of the "owner_name" field.
 	OwnerName string `json:"owner_name,omitempty"`
-	// PointTotal holds the value of the "point_total" field.
-	PointTotal int `json:"point_total,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EntryQuery when eager-loading is set.
 	Edges          EntryEdges `json:"edges"`
@@ -88,7 +86,7 @@ func (*Entry) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case entry.FieldID, entry.FieldPointTotal:
+		case entry.FieldID:
 			values[i] = new(sql.NullInt64)
 		case entry.FieldOwnerName:
 			values[i] = new(sql.NullString)
@@ -120,12 +118,6 @@ func (e *Entry) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field owner_name", values[i])
 			} else if value.Valid {
 				e.OwnerName = value.String
-			}
-		case entry.FieldPointTotal:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field point_total", values[i])
-			} else if value.Valid {
-				e.PointTotal = int(value.Int64)
 			}
 		case entry.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -192,9 +184,6 @@ func (e *Entry) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", e.ID))
 	builder.WriteString("owner_name=")
 	builder.WriteString(e.OwnerName)
-	builder.WriteString(", ")
-	builder.WriteString("point_total=")
-	builder.WriteString(fmt.Sprintf("%v", e.PointTotal))
 	builder.WriteByte(')')
 	return builder.String()
 }

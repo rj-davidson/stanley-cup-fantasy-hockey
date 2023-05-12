@@ -58,11 +58,6 @@ func OwnerName(v string) predicate.Entry {
 	return predicate.Entry(sql.FieldEQ(FieldOwnerName, v))
 }
 
-// PointTotal applies equality check predicate on the "point_total" field. It's identical to PointTotalEQ.
-func PointTotal(v int) predicate.Entry {
-	return predicate.Entry(sql.FieldEQ(FieldPointTotal, v))
-}
-
 // OwnerNameEQ applies the EQ predicate on the "owner_name" field.
 func OwnerNameEQ(v string) predicate.Entry {
 	return predicate.Entry(sql.FieldEQ(FieldOwnerName, v))
@@ -126,46 +121,6 @@ func OwnerNameEqualFold(v string) predicate.Entry {
 // OwnerNameContainsFold applies the ContainsFold predicate on the "owner_name" field.
 func OwnerNameContainsFold(v string) predicate.Entry {
 	return predicate.Entry(sql.FieldContainsFold(FieldOwnerName, v))
-}
-
-// PointTotalEQ applies the EQ predicate on the "point_total" field.
-func PointTotalEQ(v int) predicate.Entry {
-	return predicate.Entry(sql.FieldEQ(FieldPointTotal, v))
-}
-
-// PointTotalNEQ applies the NEQ predicate on the "point_total" field.
-func PointTotalNEQ(v int) predicate.Entry {
-	return predicate.Entry(sql.FieldNEQ(FieldPointTotal, v))
-}
-
-// PointTotalIn applies the In predicate on the "point_total" field.
-func PointTotalIn(vs ...int) predicate.Entry {
-	return predicate.Entry(sql.FieldIn(FieldPointTotal, vs...))
-}
-
-// PointTotalNotIn applies the NotIn predicate on the "point_total" field.
-func PointTotalNotIn(vs ...int) predicate.Entry {
-	return predicate.Entry(sql.FieldNotIn(FieldPointTotal, vs...))
-}
-
-// PointTotalGT applies the GT predicate on the "point_total" field.
-func PointTotalGT(v int) predicate.Entry {
-	return predicate.Entry(sql.FieldGT(FieldPointTotal, v))
-}
-
-// PointTotalGTE applies the GTE predicate on the "point_total" field.
-func PointTotalGTE(v int) predicate.Entry {
-	return predicate.Entry(sql.FieldGTE(FieldPointTotal, v))
-}
-
-// PointTotalLT applies the LT predicate on the "point_total" field.
-func PointTotalLT(v int) predicate.Entry {
-	return predicate.Entry(sql.FieldLT(FieldPointTotal, v))
-}
-
-// PointTotalLTE applies the LTE predicate on the "point_total" field.
-func PointTotalLTE(v int) predicate.Entry {
-	return predicate.Entry(sql.FieldLTE(FieldPointTotal, v))
 }
 
 // HasLeague applies the HasEdge predicate on the "league" edge.

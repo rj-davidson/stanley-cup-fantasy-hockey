@@ -28,10 +28,6 @@ type League struct {
 	NumDefenders int `json:"num_defenders,omitempty"`
 	// NumGoalies holds the value of the "num_goalies" field.
 	NumGoalies int `json:"num_goalies,omitempty"`
-	// EditKey holds the value of the "edit_key" field.
-	EditKey string `json:"edit_key,omitempty"`
-	// Code holds the value of the "code" field.
-	Code string `json:"code,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LeagueQuery when eager-loading is set.
 	Edges        LeagueEdges `json:"edges"`
@@ -65,7 +61,7 @@ func (*League) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case league.FieldID, league.FieldSeason, league.FieldNumForwards, league.FieldNumDefenders, league.FieldNumGoalies:
 			values[i] = new(sql.NullInt64)
-		case league.FieldName, league.FieldEditKey, league.FieldCode:
+		case league.FieldName:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -123,18 +119,6 @@ func (l *League) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field num_goalies", values[i])
 			} else if value.Valid {
 				l.NumGoalies = int(value.Int64)
-			}
-		case league.FieldEditKey:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field edit_key", values[i])
-			} else if value.Valid {
-				l.EditKey = value.String
-			}
-		case league.FieldCode:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field code", values[i])
-			} else if value.Valid {
-				l.Code = value.String
 			}
 		default:
 			l.selectValues.Set(columns[i], values[i])
@@ -194,12 +178,6 @@ func (l *League) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("num_goalies=")
 	builder.WriteString(fmt.Sprintf("%v", l.NumGoalies))
-	builder.WriteString(", ")
-	builder.WriteString("edit_key=")
-	builder.WriteString(l.EditKey)
-	builder.WriteString(", ")
-	builder.WriteString("code=")
-	builder.WriteString(l.Code)
 	builder.WriteByte(')')
 	return builder.String()
 }

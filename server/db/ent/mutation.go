@@ -41,8 +41,6 @@ type EntryMutation struct {
 	typ              string
 	id               *int
 	owner_name       *string
-	point_total      *int
-	addpoint_total   *int
 	clearedFields    map[string]struct{}
 	league           *int
 	clearedleague    bool
@@ -192,62 +190,6 @@ func (m *EntryMutation) OldOwnerName(ctx context.Context) (v string, err error) 
 // ResetOwnerName resets all changes to the "owner_name" field.
 func (m *EntryMutation) ResetOwnerName() {
 	m.owner_name = nil
-}
-
-// SetPointTotal sets the "point_total" field.
-func (m *EntryMutation) SetPointTotal(i int) {
-	m.point_total = &i
-	m.addpoint_total = nil
-}
-
-// PointTotal returns the value of the "point_total" field in the mutation.
-func (m *EntryMutation) PointTotal() (r int, exists bool) {
-	v := m.point_total
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldPointTotal returns the old "point_total" field's value of the Entry entity.
-// If the Entry object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EntryMutation) OldPointTotal(ctx context.Context) (v int, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldPointTotal is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldPointTotal requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldPointTotal: %w", err)
-	}
-	return oldValue.PointTotal, nil
-}
-
-// AddPointTotal adds i to the "point_total" field.
-func (m *EntryMutation) AddPointTotal(i int) {
-	if m.addpoint_total != nil {
-		*m.addpoint_total += i
-	} else {
-		m.addpoint_total = &i
-	}
-}
-
-// AddedPointTotal returns the value that was added to the "point_total" field in this mutation.
-func (m *EntryMutation) AddedPointTotal() (r int, exists bool) {
-	v := m.addpoint_total
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetPointTotal resets all changes to the "point_total" field.
-func (m *EntryMutation) ResetPointTotal() {
-	m.point_total = nil
-	m.addpoint_total = nil
 }
 
 // SetLeagueID sets the "league" edge to the League entity by id.
@@ -485,12 +427,9 @@ func (m *EntryMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EntryMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 1)
 	if m.owner_name != nil {
 		fields = append(fields, entry.FieldOwnerName)
-	}
-	if m.point_total != nil {
-		fields = append(fields, entry.FieldPointTotal)
 	}
 	return fields
 }
@@ -502,8 +441,6 @@ func (m *EntryMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case entry.FieldOwnerName:
 		return m.OwnerName()
-	case entry.FieldPointTotal:
-		return m.PointTotal()
 	}
 	return nil, false
 }
@@ -515,8 +452,6 @@ func (m *EntryMutation) OldField(ctx context.Context, name string) (ent.Value, e
 	switch name {
 	case entry.FieldOwnerName:
 		return m.OldOwnerName(ctx)
-	case entry.FieldPointTotal:
-		return m.OldPointTotal(ctx)
 	}
 	return nil, fmt.Errorf("unknown Entry field %s", name)
 }
@@ -533,13 +468,6 @@ func (m *EntryMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetOwnerName(v)
 		return nil
-	case entry.FieldPointTotal:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetPointTotal(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Entry field %s", name)
 }
@@ -547,21 +475,13 @@ func (m *EntryMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *EntryMutation) AddedFields() []string {
-	var fields []string
-	if m.addpoint_total != nil {
-		fields = append(fields, entry.FieldPointTotal)
-	}
-	return fields
+	return nil
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *EntryMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	case entry.FieldPointTotal:
-		return m.AddedPointTotal()
-	}
 	return nil, false
 }
 
@@ -570,13 +490,6 @@ func (m *EntryMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *EntryMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case entry.FieldPointTotal:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddPointTotal(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Entry numeric field %s", name)
 }
@@ -606,9 +519,6 @@ func (m *EntryMutation) ResetField(name string) error {
 	switch name {
 	case entry.FieldOwnerName:
 		m.ResetOwnerName()
-		return nil
-	case entry.FieldPointTotal:
-		m.ResetPointTotal()
 		return nil
 	}
 	return fmt.Errorf("unknown Entry field %s", name)
@@ -1537,8 +1447,6 @@ type LeagueMutation struct {
 	addnum_defenders *int
 	num_goalies      *int
 	addnum_goalies   *int
-	edit_key         *string
-	code             *string
 	clearedFields    map[string]struct{}
 	entries          map[int]struct{}
 	removedentries   map[int]struct{}
@@ -1942,78 +1850,6 @@ func (m *LeagueMutation) ResetNumGoalies() {
 	m.addnum_goalies = nil
 }
 
-// SetEditKey sets the "edit_key" field.
-func (m *LeagueMutation) SetEditKey(s string) {
-	m.edit_key = &s
-}
-
-// EditKey returns the value of the "edit_key" field in the mutation.
-func (m *LeagueMutation) EditKey() (r string, exists bool) {
-	v := m.edit_key
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldEditKey returns the old "edit_key" field's value of the League entity.
-// If the League object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LeagueMutation) OldEditKey(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldEditKey is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldEditKey requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldEditKey: %w", err)
-	}
-	return oldValue.EditKey, nil
-}
-
-// ResetEditKey resets all changes to the "edit_key" field.
-func (m *LeagueMutation) ResetEditKey() {
-	m.edit_key = nil
-}
-
-// SetCode sets the "code" field.
-func (m *LeagueMutation) SetCode(s string) {
-	m.code = &s
-}
-
-// Code returns the value of the "code" field in the mutation.
-func (m *LeagueMutation) Code() (r string, exists bool) {
-	v := m.code
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCode returns the old "code" field's value of the League entity.
-// If the League object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LeagueMutation) OldCode(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCode is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCode requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCode: %w", err)
-	}
-	return oldValue.Code, nil
-}
-
-// ResetCode resets all changes to the "code" field.
-func (m *LeagueMutation) ResetCode() {
-	m.code = nil
-}
-
 // AddEntryIDs adds the "entries" edge to the Entry entity by ids.
 func (m *LeagueMutation) AddEntryIDs(ids ...int) {
 	if m.entries == nil {
@@ -2102,7 +1938,7 @@ func (m *LeagueMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LeagueMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 6)
 	if m.name != nil {
 		fields = append(fields, league.FieldName)
 	}
@@ -2120,12 +1956,6 @@ func (m *LeagueMutation) Fields() []string {
 	}
 	if m.num_goalies != nil {
 		fields = append(fields, league.FieldNumGoalies)
-	}
-	if m.edit_key != nil {
-		fields = append(fields, league.FieldEditKey)
-	}
-	if m.code != nil {
-		fields = append(fields, league.FieldCode)
 	}
 	return fields
 }
@@ -2147,10 +1977,6 @@ func (m *LeagueMutation) Field(name string) (ent.Value, bool) {
 		return m.NumDefenders()
 	case league.FieldNumGoalies:
 		return m.NumGoalies()
-	case league.FieldEditKey:
-		return m.EditKey()
-	case league.FieldCode:
-		return m.Code()
 	}
 	return nil, false
 }
@@ -2172,10 +1998,6 @@ func (m *LeagueMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldNumDefenders(ctx)
 	case league.FieldNumGoalies:
 		return m.OldNumGoalies(ctx)
-	case league.FieldEditKey:
-		return m.OldEditKey(ctx)
-	case league.FieldCode:
-		return m.OldCode(ctx)
 	}
 	return nil, fmt.Errorf("unknown League field %s", name)
 }
@@ -2226,20 +2048,6 @@ func (m *LeagueMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetNumGoalies(v)
-		return nil
-	case league.FieldEditKey:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetEditKey(v)
-		return nil
-	case league.FieldCode:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCode(v)
 		return nil
 	}
 	return fmt.Errorf("unknown League field %s", name)
@@ -2358,12 +2166,6 @@ func (m *LeagueMutation) ResetField(name string) error {
 		return nil
 	case league.FieldNumGoalies:
 		m.ResetNumGoalies()
-		return nil
-	case league.FieldEditKey:
-		m.ResetEditKey()
-		return nil
-	case league.FieldCode:
-		m.ResetCode()
 		return nil
 	}
 	return fmt.Errorf("unknown League field %s", name)

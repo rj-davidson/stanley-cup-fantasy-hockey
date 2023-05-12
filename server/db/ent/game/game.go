@@ -90,8 +90,10 @@ func ValidColumn(column string) bool {
 	return false
 }
 
-// IDValidator is a validator for the "id" field. It is called by the builders before save.
-var IDValidator func(int) error
+var (
+	// IDValidator is a validator for the "id" field. It is called by the builders before save.
+	IDValidator func(int) error
+)
 
 // OrderOption defines the ordering options for the Game queries.
 type OrderOption func(*sql.Selector)
@@ -143,7 +145,6 @@ func ByHomeGoalieField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newHomeGoalieStep(), sql.OrderByField(field, opts...))
 	}
 }
-
 func newAwayTeamStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -151,7 +152,6 @@ func newAwayTeamStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, AwayTeamTable, AwayTeamColumn),
 	)
 }
-
 func newHomeTeamStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -159,7 +159,6 @@ func newHomeTeamStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, HomeTeamTable, HomeTeamColumn),
 	)
 }
-
 func newAwayGoalieStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -167,7 +166,6 @@ func newAwayGoalieStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, AwayGoalieTable, AwayGoalieColumn),
 	)
 }
-
 func newHomeGoalieStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
