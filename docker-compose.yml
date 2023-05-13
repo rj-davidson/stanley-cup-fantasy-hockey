@@ -17,7 +17,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    command: ["./main -init-data"]
+    command: ["./main", "-init-data"]
     ports:
       - '8080:8080'
     depends_on:
