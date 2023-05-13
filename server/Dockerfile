@@ -7,6 +7,7 @@ WORKDIR /go/src/app
 # Copy the app code into the container
 COPY . .
 
+COPY .env .
 # Install dependencies and build the app
 RUN go get -d -v ./...
 RUN go build -o main .
