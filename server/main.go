@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	api "github.com/rj-davidson/stanley-cup-fantasy-hockey/api/routes"
+	"github.com/robfig/cron/v3"
 	"log"
 
 	"entgo.io/ent/dialect"
@@ -68,6 +69,9 @@ func main() {
 	// Set up routes
 	initRoutes(app, client)
 
+	// Schedule data updates every 10 minutes
+	go scheduleDataUpdates(client)
+
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(app.Listen(":8080"))
 }
@@ -93,33 +97,7 @@ func initializeData(client *ent.Client) {
 		}
 	}
 
-	// Add playoff games
-	{
-		gameController := controller.NewGameController(client)
-		err := gameController.FetchPostSeasonGames()
-		if err != nil {
-			fmt.Printf("Error fetching playoff games: %s", err)
-		}
-
-	}
-
-	// Fetch Player Points
-	{
-		playerController := controller.NewPlayerController(client)
-		teamModel := model.NewTeamModel(client)
-		teams, _ := teamModel.ListPlayoffTeams()
-		for _, team := range teams {
-			err := playerController.FetchNHLPlayerPoints(team, context.Background())
-			if err != nil {
-				fmt.Printf("Error fetching player points: %s", err)
-			}
-		}
-
-		err := playerController.UpdateGoalieWinsShutouts()
-		if err != nil {
-			fmt.Printf("Error updating goalie wins and shutouts: %s", err)
-		}
-	}
+	updateData(client)
 }
 
 func initRoutes(app *fiber.App, client *ent.Client) {
@@ -129,4 +107,67 @@ func initRoutes(app *fiber.App, client *ent.Client) {
 
 	api.RegisterLeagueRoutes(app, lm, em, pm)
 	api.RegisterPlayerRoutes(app, pm)
+}
+
+func updateData(client *ent.Client) {
+	// Update playoff games
+	updatePlayoffGames(client)
+
+	// Update player points
+	updatePlayerPoints(client)
+
+	// Update goalie wins and shutouts
+	updateGoalieStats(client)
+
+	fmt.Println("Data update completed")
+}
+
+func updatePlayoffGames(client *ent.Client) {
+	gameController := controller.NewGameController(client)
+	err := gameController.FetchPostSeasonGames()
+	if err != nil {
+		fmt.Printf("Error fetching playoff games: %s", err)
+	}
+}
+
+func updatePlayerPoints(client *ent.Client) {
+	// Fetch all teams
+	teamModel := model.NewTeamModel(client)
+	teams, err := teamModel.ListPlayoffTeams()
+	if err != nil {
+		fmt.Printf("Error fetching teams: %s\n", err)
+		return
+	}
+
+	playerController := controller.NewPlayerController(client)
+	for _, team := range teams {
+		err := playerController.FetchNHLPlayerPoints(team, context.Background())
+		if err != nil {
+			fmt.Printf("Error fetching player points: %s\n", err)
+		}
+	}
+}
+
+func updateGoalieStats(client *ent.Client) {
+	playerController := controller.NewPlayerController(client)
+	err := playerController.UpdateGoalieWinsShutouts()
+	if err != nil {
+		fmt.Printf("Error updating goalie stats: %s\n", err)
+	}
+}
+
+func scheduleDataUpdates(client *ent.Client) {
+	c := cron.New()
+
+	// Schedule data updates every 10 minutes
+	_, err := c.AddFunc("*/10 * * * *", func() {
+		fmt.Println("Running data update...")
+		updateData(client)
+	})
+	if err != nil {
+		log.Fatalf("failed to schedule data updates: %v", err)
+	}
+
+	// Start the cron scheduler
+	c.Start()
 }
