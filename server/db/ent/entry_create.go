@@ -46,49 +46,19 @@ func (ec *EntryCreate) SetLeague(l *League) *EntryCreate {
 	return ec.SetLeagueID(l.ID)
 }
 
-// AddForwardIDs adds the "forwards" edge to the Player entity by IDs.
-func (ec *EntryCreate) AddForwardIDs(ids ...int) *EntryCreate {
-	ec.mutation.AddForwardIDs(ids...)
+// AddPlayerIDs adds the "players" edge to the Player entity by IDs.
+func (ec *EntryCreate) AddPlayerIDs(ids ...int) *EntryCreate {
+	ec.mutation.AddPlayerIDs(ids...)
 	return ec
 }
 
-// AddForwards adds the "forwards" edges to the Player entity.
-func (ec *EntryCreate) AddForwards(p ...*Player) *EntryCreate {
+// AddPlayers adds the "players" edges to the Player entity.
+func (ec *EntryCreate) AddPlayers(p ...*Player) *EntryCreate {
 	ids := make([]int, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
 	}
-	return ec.AddForwardIDs(ids...)
-}
-
-// AddDefenderIDs adds the "defenders" edge to the Player entity by IDs.
-func (ec *EntryCreate) AddDefenderIDs(ids ...int) *EntryCreate {
-	ec.mutation.AddDefenderIDs(ids...)
-	return ec
-}
-
-// AddDefenders adds the "defenders" edges to the Player entity.
-func (ec *EntryCreate) AddDefenders(p ...*Player) *EntryCreate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return ec.AddDefenderIDs(ids...)
-}
-
-// AddGoalyIDs adds the "goalies" edge to the Player entity by IDs.
-func (ec *EntryCreate) AddGoalyIDs(ids ...int) *EntryCreate {
-	ec.mutation.AddGoalyIDs(ids...)
-	return ec
-}
-
-// AddGoalies adds the "goalies" edges to the Player entity.
-func (ec *EntryCreate) AddGoalies(p ...*Player) *EntryCreate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return ec.AddGoalyIDs(ids...)
+	return ec.AddPlayerIDs(ids...)
 }
 
 // Mutation returns the EntryMutation object of the builder.
@@ -175,44 +145,12 @@ func (ec *EntryCreate) createSpec() (*Entry, *sqlgraph.CreateSpec) {
 		_node.league_entries = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.mutation.ForwardsIDs(); len(nodes) > 0 {
+	if nodes := ec.mutation.PlayersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   entry.ForwardsTable,
-			Columns: []string{entry.ForwardsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := ec.mutation.DefendersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.DefendersTable,
-			Columns: []string{entry.DefendersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := ec.mutation.GoaliesIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.GoaliesTable,
-			Columns: []string{entry.GoaliesColumn},
+			Table:   entry.PlayersTable,
+			Columns: entry.PlayersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),

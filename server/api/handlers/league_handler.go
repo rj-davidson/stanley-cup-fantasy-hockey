@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent"
 	"strconv"
 
@@ -54,13 +55,16 @@ func GetLeagueByID(lm *model.LeagueModel, em *model.EntryModel) fiber.Handler {
 			entryData := EntryStruct{
 				ID:        entry.ID,
 				OwnerName: entry.OwnerName,
-				Forwards:  []PlayerStruct{},
-				Defenders: []PlayerStruct{},
-				Goalies:   []PlayerStruct{},
+				Players:   []PlayerStruct{},
 			}
 
-			// Fetch the players for each category in the entry
-			for _, player := range entry.Edges.Forwards {
+			// Fetch all rows from the "entry_players" join table with entry.ID equals to the entry ID
+			entryPlayers, err := em.GetEntryPlayers(entry.ID)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+			}
+
+			for _, player := range entryPlayers {
 				playerData := PlayerStruct{
 					ID:       player.ID,
 					Name:     player.Name,
@@ -70,33 +74,7 @@ func GetLeagueByID(lm *model.LeagueModel, em *model.EntryModel) fiber.Handler {
 					Shutouts: player.Shutouts,
 					Wins:     player.Wins,
 				}
-				entryData.Forwards = append(entryData.Forwards, playerData)
-			}
-
-			for _, player := range entry.Edges.Defenders {
-				playerData := PlayerStruct{
-					ID:       player.ID,
-					Name:     player.Name,
-					Position: player.Position.String(),
-					Goals:    player.Goals,
-					Assists:  player.Assists,
-					Shutouts: player.Shutouts,
-					Wins:     player.Wins,
-				}
-				entryData.Defenders = append(entryData.Defenders, playerData)
-			}
-
-			for _, player := range entry.Edges.Goalies {
-				playerData := PlayerStruct{
-					ID:       player.ID,
-					Name:     player.Name,
-					Position: player.Position.String(),
-					Goals:    player.Goals,
-					Assists:  player.Assists,
-					Shutouts: player.Shutouts,
-					Wins:     player.Wins,
-				}
-				entryData.Goalies = append(entryData.Goalies, playerData)
+				entryData.Players = append(entryData.Players, playerData)
 			}
 
 			response.Entries = append(response.Entries, entryData)
@@ -120,9 +98,7 @@ type LeagueStruct struct {
 type EntryStruct struct {
 	ID        int            `json:"id,omitempty"`
 	OwnerName string         `json:"owner_name"`
-	Forwards  []PlayerStruct `json:"forwards,omitempty"`
-	Defenders []PlayerStruct `json:"defenders,omitempty"`
-	Goalies   []PlayerStruct `json:"goalies,omitempty"`
+	Players   []PlayerStruct `json:"players,omitempty"`
 }
 
 type PlayerStruct struct {
@@ -163,6 +139,7 @@ func CreateLeague(lm *model.LeagueModel, em *model.EntryModel, pm *model.PlayerM
 			leagueData.NumGoalies,
 			leagueData.Name,
 		)
+		fmt.Printf("Created league: %+v\n", newLeague)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create league"})
 		}
@@ -170,29 +147,19 @@ func CreateLeague(lm *model.LeagueModel, em *model.EntryModel, pm *model.PlayerM
 		// Iterate over the entries and add them to the league
 		for _, entryData := range leagueData.Entries {
 			// Validate the players by their IDs
-			forwards, err := validatePlayers(pm, entryData.Forwards)
+			players, err := validatePlayers(pm, entryData.Players)
+
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch forwards"})
-			}
-
-			defenders, err := validatePlayers(pm, entryData.Defenders)
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch defenders"})
-			}
-
-			goalies, err := validatePlayers(pm, entryData.Goalies)
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch goalies"})
 			}
 
 			// Create a new entry entity
 			_, err = em.CreateEntry(
 				entryData.OwnerName,
 				newLeague,
-				forwards,
-				defenders,
-				goalies,
+				players,
 			)
+			fmt.Printf("Created entry: %+v\n", newLeague)
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create entry"})
 			}

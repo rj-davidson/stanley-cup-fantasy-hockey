@@ -12,8 +12,6 @@ const (
 	Label = "game"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldHomeWin holds the string denoting the homewin field in the database.
-	FieldHomeWin = "home_win"
 	// FieldHomeScore holds the string denoting the homescore field in the database.
 	FieldHomeScore = "home_score"
 	// FieldAwayScore holds the string denoting the awayscore field in the database.
@@ -61,7 +59,6 @@ const (
 // Columns holds all SQL columns for game fields.
 var Columns = []string{
 	FieldID,
-	FieldHomeWin,
 	FieldHomeScore,
 	FieldAwayScore,
 }
@@ -101,11 +98,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByHomeWin orders the results by the homeWin field.
-func ByHomeWin(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldHomeWin, opts...).ToFunc()
 }
 
 // ByHomeScore orders the results by the homeScore field.

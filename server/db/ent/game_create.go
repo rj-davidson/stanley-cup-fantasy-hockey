@@ -21,12 +21,6 @@ type GameCreate struct {
 	hooks    []Hook
 }
 
-// SetHomeWin sets the "homeWin" field.
-func (gc *GameCreate) SetHomeWin(b bool) *GameCreate {
-	gc.mutation.SetHomeWin(b)
-	return gc
-}
-
 // SetHomeScore sets the "homeScore" field.
 func (gc *GameCreate) SetHomeScore(i int) *GameCreate {
 	gc.mutation.SetHomeScore(i)
@@ -123,9 +117,6 @@ func (gc *GameCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (gc *GameCreate) check() error {
-	if _, ok := gc.mutation.HomeWin(); !ok {
-		return &ValidationError{Name: "homeWin", err: errors.New(`ent: missing required field "Game.homeWin"`)}
-	}
 	if _, ok := gc.mutation.HomeScore(); !ok {
 		return &ValidationError{Name: "homeScore", err: errors.New(`ent: missing required field "Game.homeScore"`)}
 	}
@@ -180,10 +171,6 @@ func (gc *GameCreate) createSpec() (*Game, *sqlgraph.CreateSpec) {
 	if id, ok := gc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
-	}
-	if value, ok := gc.mutation.HomeWin(); ok {
-		_spec.SetField(game.FieldHomeWin, field.TypeBool, value)
-		_node.HomeWin = value
 	}
 	if value, ok := gc.mutation.HomeScore(); ok {
 		_spec.SetField(game.FieldHomeScore, field.TypeInt, value)

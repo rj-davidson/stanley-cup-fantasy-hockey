@@ -15,7 +15,6 @@ type Game struct {
 func (Game) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("id").Positive().Unique().Immutable(),
-		field.Bool("homeWin"),
 		field.Int("homeScore"),
 		field.Int("awayScore"),
 	}

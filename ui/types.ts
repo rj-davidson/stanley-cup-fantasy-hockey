@@ -1,9 +1,7 @@
 export interface Entry {
   id?: number;
   owner_name: string;
-  forwards?: Player[];
-  defenders?: Player[];
-  goalies?: Player[];
+  players?: Player[];
 }
 
 export interface League {

@@ -4,10 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
-
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/api/handlers"
 	api "github.com/rj-davidson/stanley-cup-fantasy-hockey/api/routes"
+	"log"
 
 	"entgo.io/ent/dialect"
 
@@ -68,7 +66,7 @@ func main() {
 	}
 
 	// Set up routes
-	initializeRoutes(app, client)
+	initRoutes(app, client)
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(app.Listen(":8080"))
@@ -94,21 +92,41 @@ func initializeData(client *ent.Client) {
 			fmt.Printf("Error adding players: %s", err)
 		}
 	}
+
+	// Add playoff games
+	{
+		gameController := controller.NewGameController(client)
+		err := gameController.FetchPostSeasonGames()
+		if err != nil {
+			fmt.Printf("Error fetching playoff games: %s", err)
+		}
+
+	}
+
+	// Fetch Player Points
+	{
+		playerController := controller.NewPlayerController(client)
+		teamModel := model.NewTeamModel(client)
+		teams, _ := teamModel.ListPlayoffTeams()
+		for _, team := range teams {
+			err := playerController.FetchNHLPlayerPoints(team, context.Background())
+			if err != nil {
+				fmt.Printf("Error fetching player points: %s", err)
+			}
+		}
+
+		err := playerController.UpdateGoalieWinsShutouts()
+		if err != nil {
+			fmt.Printf("Error updating goalie wins and shutouts: %s", err)
+		}
+	}
 }
 
-func initializeRoutes(app *fiber.App, client *ent.Client) {
+func initRoutes(app *fiber.App, client *ent.Client) {
 	lm := model.NewLeagueModel(client)
-	la := api.NewLeagueAPI(lm)
 	pm := model.NewPlayerModel(client)
-	pa := api.NewPlayerAPI(pm)
 	em := model.NewEntryModel(client)
 
-	la.RegisterRoutes(app)
-	app.Get("/leagues", handlers.ListLeagues(lm))
-	app.Get("/leagues/:id", handlers.GetLeagueByID(lm, em))
-	app.Post("/leagues", handlers.CreateLeague(lm, em, pm))
-
-	pa.RegisterRoutes(app)
-	app.Get("/players", handlers.ListPlayers(pm))
-	app.Get("/players/:id", handlers.GetPlayerByID(pm))
+	api.RegisterLeagueRoutes(app, lm, em, pm)
+	api.RegisterPlayerRoutes(app, pm)
 }

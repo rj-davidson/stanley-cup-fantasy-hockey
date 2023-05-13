@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/predicate"
@@ -112,6 +113,21 @@ func (pu *PlayerUpdate) SetTeam(t *Team) *PlayerUpdate {
 	return pu.SetTeamID(t.ID)
 }
 
+// AddEntryIDs adds the "entries" edge to the Entry entity by IDs.
+func (pu *PlayerUpdate) AddEntryIDs(ids ...int) *PlayerUpdate {
+	pu.mutation.AddEntryIDs(ids...)
+	return pu
+}
+
+// AddEntries adds the "entries" edges to the Entry entity.
+func (pu *PlayerUpdate) AddEntries(e ...*Entry) *PlayerUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return pu.AddEntryIDs(ids...)
+}
+
 // AddHomeGamesAsGoalieIDs adds the "homeGamesAsGoalie" edge to the Game entity by IDs.
 func (pu *PlayerUpdate) AddHomeGamesAsGoalieIDs(ids ...int) *PlayerUpdate {
 	pu.mutation.AddHomeGamesAsGoalieIDs(ids...)
@@ -151,6 +167,27 @@ func (pu *PlayerUpdate) Mutation() *PlayerMutation {
 func (pu *PlayerUpdate) ClearTeam() *PlayerUpdate {
 	pu.mutation.ClearTeam()
 	return pu
+}
+
+// ClearEntries clears all "entries" edges to the Entry entity.
+func (pu *PlayerUpdate) ClearEntries() *PlayerUpdate {
+	pu.mutation.ClearEntries()
+	return pu
+}
+
+// RemoveEntryIDs removes the "entries" edge to Entry entities by IDs.
+func (pu *PlayerUpdate) RemoveEntryIDs(ids ...int) *PlayerUpdate {
+	pu.mutation.RemoveEntryIDs(ids...)
+	return pu
+}
+
+// RemoveEntries removes "entries" edges to Entry entities.
+func (pu *PlayerUpdate) RemoveEntries(e ...*Entry) *PlayerUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return pu.RemoveEntryIDs(ids...)
 }
 
 // ClearHomeGamesAsGoalie clears all "homeGamesAsGoalie" edges to the Game entity.
@@ -296,6 +333,51 @@ func (pu *PlayerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if pu.mutation.EntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   player.EntriesTable,
+			Columns: player.EntriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entry.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RemovedEntriesIDs(); len(nodes) > 0 && !pu.mutation.EntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   player.EntriesTable,
+			Columns: player.EntriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entry.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.EntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   player.EntriesTable,
+			Columns: player.EntriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entry.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -496,6 +578,21 @@ func (puo *PlayerUpdateOne) SetTeam(t *Team) *PlayerUpdateOne {
 	return puo.SetTeamID(t.ID)
 }
 
+// AddEntryIDs adds the "entries" edge to the Entry entity by IDs.
+func (puo *PlayerUpdateOne) AddEntryIDs(ids ...int) *PlayerUpdateOne {
+	puo.mutation.AddEntryIDs(ids...)
+	return puo
+}
+
+// AddEntries adds the "entries" edges to the Entry entity.
+func (puo *PlayerUpdateOne) AddEntries(e ...*Entry) *PlayerUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return puo.AddEntryIDs(ids...)
+}
+
 // AddHomeGamesAsGoalieIDs adds the "homeGamesAsGoalie" edge to the Game entity by IDs.
 func (puo *PlayerUpdateOne) AddHomeGamesAsGoalieIDs(ids ...int) *PlayerUpdateOne {
 	puo.mutation.AddHomeGamesAsGoalieIDs(ids...)
@@ -535,6 +632,27 @@ func (puo *PlayerUpdateOne) Mutation() *PlayerMutation {
 func (puo *PlayerUpdateOne) ClearTeam() *PlayerUpdateOne {
 	puo.mutation.ClearTeam()
 	return puo
+}
+
+// ClearEntries clears all "entries" edges to the Entry entity.
+func (puo *PlayerUpdateOne) ClearEntries() *PlayerUpdateOne {
+	puo.mutation.ClearEntries()
+	return puo
+}
+
+// RemoveEntryIDs removes the "entries" edge to Entry entities by IDs.
+func (puo *PlayerUpdateOne) RemoveEntryIDs(ids ...int) *PlayerUpdateOne {
+	puo.mutation.RemoveEntryIDs(ids...)
+	return puo
+}
+
+// RemoveEntries removes "entries" edges to Entry entities.
+func (puo *PlayerUpdateOne) RemoveEntries(e ...*Entry) *PlayerUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return puo.RemoveEntryIDs(ids...)
 }
 
 // ClearHomeGamesAsGoalie clears all "homeGamesAsGoalie" edges to the Game entity.
@@ -710,6 +828,51 @@ func (puo *PlayerUpdateOne) sqlSave(ctx context.Context) (_node *Player, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.EntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   player.EntriesTable,
+			Columns: player.EntriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entry.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RemovedEntriesIDs(); len(nodes) > 0 && !puo.mutation.EntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   player.EntriesTable,
+			Columns: player.EntriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entry.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.EntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   player.EntriesTable,
+			Columns: player.EntriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entry.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

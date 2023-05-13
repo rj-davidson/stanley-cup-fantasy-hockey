@@ -53,11 +53,6 @@ func IDLTE(id int) predicate.Game {
 	return predicate.Game(sql.FieldLTE(FieldID, id))
 }
 
-// HomeWin applies equality check predicate on the "homeWin" field. It's identical to HomeWinEQ.
-func HomeWin(v bool) predicate.Game {
-	return predicate.Game(sql.FieldEQ(FieldHomeWin, v))
-}
-
 // HomeScore applies equality check predicate on the "homeScore" field. It's identical to HomeScoreEQ.
 func HomeScore(v int) predicate.Game {
 	return predicate.Game(sql.FieldEQ(FieldHomeScore, v))
@@ -66,16 +61,6 @@ func HomeScore(v int) predicate.Game {
 // AwayScore applies equality check predicate on the "awayScore" field. It's identical to AwayScoreEQ.
 func AwayScore(v int) predicate.Game {
 	return predicate.Game(sql.FieldEQ(FieldAwayScore, v))
-}
-
-// HomeWinEQ applies the EQ predicate on the "homeWin" field.
-func HomeWinEQ(v bool) predicate.Game {
-	return predicate.Game(sql.FieldEQ(FieldHomeWin, v))
-}
-
-// HomeWinNEQ applies the NEQ predicate on the "homeWin" field.
-func HomeWinNEQ(v bool) predicate.Game {
-	return predicate.Game(sql.FieldNEQ(FieldHomeWin, v))
 }
 
 // HomeScoreEQ applies the EQ predicate on the "homeScore" field.

@@ -337,47 +337,15 @@ func (c *EntryClient) QueryLeague(e *Entry) *LeagueQuery {
 	return query
 }
 
-// QueryForwards queries the forwards edge of a Entry.
-func (c *EntryClient) QueryForwards(e *Entry) *PlayerQuery {
+// QueryPlayers queries the players edge of a Entry.
+func (c *EntryClient) QueryPlayers(e *Entry) *PlayerQuery {
 	query := (&PlayerClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := e.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(entry.Table, entry.FieldID, id),
 			sqlgraph.To(player.Table, player.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, entry.ForwardsTable, entry.ForwardsColumn),
-		)
-		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryDefenders queries the defenders edge of a Entry.
-func (c *EntryClient) QueryDefenders(e *Entry) *PlayerQuery {
-	query := (&PlayerClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := e.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(entry.Table, entry.FieldID, id),
-			sqlgraph.To(player.Table, player.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, entry.DefendersTable, entry.DefendersColumn),
-		)
-		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryGoalies queries the goalies edge of a Entry.
-func (c *EntryClient) QueryGoalies(e *Entry) *PlayerQuery {
-	query := (&PlayerClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := e.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(entry.Table, entry.FieldID, id),
-			sqlgraph.To(player.Table, player.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, entry.GoaliesTable, entry.GoaliesColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, entry.PlayersTable, entry.PlayersPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
 		return fromV, nil
@@ -828,6 +796,22 @@ func (c *PlayerClient) QueryTeam(pl *Player) *TeamQuery {
 			sqlgraph.From(player.Table, player.FieldID, id),
 			sqlgraph.To(team.Table, team.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, player.TeamTable, player.TeamColumn),
+		)
+		fromV = sqlgraph.Neighbors(pl.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEntries queries the entries edge of a Player.
+func (c *PlayerClient) QueryEntries(pl *Player) *EntryQuery {
+	query := (&EntryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pl.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(player.Table, player.FieldID, id),
+			sqlgraph.To(entry.Table, entry.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, player.EntriesTable, player.EntriesPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(pl.driver.Dialect(), step)
 		return fromV, nil

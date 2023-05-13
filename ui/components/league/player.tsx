@@ -17,17 +17,17 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player }) => {
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack>
       <Grid container alignItems="center" justifyContent="space-between">
         <Grid item>
           <Typography variant="body1">{player.name}</Typography>
         </Grid>
         <Grid item>
-          <Typography variant="body1">Points: {points}</Typography>
+          <Typography variant="body1">{points}</Typography>
         </Grid>
       </Grid>
       <Typography variant="body2" color="textSecondary">
-        {player.team}
+        {player.position}
       </Typography>
     </Stack>
   );

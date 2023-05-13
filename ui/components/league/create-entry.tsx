@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Stack, TextField, Button, Autocomplete } from '@mui/material';
-import { Entry, League, Player } from '@/types';
+import { Entry, Player } from '@/types';
 
 interface Props {
   onCreateEntry: (entry: Entry) => void;
-  forwards: Player[];
-  defenders: Player[];
-  goalies: Player[];
+  players: Player[];
   numForwards: number;
   numDefenders: number;
   numGoalies: number;
@@ -14,23 +12,18 @@ interface Props {
 
 export default function CreateEntryForm(props: Props) {
   const [ownerName, setOwnerName] = useState('');
-  const [selectedForwards, setSelectedForwards] = useState<Player[]>([]);
-  const [selectedDefenders, setSelectedDefenders] = useState<Player[]>([]);
-  const [selectedGoalies, setSelectedGoalies] = useState<Player[]>([]);
+  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
-    setSelectedForwards(new Array(props.numForwards).fill(null));
-    setSelectedDefenders(new Array(props.numDefenders).fill(null));
-    setSelectedGoalies(new Array(props.numGoalies).fill(null));
+    setSelectedPlayers(
+      new Array(props.numForwards + props.numDefenders + props.numGoalies).fill(
+        null,
+      ),
+    );
   }, [props.numForwards, props.numDefenders, props.numGoalies]);
 
   const allPlayersSelected = () => {
-    const allPlayers = [
-      ...selectedForwards,
-      ...selectedDefenders,
-      ...selectedGoalies,
-    ];
-    return allPlayers.every((player) => player !== null);
+    return selectedPlayers.every((player) => player !== null);
   };
 
   const handleFinalizeEntry = () => {
@@ -40,16 +33,13 @@ export default function CreateEntryForm(props: Props) {
     }
     const entry: Entry = {
       owner_name: ownerName,
-      forwards: selectedForwards.map((p) => p),
-      defenders: selectedDefenders.map((p) => p),
-      goalies: selectedGoalies.map((p) => p),
+      players: selectedPlayers.map((p) => p),
     };
     props.onCreateEntry(entry);
   };
 
   const handlePlayerChange =
-    (setSelectedPlayers: Function, index: number) =>
-    (event: any, value: Player | null) => {
+    (index: number) => (event: any, value: Player | null) => {
       setSelectedPlayers((oldArray: Player[]) => {
         const newArray = [...oldArray];
         newArray[index] = value || oldArray[index];
@@ -60,21 +50,45 @@ export default function CreateEntryForm(props: Props) {
   const playerSelect = (
     label: string,
     players: Player[],
-    selectedPlayers: Player[],
-    setSelectedPlayers: Function,
-  ) =>
-    selectedPlayers.map((player: Player, index: number) => (
+    selectedIndex: number,
+  ) => {
+    let filteredPlayers: Player[] = [];
+
+    switch (label) {
+      case 'Forward':
+        filteredPlayers = players.filter(
+          (player) => player.position === 'Forward',
+        );
+        break;
+      case 'Defenseman':
+        filteredPlayers = players.filter(
+          (player) => player.position === 'Defenseman',
+        );
+        break;
+      case 'Goalie':
+        filteredPlayers = players.filter(
+          (player) => player.position === 'Goalie',
+        );
+        break;
+      default:
+        break;
+    }
+
+    return (
       <Autocomplete
-        key={index}
-        id={`player-select-${index}`}
-        options={players.filter((p: Player) => !selectedPlayers.includes(p))}
+        key={selectedIndex}
+        id={`player-select-${selectedIndex}`}
+        options={filteredPlayers.filter(
+          (p: Player) => !selectedPlayers.includes(p),
+        )}
         getOptionLabel={(option) => option.name}
         style={{ width: 300 }}
         renderInput={(params) => <TextField {...params} label={label} />}
-        value={player}
-        onChange={handlePlayerChange(setSelectedPlayers, index)}
+        value={selectedPlayers[selectedIndex]}
+        onChange={handlePlayerChange(selectedIndex)}
       />
-    ));
+    );
+  };
 
   return (
     <Stack spacing={2}>
@@ -84,23 +98,18 @@ export default function CreateEntryForm(props: Props) {
         value={ownerName}
         onChange={(e) => setOwnerName(e.target.value)}
       />
-      {playerSelect(
-        'Forward',
-        props.forwards,
-        selectedForwards,
-        setSelectedForwards,
+      {Array.from({ length: props.numForwards }).map((_, index) =>
+        playerSelect('Forward', props.players, index),
       )}
-      {playerSelect(
-        'Defenseman',
-        props.defenders,
-        selectedDefenders,
-        setSelectedDefenders,
+      {Array.from({ length: props.numDefenders }).map((_, index) =>
+        playerSelect('Defenseman', props.players, index + props.numForwards),
       )}
-      {playerSelect(
-        'Goalie',
-        props.goalies,
-        selectedGoalies,
-        setSelectedGoalies,
+      {Array.from({ length: props.numGoalies }).map((_, index) =>
+        playerSelect(
+          'Goalie',
+          props.players,
+          index + props.numForwards + props.numDefenders,
+        ),
       )}
       <Button
         variant="contained"

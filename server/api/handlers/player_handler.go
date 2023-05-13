@@ -33,3 +33,19 @@ func GetPlayerByID(pm *model.PlayerModel) fiber.Handler {
 		return c.JSON(player)
 	}
 }
+
+func DeletePlayer(pm *model.PlayerModel) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		id, err := strconv.Atoi(c.Params("id"))
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		err = pm.DeletePlayer(id)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		return c.SendStatus(fiber.StatusNoContent)
+	}
+}

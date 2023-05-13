@@ -28,6 +28,8 @@ const (
 	FieldWins = "wins"
 	// EdgeTeam holds the string denoting the team edge name in mutations.
 	EdgeTeam = "team"
+	// EdgeEntries holds the string denoting the entries edge name in mutations.
+	EdgeEntries = "entries"
 	// EdgeHomeGamesAsGoalie holds the string denoting the homegamesasgoalie edge name in mutations.
 	EdgeHomeGamesAsGoalie = "homeGamesAsGoalie"
 	// EdgeAwayGamesAsGoalie holds the string denoting the awaygamesasgoalie edge name in mutations.
@@ -41,6 +43,11 @@ const (
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.
 	TeamColumn = "team_players"
+	// EntriesTable is the table that holds the entries relation/edge. The primary key declared below.
+	EntriesTable = "entry_players"
+	// EntriesInverseTable is the table name for the Entry entity.
+	// It exists in this package in order to avoid circular dependency with the "entry" package.
+	EntriesInverseTable = "entries"
 	// HomeGamesAsGoalieTable is the table that holds the homeGamesAsGoalie relation/edge.
 	HomeGamesAsGoalieTable = "games"
 	// HomeGamesAsGoalieInverseTable is the table name for the Game entity.
@@ -71,11 +78,14 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "players"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"entry_forwards",
-	"entry_defenders",
-	"entry_goalies",
 	"team_players",
 }
+
+var (
+	// EntriesPrimaryKey and EntriesColumn2 are the table columns denoting the
+	// primary key for the entries relation (M2M).
+	EntriesPrimaryKey = []string{"entry_id", "player_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -166,6 +176,20 @@ func ByTeamField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
+// ByEntriesCount orders the results by entries count.
+func ByEntriesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEntriesStep(), opts...)
+	}
+}
+
+// ByEntries orders the results by entries terms.
+func ByEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByHomeGamesAsGoalieCount orders the results by homeGamesAsGoalie count.
 func ByHomeGamesAsGoalieCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -198,6 +222,13 @@ func newTeamStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TeamInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, TeamTable, TeamColumn),
+	)
+}
+func newEntriesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EntriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, EntriesTable, EntriesPrimaryKey...),
 	)
 }
 func newHomeGamesAsGoalieStep() *sqlgraph.Step {

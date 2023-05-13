@@ -17,19 +17,18 @@ func NewEntryModel(client *ent.Client) *EntryModel {
 	return &EntryModel{client: client}
 }
 
-func (em *EntryModel) CreateEntry(ownerName string, league *ent.League, forwards, defenders, goalies []*ent.Player) (*ent.Entry, error) {
-	e, err := em.client.Entry.
+func (em *EntryModel) CreateEntry(ownerName string, league *ent.League, players []*ent.Player) (*ent.Entry, error) {
+	entry := em.client.Entry.
 		Create().
 		SetOwnerName(ownerName).
 		SetLeague(league).
-		AddForwards(forwards...).
-		AddDefenders(defenders...).
-		AddGoalies(goalies...).
-		Save(context.Background())
+		AddPlayers(players...)
 
+	e, err := entry.Save(context.Background())
 	if err != nil {
 		return nil, err
 	}
+
 	return e, nil
 }
 
@@ -49,6 +48,8 @@ func (em *EntryModel) UpdateEntry(id int, ownerName string, leagueID int, forwar
 	forwards, err := pm.GetPlayersByID(forwardsIDs)
 	defenders, err := pm.GetPlayersByID(defendersIDs)
 	goalies, err := pm.GetPlayersByID(goaliesIDs)
+	players := append(forwards, defenders...)
+	players = append(players, goalies...)
 	if err != nil {
 		return nil, fmt.Errorf("invalid player IDs: %w", err)
 	}
@@ -57,12 +58,8 @@ func (em *EntryModel) UpdateEntry(id int, ownerName string, leagueID int, forwar
 		UpdateOneID(id).
 		SetOwnerName(ownerName).
 		SetLeague(l).
-		ClearForwards().
-		AddForwards(forwards...).
-		ClearDefenders().
-		AddDefenders(defenders...).
-		ClearGoalies().
-		AddGoalies(goalies...).
+		ClearPlayers().
+		AddPlayers(players...).
 		Save(context.Background())
 
 	if err != nil {
@@ -97,4 +94,18 @@ func (em *EntryModel) ListEntries() ([]*ent.Entry, error) {
 	return em.client.Entry.
 		Query().
 		All(context.Background())
+}
+
+func (em *EntryModel) GetEntryPlayers(entryID int) ([]*ent.Player, error) {
+	entry, err := em.client.Entry.
+		Query().
+		Where(entry.ID(entryID)).
+		WithPlayers().
+		Only(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	players := entry.Edges.Players
+	return players, nil
 }

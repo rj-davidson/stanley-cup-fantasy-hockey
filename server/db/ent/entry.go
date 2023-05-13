@@ -30,15 +30,11 @@ type Entry struct {
 type EntryEdges struct {
 	// League holds the value of the league edge.
 	League *League `json:"league,omitempty"`
-	// Forwards holds the value of the forwards edge.
-	Forwards []*Player `json:"forwards,omitempty"`
-	// Defenders holds the value of the defenders edge.
-	Defenders []*Player `json:"defenders,omitempty"`
-	// Goalies holds the value of the goalies edge.
-	Goalies []*Player `json:"goalies,omitempty"`
+	// Players holds the value of the players edge.
+	Players []*Player `json:"players,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [2]bool
 }
 
 // LeagueOrErr returns the League value or an error if the edge
@@ -54,31 +50,13 @@ func (e EntryEdges) LeagueOrErr() (*League, error) {
 	return nil, &NotLoadedError{edge: "league"}
 }
 
-// ForwardsOrErr returns the Forwards value or an error if the edge
+// PlayersOrErr returns the Players value or an error if the edge
 // was not loaded in eager-loading.
-func (e EntryEdges) ForwardsOrErr() ([]*Player, error) {
+func (e EntryEdges) PlayersOrErr() ([]*Player, error) {
 	if e.loadedTypes[1] {
-		return e.Forwards, nil
+		return e.Players, nil
 	}
-	return nil, &NotLoadedError{edge: "forwards"}
-}
-
-// DefendersOrErr returns the Defenders value or an error if the edge
-// was not loaded in eager-loading.
-func (e EntryEdges) DefendersOrErr() ([]*Player, error) {
-	if e.loadedTypes[2] {
-		return e.Defenders, nil
-	}
-	return nil, &NotLoadedError{edge: "defenders"}
-}
-
-// GoaliesOrErr returns the Goalies value or an error if the edge
-// was not loaded in eager-loading.
-func (e EntryEdges) GoaliesOrErr() ([]*Player, error) {
-	if e.loadedTypes[3] {
-		return e.Goalies, nil
-	}
-	return nil, &NotLoadedError{edge: "goalies"}
+	return nil, &NotLoadedError{edge: "players"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -144,19 +122,9 @@ func (e *Entry) QueryLeague() *LeagueQuery {
 	return NewEntryClient(e.config).QueryLeague(e)
 }
 
-// QueryForwards queries the "forwards" edge of the Entry entity.
-func (e *Entry) QueryForwards() *PlayerQuery {
-	return NewEntryClient(e.config).QueryForwards(e)
-}
-
-// QueryDefenders queries the "defenders" edge of the Entry entity.
-func (e *Entry) QueryDefenders() *PlayerQuery {
-	return NewEntryClient(e.config).QueryDefenders(e)
-}
-
-// QueryGoalies queries the "goalies" edge of the Entry entity.
-func (e *Entry) QueryGoalies() *PlayerQuery {
-	return NewEntryClient(e.config).QueryGoalies(e)
+// QueryPlayers queries the "players" edge of the Entry entity.
+func (e *Entry) QueryPlayers() *PlayerQuery {
+	return NewEntryClient(e.config).QueryPlayers(e)
 }
 
 // Update returns a builder for updating this Entry.

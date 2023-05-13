@@ -58,6 +58,19 @@ func (pm *PlayerModel) UpdatePlayer(id int, name, position string, goals, assist
 	return p, nil
 }
 
+// Function for updating player stats
+func (pm *PlayerModel) UpdatePlayerPoints(player *ent.Player, goals, assists int) (*ent.Player, error) {
+	p, err := pm.client.Player.
+		UpdateOne(player).
+		SetGoals(goals).
+		SetAssists(assists).
+		Save(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
 func (pm *PlayerModel) DeletePlayer(id int) error {
 	err := pm.client.Player.
 		DeleteOneID(id).
@@ -89,4 +102,28 @@ func (pm *PlayerModel) ListPlayerIDs() ([]int, error) {
 	}
 
 	return playerIDs, nil
+}
+
+// UpdateGoalieWins updates the wins for a goalie
+func (pm *PlayerModel) UpdateGoalieWins(goalie *ent.Player, wins int) (*ent.Player, error) {
+	p, err := pm.client.Player.
+		UpdateOne(goalie).
+		SetWins(wins).
+		Save(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
+// UpdateGoalieShutouts updates the shutouts for a goalie
+func (pm *PlayerModel) UpdateGoalieShutouts(goalie *ent.Player, shutouts int) (*ent.Player, error) {
+	p, err := pm.client.Player.
+		UpdateOne(goalie).
+		SetShutouts(shutouts).
+		Save(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
 }

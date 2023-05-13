@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/predicate"
@@ -25,6 +26,7 @@ type PlayerQuery struct {
 	inters                []Interceptor
 	predicates            []predicate.Player
 	withTeam              *TeamQuery
+	withEntries           *EntryQuery
 	withHomeGamesAsGoalie *GameQuery
 	withAwayGamesAsGoalie *GameQuery
 	withFKs               bool
@@ -79,6 +81,28 @@ func (pq *PlayerQuery) QueryTeam() *TeamQuery {
 			sqlgraph.From(player.Table, player.FieldID, selector),
 			sqlgraph.To(team.Table, team.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, player.TeamTable, player.TeamColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryEntries chains the current query on the "entries" edge.
+func (pq *PlayerQuery) QueryEntries() *EntryQuery {
+	query := (&EntryClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(player.Table, player.FieldID, selector),
+			sqlgraph.To(entry.Table, entry.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, player.EntriesTable, player.EntriesPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -323,6 +347,7 @@ func (pq *PlayerQuery) Clone() *PlayerQuery {
 		inters:                append([]Interceptor{}, pq.inters...),
 		predicates:            append([]predicate.Player{}, pq.predicates...),
 		withTeam:              pq.withTeam.Clone(),
+		withEntries:           pq.withEntries.Clone(),
 		withHomeGamesAsGoalie: pq.withHomeGamesAsGoalie.Clone(),
 		withAwayGamesAsGoalie: pq.withAwayGamesAsGoalie.Clone(),
 		// clone intermediate query.
@@ -339,6 +364,17 @@ func (pq *PlayerQuery) WithTeam(opts ...func(*TeamQuery)) *PlayerQuery {
 		opt(query)
 	}
 	pq.withTeam = query
+	return pq
+}
+
+// WithEntries tells the query-builder to eager-load the nodes that are connected to
+// the "entries" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PlayerQuery) WithEntries(opts ...func(*EntryQuery)) *PlayerQuery {
+	query := (&EntryClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withEntries = query
 	return pq
 }
 
@@ -443,8 +479,9 @@ func (pq *PlayerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Playe
 		nodes       = []*Player{}
 		withFKs     = pq.withFKs
 		_spec       = pq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			pq.withTeam != nil,
+			pq.withEntries != nil,
 			pq.withHomeGamesAsGoalie != nil,
 			pq.withAwayGamesAsGoalie != nil,
 		}
@@ -476,6 +513,13 @@ func (pq *PlayerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Playe
 	if query := pq.withTeam; query != nil {
 		if err := pq.loadTeam(ctx, query, nodes, nil,
 			func(n *Player, e *Team) { n.Edges.Team = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withEntries; query != nil {
+		if err := pq.loadEntries(ctx, query, nodes,
+			func(n *Player) { n.Edges.Entries = []*Entry{} },
+			func(n *Player, e *Entry) { n.Edges.Entries = append(n.Edges.Entries, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -524,6 +568,67 @@ func (pq *PlayerQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes []*
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (pq *PlayerQuery) loadEntries(ctx context.Context, query *EntryQuery, nodes []*Player, init func(*Player), assign func(*Player, *Entry)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Player)
+	nids := make(map[int]map[*Player]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(player.EntriesTable)
+		s.Join(joinT).On(s.C(entry.FieldID), joinT.C(player.EntriesPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(player.EntriesPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(player.EntriesPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Player]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Entry](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "entries" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
 		}
 	}
 	return nil

@@ -68,7 +68,7 @@ func (ctrl *NHLController) AddNHLTeams() error {
 			fmt.Println("Team already added: %s\n", nhlTeam.Name)
 			continue
 		} else {
-			_, err := ctrl.teamModel.CreateTeam(nhlTeam.Name, fmt.Sprintf("nhl_%d_logo.png", nhlTeam.ID), nhlTeam.ID, false)
+			_, err := ctrl.teamModel.CreateTeam(nhlTeam.Name, fmt.Sprintf("nhl_%d_logo.png", nhlTeam.ID), nhlTeam.ID, true)
 			if err != nil {
 				return err
 			} else {

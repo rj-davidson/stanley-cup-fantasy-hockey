@@ -346,6 +346,29 @@ func HasTeamWith(preds ...predicate.Team) predicate.Player {
 	})
 }
 
+// HasEntries applies the HasEdge predicate on the "entries" edge.
+func HasEntries() predicate.Player {
+	return predicate.Player(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, EntriesTable, EntriesPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEntriesWith applies the HasEdge predicate on the "entries" edge with a given conditions (other predicates).
+func HasEntriesWith(preds ...predicate.Entry) predicate.Player {
+	return predicate.Player(func(s *sql.Selector) {
+		step := newEntriesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasHomeGamesAsGoalie applies the HasEdge predicate on the "homeGamesAsGoalie" edge.
 func HasHomeGamesAsGoalie() predicate.Player {
 	return predicate.Player(func(s *sql.Selector) {

@@ -54,49 +54,19 @@ func (eu *EntryUpdate) SetLeague(l *League) *EntryUpdate {
 	return eu.SetLeagueID(l.ID)
 }
 
-// AddForwardIDs adds the "forwards" edge to the Player entity by IDs.
-func (eu *EntryUpdate) AddForwardIDs(ids ...int) *EntryUpdate {
-	eu.mutation.AddForwardIDs(ids...)
+// AddPlayerIDs adds the "players" edge to the Player entity by IDs.
+func (eu *EntryUpdate) AddPlayerIDs(ids ...int) *EntryUpdate {
+	eu.mutation.AddPlayerIDs(ids...)
 	return eu
 }
 
-// AddForwards adds the "forwards" edges to the Player entity.
-func (eu *EntryUpdate) AddForwards(p ...*Player) *EntryUpdate {
+// AddPlayers adds the "players" edges to the Player entity.
+func (eu *EntryUpdate) AddPlayers(p ...*Player) *EntryUpdate {
 	ids := make([]int, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
 	}
-	return eu.AddForwardIDs(ids...)
-}
-
-// AddDefenderIDs adds the "defenders" edge to the Player entity by IDs.
-func (eu *EntryUpdate) AddDefenderIDs(ids ...int) *EntryUpdate {
-	eu.mutation.AddDefenderIDs(ids...)
-	return eu
-}
-
-// AddDefenders adds the "defenders" edges to the Player entity.
-func (eu *EntryUpdate) AddDefenders(p ...*Player) *EntryUpdate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return eu.AddDefenderIDs(ids...)
-}
-
-// AddGoalyIDs adds the "goalies" edge to the Player entity by IDs.
-func (eu *EntryUpdate) AddGoalyIDs(ids ...int) *EntryUpdate {
-	eu.mutation.AddGoalyIDs(ids...)
-	return eu
-}
-
-// AddGoalies adds the "goalies" edges to the Player entity.
-func (eu *EntryUpdate) AddGoalies(p ...*Player) *EntryUpdate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return eu.AddGoalyIDs(ids...)
+	return eu.AddPlayerIDs(ids...)
 }
 
 // Mutation returns the EntryMutation object of the builder.
@@ -110,67 +80,25 @@ func (eu *EntryUpdate) ClearLeague() *EntryUpdate {
 	return eu
 }
 
-// ClearForwards clears all "forwards" edges to the Player entity.
-func (eu *EntryUpdate) ClearForwards() *EntryUpdate {
-	eu.mutation.ClearForwards()
+// ClearPlayers clears all "players" edges to the Player entity.
+func (eu *EntryUpdate) ClearPlayers() *EntryUpdate {
+	eu.mutation.ClearPlayers()
 	return eu
 }
 
-// RemoveForwardIDs removes the "forwards" edge to Player entities by IDs.
-func (eu *EntryUpdate) RemoveForwardIDs(ids ...int) *EntryUpdate {
-	eu.mutation.RemoveForwardIDs(ids...)
+// RemovePlayerIDs removes the "players" edge to Player entities by IDs.
+func (eu *EntryUpdate) RemovePlayerIDs(ids ...int) *EntryUpdate {
+	eu.mutation.RemovePlayerIDs(ids...)
 	return eu
 }
 
-// RemoveForwards removes "forwards" edges to Player entities.
-func (eu *EntryUpdate) RemoveForwards(p ...*Player) *EntryUpdate {
+// RemovePlayers removes "players" edges to Player entities.
+func (eu *EntryUpdate) RemovePlayers(p ...*Player) *EntryUpdate {
 	ids := make([]int, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
 	}
-	return eu.RemoveForwardIDs(ids...)
-}
-
-// ClearDefenders clears all "defenders" edges to the Player entity.
-func (eu *EntryUpdate) ClearDefenders() *EntryUpdate {
-	eu.mutation.ClearDefenders()
-	return eu
-}
-
-// RemoveDefenderIDs removes the "defenders" edge to Player entities by IDs.
-func (eu *EntryUpdate) RemoveDefenderIDs(ids ...int) *EntryUpdate {
-	eu.mutation.RemoveDefenderIDs(ids...)
-	return eu
-}
-
-// RemoveDefenders removes "defenders" edges to Player entities.
-func (eu *EntryUpdate) RemoveDefenders(p ...*Player) *EntryUpdate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return eu.RemoveDefenderIDs(ids...)
-}
-
-// ClearGoalies clears all "goalies" edges to the Player entity.
-func (eu *EntryUpdate) ClearGoalies() *EntryUpdate {
-	eu.mutation.ClearGoalies()
-	return eu
-}
-
-// RemoveGoalyIDs removes the "goalies" edge to Player entities by IDs.
-func (eu *EntryUpdate) RemoveGoalyIDs(ids ...int) *EntryUpdate {
-	eu.mutation.RemoveGoalyIDs(ids...)
-	return eu
-}
-
-// RemoveGoalies removes "goalies" edges to Player entities.
-func (eu *EntryUpdate) RemoveGoalies(p ...*Player) *EntryUpdate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return eu.RemoveGoalyIDs(ids...)
+	return eu.RemovePlayerIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -241,12 +169,12 @@ func (eu *EntryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.mutation.ForwardsCleared() {
+	if eu.mutation.PlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   entry.ForwardsTable,
-			Columns: []string{entry.ForwardsColumn},
+			Table:   entry.PlayersTable,
+			Columns: entry.PlayersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
@@ -254,12 +182,12 @@ func (eu *EntryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.mutation.RemovedForwardsIDs(); len(nodes) > 0 && !eu.mutation.ForwardsCleared() {
+	if nodes := eu.mutation.RemovedPlayersIDs(); len(nodes) > 0 && !eu.mutation.PlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   entry.ForwardsTable,
-			Columns: []string{entry.ForwardsColumn},
+			Table:   entry.PlayersTable,
+			Columns: entry.PlayersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
@@ -270,102 +198,12 @@ func (eu *EntryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.mutation.ForwardsIDs(); len(nodes) > 0 {
+	if nodes := eu.mutation.PlayersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   entry.ForwardsTable,
-			Columns: []string{entry.ForwardsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if eu.mutation.DefendersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.DefendersTable,
-			Columns: []string{entry.DefendersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := eu.mutation.RemovedDefendersIDs(); len(nodes) > 0 && !eu.mutation.DefendersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.DefendersTable,
-			Columns: []string{entry.DefendersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := eu.mutation.DefendersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.DefendersTable,
-			Columns: []string{entry.DefendersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if eu.mutation.GoaliesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.GoaliesTable,
-			Columns: []string{entry.GoaliesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := eu.mutation.RemovedGoaliesIDs(); len(nodes) > 0 && !eu.mutation.GoaliesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.GoaliesTable,
-			Columns: []string{entry.GoaliesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := eu.mutation.GoaliesIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.GoaliesTable,
-			Columns: []string{entry.GoaliesColumn},
+			Table:   entry.PlayersTable,
+			Columns: entry.PlayersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
@@ -421,49 +259,19 @@ func (euo *EntryUpdateOne) SetLeague(l *League) *EntryUpdateOne {
 	return euo.SetLeagueID(l.ID)
 }
 
-// AddForwardIDs adds the "forwards" edge to the Player entity by IDs.
-func (euo *EntryUpdateOne) AddForwardIDs(ids ...int) *EntryUpdateOne {
-	euo.mutation.AddForwardIDs(ids...)
+// AddPlayerIDs adds the "players" edge to the Player entity by IDs.
+func (euo *EntryUpdateOne) AddPlayerIDs(ids ...int) *EntryUpdateOne {
+	euo.mutation.AddPlayerIDs(ids...)
 	return euo
 }
 
-// AddForwards adds the "forwards" edges to the Player entity.
-func (euo *EntryUpdateOne) AddForwards(p ...*Player) *EntryUpdateOne {
+// AddPlayers adds the "players" edges to the Player entity.
+func (euo *EntryUpdateOne) AddPlayers(p ...*Player) *EntryUpdateOne {
 	ids := make([]int, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
 	}
-	return euo.AddForwardIDs(ids...)
-}
-
-// AddDefenderIDs adds the "defenders" edge to the Player entity by IDs.
-func (euo *EntryUpdateOne) AddDefenderIDs(ids ...int) *EntryUpdateOne {
-	euo.mutation.AddDefenderIDs(ids...)
-	return euo
-}
-
-// AddDefenders adds the "defenders" edges to the Player entity.
-func (euo *EntryUpdateOne) AddDefenders(p ...*Player) *EntryUpdateOne {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return euo.AddDefenderIDs(ids...)
-}
-
-// AddGoalyIDs adds the "goalies" edge to the Player entity by IDs.
-func (euo *EntryUpdateOne) AddGoalyIDs(ids ...int) *EntryUpdateOne {
-	euo.mutation.AddGoalyIDs(ids...)
-	return euo
-}
-
-// AddGoalies adds the "goalies" edges to the Player entity.
-func (euo *EntryUpdateOne) AddGoalies(p ...*Player) *EntryUpdateOne {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return euo.AddGoalyIDs(ids...)
+	return euo.AddPlayerIDs(ids...)
 }
 
 // Mutation returns the EntryMutation object of the builder.
@@ -477,67 +285,25 @@ func (euo *EntryUpdateOne) ClearLeague() *EntryUpdateOne {
 	return euo
 }
 
-// ClearForwards clears all "forwards" edges to the Player entity.
-func (euo *EntryUpdateOne) ClearForwards() *EntryUpdateOne {
-	euo.mutation.ClearForwards()
+// ClearPlayers clears all "players" edges to the Player entity.
+func (euo *EntryUpdateOne) ClearPlayers() *EntryUpdateOne {
+	euo.mutation.ClearPlayers()
 	return euo
 }
 
-// RemoveForwardIDs removes the "forwards" edge to Player entities by IDs.
-func (euo *EntryUpdateOne) RemoveForwardIDs(ids ...int) *EntryUpdateOne {
-	euo.mutation.RemoveForwardIDs(ids...)
+// RemovePlayerIDs removes the "players" edge to Player entities by IDs.
+func (euo *EntryUpdateOne) RemovePlayerIDs(ids ...int) *EntryUpdateOne {
+	euo.mutation.RemovePlayerIDs(ids...)
 	return euo
 }
 
-// RemoveForwards removes "forwards" edges to Player entities.
-func (euo *EntryUpdateOne) RemoveForwards(p ...*Player) *EntryUpdateOne {
+// RemovePlayers removes "players" edges to Player entities.
+func (euo *EntryUpdateOne) RemovePlayers(p ...*Player) *EntryUpdateOne {
 	ids := make([]int, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
 	}
-	return euo.RemoveForwardIDs(ids...)
-}
-
-// ClearDefenders clears all "defenders" edges to the Player entity.
-func (euo *EntryUpdateOne) ClearDefenders() *EntryUpdateOne {
-	euo.mutation.ClearDefenders()
-	return euo
-}
-
-// RemoveDefenderIDs removes the "defenders" edge to Player entities by IDs.
-func (euo *EntryUpdateOne) RemoveDefenderIDs(ids ...int) *EntryUpdateOne {
-	euo.mutation.RemoveDefenderIDs(ids...)
-	return euo
-}
-
-// RemoveDefenders removes "defenders" edges to Player entities.
-func (euo *EntryUpdateOne) RemoveDefenders(p ...*Player) *EntryUpdateOne {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return euo.RemoveDefenderIDs(ids...)
-}
-
-// ClearGoalies clears all "goalies" edges to the Player entity.
-func (euo *EntryUpdateOne) ClearGoalies() *EntryUpdateOne {
-	euo.mutation.ClearGoalies()
-	return euo
-}
-
-// RemoveGoalyIDs removes the "goalies" edge to Player entities by IDs.
-func (euo *EntryUpdateOne) RemoveGoalyIDs(ids ...int) *EntryUpdateOne {
-	euo.mutation.RemoveGoalyIDs(ids...)
-	return euo
-}
-
-// RemoveGoalies removes "goalies" edges to Player entities.
-func (euo *EntryUpdateOne) RemoveGoalies(p ...*Player) *EntryUpdateOne {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return euo.RemoveGoalyIDs(ids...)
+	return euo.RemovePlayerIDs(ids...)
 }
 
 // Where appends a list predicates to the EntryUpdate builder.
@@ -638,12 +404,12 @@ func (euo *EntryUpdateOne) sqlSave(ctx context.Context) (_node *Entry, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.mutation.ForwardsCleared() {
+	if euo.mutation.PlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   entry.ForwardsTable,
-			Columns: []string{entry.ForwardsColumn},
+			Table:   entry.PlayersTable,
+			Columns: entry.PlayersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
@@ -651,12 +417,12 @@ func (euo *EntryUpdateOne) sqlSave(ctx context.Context) (_node *Entry, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.mutation.RemovedForwardsIDs(); len(nodes) > 0 && !euo.mutation.ForwardsCleared() {
+	if nodes := euo.mutation.RemovedPlayersIDs(); len(nodes) > 0 && !euo.mutation.PlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   entry.ForwardsTable,
-			Columns: []string{entry.ForwardsColumn},
+			Table:   entry.PlayersTable,
+			Columns: entry.PlayersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
@@ -667,102 +433,12 @@ func (euo *EntryUpdateOne) sqlSave(ctx context.Context) (_node *Entry, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.mutation.ForwardsIDs(); len(nodes) > 0 {
+	if nodes := euo.mutation.PlayersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   entry.ForwardsTable,
-			Columns: []string{entry.ForwardsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if euo.mutation.DefendersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.DefendersTable,
-			Columns: []string{entry.DefendersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := euo.mutation.RemovedDefendersIDs(); len(nodes) > 0 && !euo.mutation.DefendersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.DefendersTable,
-			Columns: []string{entry.DefendersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := euo.mutation.DefendersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.DefendersTable,
-			Columns: []string{entry.DefendersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if euo.mutation.GoaliesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.GoaliesTable,
-			Columns: []string{entry.GoaliesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := euo.mutation.RemovedGoaliesIDs(); len(nodes) > 0 && !euo.mutation.GoaliesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.GoaliesTable,
-			Columns: []string{entry.GoaliesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := euo.mutation.GoaliesIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   entry.GoaliesTable,
-			Columns: []string{entry.GoaliesColumn},
+			Table:   entry.PlayersTable,
+			Columns: entry.PlayersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),

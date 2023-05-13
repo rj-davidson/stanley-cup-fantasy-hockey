@@ -16,12 +16,8 @@ const (
 	FieldOwnerName = "owner_name"
 	// EdgeLeague holds the string denoting the league edge name in mutations.
 	EdgeLeague = "league"
-	// EdgeForwards holds the string denoting the forwards edge name in mutations.
-	EdgeForwards = "forwards"
-	// EdgeDefenders holds the string denoting the defenders edge name in mutations.
-	EdgeDefenders = "defenders"
-	// EdgeGoalies holds the string denoting the goalies edge name in mutations.
-	EdgeGoalies = "goalies"
+	// EdgePlayers holds the string denoting the players edge name in mutations.
+	EdgePlayers = "players"
 	// Table holds the table name of the entry in the database.
 	Table = "entries"
 	// LeagueTable is the table that holds the league relation/edge.
@@ -31,27 +27,11 @@ const (
 	LeagueInverseTable = "leagues"
 	// LeagueColumn is the table column denoting the league relation/edge.
 	LeagueColumn = "league_entries"
-	// ForwardsTable is the table that holds the forwards relation/edge.
-	ForwardsTable = "players"
-	// ForwardsInverseTable is the table name for the Player entity.
+	// PlayersTable is the table that holds the players relation/edge. The primary key declared below.
+	PlayersTable = "entry_players"
+	// PlayersInverseTable is the table name for the Player entity.
 	// It exists in this package in order to avoid circular dependency with the "player" package.
-	ForwardsInverseTable = "players"
-	// ForwardsColumn is the table column denoting the forwards relation/edge.
-	ForwardsColumn = "entry_forwards"
-	// DefendersTable is the table that holds the defenders relation/edge.
-	DefendersTable = "players"
-	// DefendersInverseTable is the table name for the Player entity.
-	// It exists in this package in order to avoid circular dependency with the "player" package.
-	DefendersInverseTable = "players"
-	// DefendersColumn is the table column denoting the defenders relation/edge.
-	DefendersColumn = "entry_defenders"
-	// GoaliesTable is the table that holds the goalies relation/edge.
-	GoaliesTable = "players"
-	// GoaliesInverseTable is the table name for the Player entity.
-	// It exists in this package in order to avoid circular dependency with the "player" package.
-	GoaliesInverseTable = "players"
-	// GoaliesColumn is the table column denoting the goalies relation/edge.
-	GoaliesColumn = "entry_goalies"
+	PlayersInverseTable = "players"
 )
 
 // Columns holds all SQL columns for entry fields.
@@ -65,6 +45,12 @@ var Columns = []string{
 var ForeignKeys = []string{
 	"league_entries",
 }
+
+var (
+	// PlayersPrimaryKey and PlayersColumn2 are the table columns denoting the
+	// primary key for the players relation (M2M).
+	PlayersPrimaryKey = []string{"entry_id", "player_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -101,45 +87,17 @@ func ByLeagueField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// ByForwardsCount orders the results by forwards count.
-func ByForwardsCount(opts ...sql.OrderTermOption) OrderOption {
+// ByPlayersCount orders the results by players count.
+func ByPlayersCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newForwardsStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newPlayersStep(), opts...)
 	}
 }
 
-// ByForwards orders the results by forwards terms.
-func ByForwards(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByPlayers orders the results by players terms.
+func ByPlayers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newForwardsStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
-
-// ByDefendersCount orders the results by defenders count.
-func ByDefendersCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newDefendersStep(), opts...)
-	}
-}
-
-// ByDefenders orders the results by defenders terms.
-func ByDefenders(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newDefendersStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
-
-// ByGoaliesCount orders the results by goalies count.
-func ByGoaliesCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newGoaliesStep(), opts...)
-	}
-}
-
-// ByGoalies orders the results by goalies terms.
-func ByGoalies(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newGoaliesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newPlayersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newLeagueStep() *sqlgraph.Step {
@@ -149,24 +107,10 @@ func newLeagueStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, LeagueTable, LeagueColumn),
 	)
 }
-func newForwardsStep() *sqlgraph.Step {
+func newPlayersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ForwardsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, ForwardsTable, ForwardsColumn),
-	)
-}
-func newDefendersStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(DefendersInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, DefendersTable, DefendersColumn),
-	)
-}
-func newGoaliesStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(GoaliesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, GoaliesTable, GoaliesColumn),
+		sqlgraph.To(PlayersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, PlayersTable, PlayersPrimaryKey...),
 	)
 }

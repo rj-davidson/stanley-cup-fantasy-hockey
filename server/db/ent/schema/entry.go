@@ -23,8 +23,6 @@ func (Entry) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("league", League.Type).
 			Unique().Ref("entries"),
-		edge.To("forwards", Player.Type),
-		edge.To("defenders", Player.Type),
-		edge.To("goalies", Player.Type),
+		edge.To("players", Player.Type),
 	}
 }

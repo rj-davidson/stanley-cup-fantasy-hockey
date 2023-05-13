@@ -31,25 +31,24 @@ type Player struct {
 	Wins int `json:"wins,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PlayerQuery when eager-loading is set.
-	Edges           PlayerEdges `json:"edges"`
-	entry_forwards  *int
-	entry_defenders *int
-	entry_goalies   *int
-	team_players    *int
-	selectValues    sql.SelectValues
+	Edges        PlayerEdges `json:"edges"`
+	team_players *int
+	selectValues sql.SelectValues
 }
 
 // PlayerEdges holds the relations/edges for other nodes in the graph.
 type PlayerEdges struct {
 	// Team holds the value of the team edge.
 	Team *Team `json:"team,omitempty"`
+	// Entries holds the value of the entries edge.
+	Entries []*Entry `json:"entries,omitempty"`
 	// HomeGamesAsGoalie holds the value of the homeGamesAsGoalie edge.
 	HomeGamesAsGoalie []*Game `json:"homeGamesAsGoalie,omitempty"`
 	// AwayGamesAsGoalie holds the value of the awayGamesAsGoalie edge.
 	AwayGamesAsGoalie []*Game `json:"awayGamesAsGoalie,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // TeamOrErr returns the Team value or an error if the edge
@@ -65,10 +64,19 @@ func (e PlayerEdges) TeamOrErr() (*Team, error) {
 	return nil, &NotLoadedError{edge: "team"}
 }
 
+// EntriesOrErr returns the Entries value or an error if the edge
+// was not loaded in eager-loading.
+func (e PlayerEdges) EntriesOrErr() ([]*Entry, error) {
+	if e.loadedTypes[1] {
+		return e.Entries, nil
+	}
+	return nil, &NotLoadedError{edge: "entries"}
+}
+
 // HomeGamesAsGoalieOrErr returns the HomeGamesAsGoalie value or an error if the edge
 // was not loaded in eager-loading.
 func (e PlayerEdges) HomeGamesAsGoalieOrErr() ([]*Game, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.HomeGamesAsGoalie, nil
 	}
 	return nil, &NotLoadedError{edge: "homeGamesAsGoalie"}
@@ -77,7 +85,7 @@ func (e PlayerEdges) HomeGamesAsGoalieOrErr() ([]*Game, error) {
 // AwayGamesAsGoalieOrErr returns the AwayGamesAsGoalie value or an error if the edge
 // was not loaded in eager-loading.
 func (e PlayerEdges) AwayGamesAsGoalieOrErr() ([]*Game, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.AwayGamesAsGoalie, nil
 	}
 	return nil, &NotLoadedError{edge: "awayGamesAsGoalie"}
@@ -92,13 +100,7 @@ func (*Player) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case player.FieldName, player.FieldPosition:
 			values[i] = new(sql.NullString)
-		case player.ForeignKeys[0]: // entry_forwards
-			values[i] = new(sql.NullInt64)
-		case player.ForeignKeys[1]: // entry_defenders
-			values[i] = new(sql.NullInt64)
-		case player.ForeignKeys[2]: // entry_goalies
-			values[i] = new(sql.NullInt64)
-		case player.ForeignKeys[3]: // team_players
+		case player.ForeignKeys[0]: // team_players
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -159,27 +161,6 @@ func (pl *Player) assignValues(columns []string, values []any) error {
 			}
 		case player.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field entry_forwards", value)
-			} else if value.Valid {
-				pl.entry_forwards = new(int)
-				*pl.entry_forwards = int(value.Int64)
-			}
-		case player.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field entry_defenders", value)
-			} else if value.Valid {
-				pl.entry_defenders = new(int)
-				*pl.entry_defenders = int(value.Int64)
-			}
-		case player.ForeignKeys[2]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field entry_goalies", value)
-			} else if value.Valid {
-				pl.entry_goalies = new(int)
-				*pl.entry_goalies = int(value.Int64)
-			}
-		case player.ForeignKeys[3]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field team_players", value)
 			} else if value.Valid {
 				pl.team_players = new(int)
@@ -201,6 +182,11 @@ func (pl *Player) Value(name string) (ent.Value, error) {
 // QueryTeam queries the "team" edge of the Player entity.
 func (pl *Player) QueryTeam() *TeamQuery {
 	return NewPlayerClient(pl.config).QueryTeam(pl)
+}
+
+// QueryEntries queries the "entries" edge of the Player entity.
+func (pl *Player) QueryEntries() *EntryQuery {
+	return NewPlayerClient(pl.config).QueryEntries(pl)
 }
 
 // QueryHomeGamesAsGoalie queries the "homeGamesAsGoalie" edge of the Player entity.

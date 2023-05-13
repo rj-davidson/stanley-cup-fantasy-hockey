@@ -6,7 +6,6 @@ import {
   FormControlLabel,
   Select,
   MenuItem,
-  InputLabel,
   FormControl,
   Button,
 } from '@mui/material';
@@ -23,8 +22,6 @@ export default function CreateLeagueForm(props: Props) {
   const [numForwards, setNumForwards] = useState('');
   const [numDefenders, setNumDefenders] = useState('');
   const [numGoalies, setNumGoalies] = useState('');
-  const [editKey, setEditKey] = useState('');
-  const [code, setCode] = useState('');
 
   const handleCreateLeague = () => {
     const league: League = {
@@ -43,8 +40,7 @@ export default function CreateLeagueForm(props: Props) {
     name.trim() !== '' &&
     numForwards.trim() !== '' &&
     numDefenders.trim() !== '' &&
-    numGoalies.trim() !== '' &&
-    editKey.trim() !== '';
+    numGoalies.trim() !== '';
 
   return (
     <Stack spacing={2}>

@@ -8,7 +8,7 @@ interface EntryDetailsProps {
 }
 
 const EntryDetails: React.FC<EntryDetailsProps> = ({ entry }) => {
-  const { owner_name, forwards, defenders, goalies } = entry;
+  const { owner_name, players } = entry;
 
   // Calculate total points for each position
   const calculateTotalPoints = (players: Player[]) => {
@@ -28,49 +28,44 @@ const EntryDetails: React.FC<EntryDetailsProps> = ({ entry }) => {
     }
   };
 
+  // Sort players by points in descending order
+  const sortedPlayers = players
+    ? [...players].sort((a, b) => {
+        const pointsA = getPlayerPoints(a);
+        const pointsB = getPlayerPoints(b);
+
+        if (pointsA !== pointsB) {
+          return pointsB - pointsA; // Sort by points in descending order
+        }
+
+        if (a.position !== b.position) {
+          if (a.position === 'Forward') return -1;
+          if (a.position === 'Defenseman')
+            return a.position === b.position ? -1 : 1;
+          if (a.position === 'Goalie') return 1;
+        }
+
+        return a.name.localeCompare(b.name);
+      })
+    : [];
+
   // Calculate total points for each position
-  const totalForwardPoints = forwards ? calculateTotalPoints(forwards) : 0;
-  const totalDefenderPoints = defenders ? calculateTotalPoints(defenders) : 0;
-  const totalGoaliePoints = goalies ? calculateTotalPoints(goalies) : 0;
+  const points = calculateTotalPoints(sortedPlayers);
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h6">{owner_name}</Typography>
-      <Typography variant="body1">
-        Total Points:{' '}
-        {totalForwardPoints + totalDefenderPoints + totalGoaliePoints}
-      </Typography>
+      <Stack direction={'row'} justifyContent={'space-between'}>
+        <Typography variant="h5">{owner_name}</Typography>
+        <Typography variant="h6">{points}</Typography>
+      </Stack>
 
-      {forwards && (
+      {sortedPlayers.length > 0 && (
         <Box>
-          <Typography variant="subtitle1">
-            Forwards (Total Points: {totalForwardPoints})
-          </Typography>
-          {forwards.map((forward) => (
-            <PlayerDetails key={forward.id} player={forward} />
-          ))}
-        </Box>
-      )}
-
-      {defenders && (
-        <Box>
-          <Typography variant="subtitle1">
-            Defenders (Total Points: {totalDefenderPoints})
-          </Typography>
-          {defenders.map((defender) => (
-            <PlayerDetails key={defender.id} player={defender} />
-          ))}
-        </Box>
-      )}
-
-      {goalies && (
-        <Box>
-          <Typography variant="subtitle1">
-            Goalies (Total Points: {totalGoaliePoints})
-          </Typography>
-          {goalies.map((goalie) => (
-            <PlayerDetails key={goalie.id} player={goalie} />
-          ))}
+          <Stack spacing={1}>
+            {sortedPlayers.map((player) => (
+              <PlayerDetails key={player.id} player={player} />
+            ))}
+          </Stack>
         </Box>
       )}
     </Stack>

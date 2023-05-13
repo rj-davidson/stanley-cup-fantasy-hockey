@@ -37,25 +37,19 @@ const (
 // EntryMutation represents an operation that mutates the Entry nodes in the graph.
 type EntryMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int
-	owner_name       *string
-	clearedFields    map[string]struct{}
-	league           *int
-	clearedleague    bool
-	forwards         map[int]struct{}
-	removedforwards  map[int]struct{}
-	clearedforwards  bool
-	defenders        map[int]struct{}
-	removeddefenders map[int]struct{}
-	cleareddefenders bool
-	goalies          map[int]struct{}
-	removedgoalies   map[int]struct{}
-	clearedgoalies   bool
-	done             bool
-	oldValue         func(context.Context) (*Entry, error)
-	predicates       []predicate.Entry
+	op             Op
+	typ            string
+	id             *int
+	owner_name     *string
+	clearedFields  map[string]struct{}
+	league         *int
+	clearedleague  bool
+	players        map[int]struct{}
+	removedplayers map[int]struct{}
+	clearedplayers bool
+	done           bool
+	oldValue       func(context.Context) (*Entry, error)
+	predicates     []predicate.Entry
 }
 
 var _ ent.Mutation = (*EntryMutation)(nil)
@@ -231,166 +225,58 @@ func (m *EntryMutation) ResetLeague() {
 	m.clearedleague = false
 }
 
-// AddForwardIDs adds the "forwards" edge to the Player entity by ids.
-func (m *EntryMutation) AddForwardIDs(ids ...int) {
-	if m.forwards == nil {
-		m.forwards = make(map[int]struct{})
+// AddPlayerIDs adds the "players" edge to the Player entity by ids.
+func (m *EntryMutation) AddPlayerIDs(ids ...int) {
+	if m.players == nil {
+		m.players = make(map[int]struct{})
 	}
 	for i := range ids {
-		m.forwards[ids[i]] = struct{}{}
+		m.players[ids[i]] = struct{}{}
 	}
 }
 
-// ClearForwards clears the "forwards" edge to the Player entity.
-func (m *EntryMutation) ClearForwards() {
-	m.clearedforwards = true
+// ClearPlayers clears the "players" edge to the Player entity.
+func (m *EntryMutation) ClearPlayers() {
+	m.clearedplayers = true
 }
 
-// ForwardsCleared reports if the "forwards" edge to the Player entity was cleared.
-func (m *EntryMutation) ForwardsCleared() bool {
-	return m.clearedforwards
+// PlayersCleared reports if the "players" edge to the Player entity was cleared.
+func (m *EntryMutation) PlayersCleared() bool {
+	return m.clearedplayers
 }
 
-// RemoveForwardIDs removes the "forwards" edge to the Player entity by IDs.
-func (m *EntryMutation) RemoveForwardIDs(ids ...int) {
-	if m.removedforwards == nil {
-		m.removedforwards = make(map[int]struct{})
+// RemovePlayerIDs removes the "players" edge to the Player entity by IDs.
+func (m *EntryMutation) RemovePlayerIDs(ids ...int) {
+	if m.removedplayers == nil {
+		m.removedplayers = make(map[int]struct{})
 	}
 	for i := range ids {
-		delete(m.forwards, ids[i])
-		m.removedforwards[ids[i]] = struct{}{}
+		delete(m.players, ids[i])
+		m.removedplayers[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedForwards returns the removed IDs of the "forwards" edge to the Player entity.
-func (m *EntryMutation) RemovedForwardsIDs() (ids []int) {
-	for id := range m.removedforwards {
+// RemovedPlayers returns the removed IDs of the "players" edge to the Player entity.
+func (m *EntryMutation) RemovedPlayersIDs() (ids []int) {
+	for id := range m.removedplayers {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ForwardsIDs returns the "forwards" edge IDs in the mutation.
-func (m *EntryMutation) ForwardsIDs() (ids []int) {
-	for id := range m.forwards {
+// PlayersIDs returns the "players" edge IDs in the mutation.
+func (m *EntryMutation) PlayersIDs() (ids []int) {
+	for id := range m.players {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetForwards resets all changes to the "forwards" edge.
-func (m *EntryMutation) ResetForwards() {
-	m.forwards = nil
-	m.clearedforwards = false
-	m.removedforwards = nil
-}
-
-// AddDefenderIDs adds the "defenders" edge to the Player entity by ids.
-func (m *EntryMutation) AddDefenderIDs(ids ...int) {
-	if m.defenders == nil {
-		m.defenders = make(map[int]struct{})
-	}
-	for i := range ids {
-		m.defenders[ids[i]] = struct{}{}
-	}
-}
-
-// ClearDefenders clears the "defenders" edge to the Player entity.
-func (m *EntryMutation) ClearDefenders() {
-	m.cleareddefenders = true
-}
-
-// DefendersCleared reports if the "defenders" edge to the Player entity was cleared.
-func (m *EntryMutation) DefendersCleared() bool {
-	return m.cleareddefenders
-}
-
-// RemoveDefenderIDs removes the "defenders" edge to the Player entity by IDs.
-func (m *EntryMutation) RemoveDefenderIDs(ids ...int) {
-	if m.removeddefenders == nil {
-		m.removeddefenders = make(map[int]struct{})
-	}
-	for i := range ids {
-		delete(m.defenders, ids[i])
-		m.removeddefenders[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedDefenders returns the removed IDs of the "defenders" edge to the Player entity.
-func (m *EntryMutation) RemovedDefendersIDs() (ids []int) {
-	for id := range m.removeddefenders {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// DefendersIDs returns the "defenders" edge IDs in the mutation.
-func (m *EntryMutation) DefendersIDs() (ids []int) {
-	for id := range m.defenders {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetDefenders resets all changes to the "defenders" edge.
-func (m *EntryMutation) ResetDefenders() {
-	m.defenders = nil
-	m.cleareddefenders = false
-	m.removeddefenders = nil
-}
-
-// AddGoalyIDs adds the "goalies" edge to the Player entity by ids.
-func (m *EntryMutation) AddGoalyIDs(ids ...int) {
-	if m.goalies == nil {
-		m.goalies = make(map[int]struct{})
-	}
-	for i := range ids {
-		m.goalies[ids[i]] = struct{}{}
-	}
-}
-
-// ClearGoalies clears the "goalies" edge to the Player entity.
-func (m *EntryMutation) ClearGoalies() {
-	m.clearedgoalies = true
-}
-
-// GoaliesCleared reports if the "goalies" edge to the Player entity was cleared.
-func (m *EntryMutation) GoaliesCleared() bool {
-	return m.clearedgoalies
-}
-
-// RemoveGoalyIDs removes the "goalies" edge to the Player entity by IDs.
-func (m *EntryMutation) RemoveGoalyIDs(ids ...int) {
-	if m.removedgoalies == nil {
-		m.removedgoalies = make(map[int]struct{})
-	}
-	for i := range ids {
-		delete(m.goalies, ids[i])
-		m.removedgoalies[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedGoalies returns the removed IDs of the "goalies" edge to the Player entity.
-func (m *EntryMutation) RemovedGoaliesIDs() (ids []int) {
-	for id := range m.removedgoalies {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// GoaliesIDs returns the "goalies" edge IDs in the mutation.
-func (m *EntryMutation) GoaliesIDs() (ids []int) {
-	for id := range m.goalies {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetGoalies resets all changes to the "goalies" edge.
-func (m *EntryMutation) ResetGoalies() {
-	m.goalies = nil
-	m.clearedgoalies = false
-	m.removedgoalies = nil
+// ResetPlayers resets all changes to the "players" edge.
+func (m *EntryMutation) ResetPlayers() {
+	m.players = nil
+	m.clearedplayers = false
+	m.removedplayers = nil
 }
 
 // Where appends a list predicates to the EntryMutation builder.
@@ -526,18 +412,12 @@ func (m *EntryMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *EntryMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 2)
 	if m.league != nil {
 		edges = append(edges, entry.EdgeLeague)
 	}
-	if m.forwards != nil {
-		edges = append(edges, entry.EdgeForwards)
-	}
-	if m.defenders != nil {
-		edges = append(edges, entry.EdgeDefenders)
-	}
-	if m.goalies != nil {
-		edges = append(edges, entry.EdgeGoalies)
+	if m.players != nil {
+		edges = append(edges, entry.EdgePlayers)
 	}
 	return edges
 }
@@ -550,21 +430,9 @@ func (m *EntryMutation) AddedIDs(name string) []ent.Value {
 		if id := m.league; id != nil {
 			return []ent.Value{*id}
 		}
-	case entry.EdgeForwards:
-		ids := make([]ent.Value, 0, len(m.forwards))
-		for id := range m.forwards {
-			ids = append(ids, id)
-		}
-		return ids
-	case entry.EdgeDefenders:
-		ids := make([]ent.Value, 0, len(m.defenders))
-		for id := range m.defenders {
-			ids = append(ids, id)
-		}
-		return ids
-	case entry.EdgeGoalies:
-		ids := make([]ent.Value, 0, len(m.goalies))
-		for id := range m.goalies {
+	case entry.EdgePlayers:
+		ids := make([]ent.Value, 0, len(m.players))
+		for id := range m.players {
 			ids = append(ids, id)
 		}
 		return ids
@@ -574,15 +442,9 @@ func (m *EntryMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *EntryMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
-	if m.removedforwards != nil {
-		edges = append(edges, entry.EdgeForwards)
-	}
-	if m.removeddefenders != nil {
-		edges = append(edges, entry.EdgeDefenders)
-	}
-	if m.removedgoalies != nil {
-		edges = append(edges, entry.EdgeGoalies)
+	edges := make([]string, 0, 2)
+	if m.removedplayers != nil {
+		edges = append(edges, entry.EdgePlayers)
 	}
 	return edges
 }
@@ -591,21 +453,9 @@ func (m *EntryMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *EntryMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case entry.EdgeForwards:
-		ids := make([]ent.Value, 0, len(m.removedforwards))
-		for id := range m.removedforwards {
-			ids = append(ids, id)
-		}
-		return ids
-	case entry.EdgeDefenders:
-		ids := make([]ent.Value, 0, len(m.removeddefenders))
-		for id := range m.removeddefenders {
-			ids = append(ids, id)
-		}
-		return ids
-	case entry.EdgeGoalies:
-		ids := make([]ent.Value, 0, len(m.removedgoalies))
-		for id := range m.removedgoalies {
+	case entry.EdgePlayers:
+		ids := make([]ent.Value, 0, len(m.removedplayers))
+		for id := range m.removedplayers {
 			ids = append(ids, id)
 		}
 		return ids
@@ -615,18 +465,12 @@ func (m *EntryMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *EntryMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 2)
 	if m.clearedleague {
 		edges = append(edges, entry.EdgeLeague)
 	}
-	if m.clearedforwards {
-		edges = append(edges, entry.EdgeForwards)
-	}
-	if m.cleareddefenders {
-		edges = append(edges, entry.EdgeDefenders)
-	}
-	if m.clearedgoalies {
-		edges = append(edges, entry.EdgeGoalies)
+	if m.clearedplayers {
+		edges = append(edges, entry.EdgePlayers)
 	}
 	return edges
 }
@@ -637,12 +481,8 @@ func (m *EntryMutation) EdgeCleared(name string) bool {
 	switch name {
 	case entry.EdgeLeague:
 		return m.clearedleague
-	case entry.EdgeForwards:
-		return m.clearedforwards
-	case entry.EdgeDefenders:
-		return m.cleareddefenders
-	case entry.EdgeGoalies:
-		return m.clearedgoalies
+	case entry.EdgePlayers:
+		return m.clearedplayers
 	}
 	return false
 }
@@ -665,14 +505,8 @@ func (m *EntryMutation) ResetEdge(name string) error {
 	case entry.EdgeLeague:
 		m.ResetLeague()
 		return nil
-	case entry.EdgeForwards:
-		m.ResetForwards()
-		return nil
-	case entry.EdgeDefenders:
-		m.ResetDefenders()
-		return nil
-	case entry.EdgeGoalies:
-		m.ResetGoalies()
+	case entry.EdgePlayers:
+		m.ResetPlayers()
 		return nil
 	}
 	return fmt.Errorf("unknown Entry edge %s", name)
@@ -684,7 +518,6 @@ type GameMutation struct {
 	op                Op
 	typ               string
 	id                *int
-	homeWin           *bool
 	homeScore         *int
 	addhomeScore      *int
 	awayScore         *int
@@ -805,42 +638,6 @@ func (m *GameMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetHomeWin sets the "homeWin" field.
-func (m *GameMutation) SetHomeWin(b bool) {
-	m.homeWin = &b
-}
-
-// HomeWin returns the value of the "homeWin" field in the mutation.
-func (m *GameMutation) HomeWin() (r bool, exists bool) {
-	v := m.homeWin
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldHomeWin returns the old "homeWin" field's value of the Game entity.
-// If the Game object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GameMutation) OldHomeWin(ctx context.Context) (v bool, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldHomeWin is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldHomeWin requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldHomeWin: %w", err)
-	}
-	return oldValue.HomeWin, nil
-}
-
-// ResetHomeWin resets all changes to the "homeWin" field.
-func (m *GameMutation) ResetHomeWin() {
-	m.homeWin = nil
 }
 
 // SetHomeScore sets the "homeScore" field.
@@ -1145,10 +942,7 @@ func (m *GameMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GameMutation) Fields() []string {
-	fields := make([]string, 0, 3)
-	if m.homeWin != nil {
-		fields = append(fields, game.FieldHomeWin)
-	}
+	fields := make([]string, 0, 2)
 	if m.homeScore != nil {
 		fields = append(fields, game.FieldHomeScore)
 	}
@@ -1163,8 +957,6 @@ func (m *GameMutation) Fields() []string {
 // schema.
 func (m *GameMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case game.FieldHomeWin:
-		return m.HomeWin()
 	case game.FieldHomeScore:
 		return m.HomeScore()
 	case game.FieldAwayScore:
@@ -1178,8 +970,6 @@ func (m *GameMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *GameMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case game.FieldHomeWin:
-		return m.OldHomeWin(ctx)
 	case game.FieldHomeScore:
 		return m.OldHomeScore(ctx)
 	case game.FieldAwayScore:
@@ -1193,13 +983,6 @@ func (m *GameMutation) OldField(ctx context.Context, name string) (ent.Value, er
 // type.
 func (m *GameMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case game.FieldHomeWin:
-		v, ok := value.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetHomeWin(v)
-		return nil
 	case game.FieldHomeScore:
 		v, ok := value.(int)
 		if !ok {
@@ -1290,9 +1073,6 @@ func (m *GameMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *GameMutation) ResetField(name string) error {
 	switch name {
-	case game.FieldHomeWin:
-		m.ResetHomeWin()
-		return nil
 	case game.FieldHomeScore:
 		m.ResetHomeScore()
 		return nil
@@ -2274,6 +2054,9 @@ type PlayerMutation struct {
 	clearedFields            map[string]struct{}
 	team                     *int
 	clearedteam              bool
+	entries                  map[int]struct{}
+	removedentries           map[int]struct{}
+	clearedentries           bool
 	homeGamesAsGoalie        map[int]struct{}
 	removedhomeGamesAsGoalie map[int]struct{}
 	clearedhomeGamesAsGoalie bool
@@ -2724,6 +2507,60 @@ func (m *PlayerMutation) ResetTeam() {
 	m.clearedteam = false
 }
 
+// AddEntryIDs adds the "entries" edge to the Entry entity by ids.
+func (m *PlayerMutation) AddEntryIDs(ids ...int) {
+	if m.entries == nil {
+		m.entries = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.entries[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEntries clears the "entries" edge to the Entry entity.
+func (m *PlayerMutation) ClearEntries() {
+	m.clearedentries = true
+}
+
+// EntriesCleared reports if the "entries" edge to the Entry entity was cleared.
+func (m *PlayerMutation) EntriesCleared() bool {
+	return m.clearedentries
+}
+
+// RemoveEntryIDs removes the "entries" edge to the Entry entity by IDs.
+func (m *PlayerMutation) RemoveEntryIDs(ids ...int) {
+	if m.removedentries == nil {
+		m.removedentries = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.entries, ids[i])
+		m.removedentries[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEntries returns the removed IDs of the "entries" edge to the Entry entity.
+func (m *PlayerMutation) RemovedEntriesIDs() (ids []int) {
+	for id := range m.removedentries {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EntriesIDs returns the "entries" edge IDs in the mutation.
+func (m *PlayerMutation) EntriesIDs() (ids []int) {
+	for id := range m.entries {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEntries resets all changes to the "entries" edge.
+func (m *PlayerMutation) ResetEntries() {
+	m.entries = nil
+	m.clearedentries = false
+	m.removedentries = nil
+}
+
 // AddHomeGamesAsGoalieIDs adds the "homeGamesAsGoalie" edge to the Game entity by ids.
 func (m *PlayerMutation) AddHomeGamesAsGoalieIDs(ids ...int) {
 	if m.homeGamesAsGoalie == nil {
@@ -3101,9 +2938,12 @@ func (m *PlayerMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *PlayerMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.team != nil {
 		edges = append(edges, player.EdgeTeam)
+	}
+	if m.entries != nil {
+		edges = append(edges, player.EdgeEntries)
 	}
 	if m.homeGamesAsGoalie != nil {
 		edges = append(edges, player.EdgeHomeGamesAsGoalie)
@@ -3122,6 +2962,12 @@ func (m *PlayerMutation) AddedIDs(name string) []ent.Value {
 		if id := m.team; id != nil {
 			return []ent.Value{*id}
 		}
+	case player.EdgeEntries:
+		ids := make([]ent.Value, 0, len(m.entries))
+		for id := range m.entries {
+			ids = append(ids, id)
+		}
+		return ids
 	case player.EdgeHomeGamesAsGoalie:
 		ids := make([]ent.Value, 0, len(m.homeGamesAsGoalie))
 		for id := range m.homeGamesAsGoalie {
@@ -3140,7 +2986,10 @@ func (m *PlayerMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *PlayerMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
+	if m.removedentries != nil {
+		edges = append(edges, player.EdgeEntries)
+	}
 	if m.removedhomeGamesAsGoalie != nil {
 		edges = append(edges, player.EdgeHomeGamesAsGoalie)
 	}
@@ -3154,6 +3003,12 @@ func (m *PlayerMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *PlayerMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
+	case player.EdgeEntries:
+		ids := make([]ent.Value, 0, len(m.removedentries))
+		for id := range m.removedentries {
+			ids = append(ids, id)
+		}
+		return ids
 	case player.EdgeHomeGamesAsGoalie:
 		ids := make([]ent.Value, 0, len(m.removedhomeGamesAsGoalie))
 		for id := range m.removedhomeGamesAsGoalie {
@@ -3172,9 +3027,12 @@ func (m *PlayerMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *PlayerMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedteam {
 		edges = append(edges, player.EdgeTeam)
+	}
+	if m.clearedentries {
+		edges = append(edges, player.EdgeEntries)
 	}
 	if m.clearedhomeGamesAsGoalie {
 		edges = append(edges, player.EdgeHomeGamesAsGoalie)
@@ -3191,6 +3049,8 @@ func (m *PlayerMutation) EdgeCleared(name string) bool {
 	switch name {
 	case player.EdgeTeam:
 		return m.clearedteam
+	case player.EdgeEntries:
+		return m.clearedentries
 	case player.EdgeHomeGamesAsGoalie:
 		return m.clearedhomeGamesAsGoalie
 	case player.EdgeAwayGamesAsGoalie:
@@ -3216,6 +3076,9 @@ func (m *PlayerMutation) ResetEdge(name string) error {
 	switch name {
 	case player.EdgeTeam:
 		m.ResetTeam()
+		return nil
+	case player.EdgeEntries:
+		m.ResetEntries()
 		return nil
 	case player.EdgeHomeGamesAsGoalie:
 		m.ResetHomeGamesAsGoalie()

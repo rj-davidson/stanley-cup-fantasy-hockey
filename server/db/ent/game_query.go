@@ -404,12 +404,12 @@ func (gq *GameQuery) WithHomeGoalie(opts ...func(*PlayerQuery)) *GameQuery {
 // Example:
 //
 //	var v []struct {
-//		HomeWin bool `json:"homeWin,omitempty"`
+//		HomeScore int `json:"homeScore,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Game.Query().
-//		GroupBy(game.FieldHomeWin).
+//		GroupBy(game.FieldHomeScore).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (gq *GameQuery) GroupBy(field string, fields ...string) *GameGroupBy {
@@ -427,11 +427,11 @@ func (gq *GameQuery) GroupBy(field string, fields ...string) *GameGroupBy {
 // Example:
 //
 //	var v []struct {
-//		HomeWin bool `json:"homeWin,omitempty"`
+//		HomeScore int `json:"homeScore,omitempty"`
 //	}
 //
 //	client.Game.Query().
-//		Select(game.FieldHomeWin).
+//		Select(game.FieldHomeScore).
 //		Scan(ctx, &v)
 func (gq *GameQuery) Select(fields ...string) *GameSelect {
 	gq.ctx.Fields = append(gq.ctx.Fields, fields...)

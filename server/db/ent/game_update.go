@@ -29,12 +29,6 @@ func (gu *GameUpdate) Where(ps ...predicate.Game) *GameUpdate {
 	return gu
 }
 
-// SetHomeWin sets the "homeWin" field.
-func (gu *GameUpdate) SetHomeWin(b bool) *GameUpdate {
-	gu.mutation.SetHomeWin(b)
-	return gu
-}
-
 // SetHomeScore sets the "homeScore" field.
 func (gu *GameUpdate) SetHomeScore(i int) *GameUpdate {
 	gu.mutation.ResetHomeScore()
@@ -190,9 +184,6 @@ func (gu *GameUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := gu.mutation.HomeWin(); ok {
-		_spec.SetField(game.FieldHomeWin, field.TypeBool, value)
-	}
 	if value, ok := gu.mutation.HomeScore(); ok {
 		_spec.SetField(game.FieldHomeScore, field.TypeInt, value)
 	}
@@ -339,12 +330,6 @@ type GameUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *GameMutation
-}
-
-// SetHomeWin sets the "homeWin" field.
-func (guo *GameUpdateOne) SetHomeWin(b bool) *GameUpdateOne {
-	guo.mutation.SetHomeWin(b)
-	return guo
 }
 
 // SetHomeScore sets the "homeScore" field.
@@ -531,9 +516,6 @@ func (guo *GameUpdateOne) sqlSave(ctx context.Context) (_node *Game, err error) 
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := guo.mutation.HomeWin(); ok {
-		_spec.SetField(game.FieldHomeWin, field.TypeBool, value)
 	}
 	if value, ok := guo.mutation.HomeScore(); ok {
 		_spec.SetField(game.FieldHomeScore, field.TypeInt, value)

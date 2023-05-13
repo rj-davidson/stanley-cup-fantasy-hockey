@@ -15,11 +15,10 @@ func NewGameModel(client *ent.Client) *GameModel {
 }
 
 // CreateGame creates a new game in the database.
-func (gm *GameModel) CreateGame(id int, homeWin bool, homeScore, awayScore int, homeTeam, awayTeam *ent.Team, homeGoalie, awayGoalie *ent.Player) (*ent.Game, error) {
-	return gm.client.Game.
+func (gm *GameModel) CreateGame(id int, homeScore, awayScore int, homeTeam, awayTeam *ent.Team, homeGoalie, awayGoalie *ent.Player) (*ent.Game, error) {
+	game, err := gm.client.Game.
 		Create().
 		SetID(id).
-		SetHomeWin(homeWin).
 		SetHomeScore(homeScore).
 		SetAwayScore(awayScore).
 		SetHomeTeam(homeTeam).
@@ -27,6 +26,12 @@ func (gm *GameModel) CreateGame(id int, homeWin bool, homeScore, awayScore int, 
 		SetHomeGoalie(homeGoalie).
 		SetAwayGoalie(awayGoalie).
 		Save(context.Background())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return game, nil
 }
 
 // GetGameByID retrieves a game by its ID.
@@ -42,7 +47,7 @@ func (gm *GameModel) GetGameByID(id int) (*ent.Game, error) {
 }
 
 // UpdateGame updates a game by its ID.
-func (gm *GameModel) UpdateGame(id int, homeWin bool, homeScore, awayScore int) (*ent.Game, error) {
+func (gm *GameModel) UpdateGame(id int, homeScore, awayScore int) (*ent.Game, error) {
 	gameToUpdate, err := gm.GetGameByID(id)
 	if err != nil {
 		return nil, err
@@ -50,7 +55,6 @@ func (gm *GameModel) UpdateGame(id int, homeWin bool, homeScore, awayScore int) 
 
 	return gameToUpdate.
 		Update().
-		SetHomeWin(homeWin).
 		SetHomeScore(homeScore).
 		SetAwayScore(awayScore).
 		Save(context.Background())
@@ -61,4 +65,15 @@ func (gm *GameModel) DeleteGame(id int) error {
 	return gm.client.Game.
 		DeleteOneID(id).
 		Exec(context.Background())
+}
+
+// ListGames lists all games in the database.
+func (gm *GameModel) ListGames() ([]*ent.Game, error) {
+	return gm.client.Game.
+		Query().
+		WithHomeTeam().
+		WithAwayTeam().
+		WithHomeGoalie().
+		WithAwayGoalie().
+		All(context.Background())
 }

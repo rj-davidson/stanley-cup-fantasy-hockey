@@ -18,8 +18,6 @@ type Game struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// HomeWin holds the value of the "homeWin" field.
-	HomeWin bool `json:"homeWin,omitempty"`
 	// HomeScore holds the value of the "homeScore" field.
 	HomeScore int `json:"homeScore,omitempty"`
 	// AwayScore holds the value of the "awayScore" field.
@@ -106,8 +104,6 @@ func (*Game) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case game.FieldHomeWin:
-			values[i] = new(sql.NullBool)
 		case game.FieldID, game.FieldHomeScore, game.FieldAwayScore:
 			values[i] = new(sql.NullInt64)
 		case game.ForeignKeys[0]: // player_home_games_as_goalie
@@ -139,12 +135,6 @@ func (ga *Game) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			ga.ID = int(value.Int64)
-		case game.FieldHomeWin:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field homeWin", values[i])
-			} else if value.Valid {
-				ga.HomeWin = value.Bool
-			}
 		case game.FieldHomeScore:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field homeScore", values[i])
@@ -241,9 +231,6 @@ func (ga *Game) String() string {
 	var builder strings.Builder
 	builder.WriteString("Game(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", ga.ID))
-	builder.WriteString("homeWin=")
-	builder.WriteString(fmt.Sprintf("%v", ga.HomeWin))
-	builder.WriteString(", ")
 	builder.WriteString("homeScore=")
 	builder.WriteString(fmt.Sprintf("%v", ga.HomeScore))
 	builder.WriteString(", ")

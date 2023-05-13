@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
@@ -80,6 +81,21 @@ func (pc *PlayerCreate) SetNillableTeamID(id *int) *PlayerCreate {
 // SetTeam sets the "team" edge to the Team entity.
 func (pc *PlayerCreate) SetTeam(t *Team) *PlayerCreate {
 	return pc.SetTeamID(t.ID)
+}
+
+// AddEntryIDs adds the "entries" edge to the Entry entity by IDs.
+func (pc *PlayerCreate) AddEntryIDs(ids ...int) *PlayerCreate {
+	pc.mutation.AddEntryIDs(ids...)
+	return pc
+}
+
+// AddEntries adds the "entries" edges to the Entry entity.
+func (pc *PlayerCreate) AddEntries(e ...*Entry) *PlayerCreate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return pc.AddEntryIDs(ids...)
 }
 
 // AddHomeGamesAsGoalieIDs adds the "homeGamesAsGoalie" edge to the Game entity by IDs.
@@ -245,6 +261,22 @@ func (pc *PlayerCreate) createSpec() (*Player, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.team_players = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.EntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   player.EntriesTable,
+			Columns: player.EntriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entry.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := pc.mutation.HomeGamesAsGoalieIDs(); len(nodes) > 0 {

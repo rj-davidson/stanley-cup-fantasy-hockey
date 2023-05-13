@@ -3,92 +3,137 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/model"
 	"io/ioutil"
 	"net/http"
 	"time"
-
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/model"
 )
 
-type NHLBoxScore struct {
-	GameID int `json:"gamePk"`
-	Status struct {
-		AbstractGameState string `json:"abstractGameState"`
-	} `json:"status"`
-	Teams struct {
-		Away struct {
-			Team struct {
-				ID   int    `json:"id"`
-				Name string `json:"name"`
-			} `json:"team"`
-			Score int `json:"score"`
-		} `json:"away"`
-		Home struct {
-			Team struct {
-				ID   int    `json:"id"`
-				Name string `json:"name"`
-			} `json:"team"`
-			Score int `json:"score"`
-		} `json:"home"`
-	} `json:"teams"`
+type GameController struct {
+	gameModel   *model.GameModel
+	playerModel *model.PlayerModel
+	teamModel   *model.TeamModel
 }
 
-const nhlApiGameUrlFormat = "https://statsapi.web.nhl.com/api/v1/game/%d/boxscore"
+func NewGameController(client *ent.Client) *GameController {
+	return &GameController{
+		gameModel:   model.NewGameModel(client),
+		playerModel: model.NewPlayerModel(client),
+		teamModel:   model.NewTeamModel(client),
+	}
+}
 
-func fetchNHLBoxScore(gameID int) (*NHLBoxScore, error) {
+func (ctrl *GameController) FetchPostSeasonGames() error {
 	httpClient := &http.Client{Timeout: 10 * time.Second}
+	const nhlApiScheduleURLFormat = "https://statsapi.web.nhl.com/api/v1/schedule?startDate=2023-04-16&endDate=2023-07-10"
 
-	gameUrl := fmt.Sprintf(nhlApiGameUrlFormat, gameID)
-	resp, err := httpClient.Get(gameUrl)
+	resp, err := httpClient.Get(nhlApiScheduleURLFormat)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("error fetching post season schedule: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("error reading response body: %w", err)
 	}
 
-	var apiResponse NHLBoxScore
-	err = json.Unmarshal(body, &apiResponse)
-	if err != nil {
-		return nil, err
+	var scheduleResult map[string]interface{}
+	if err := json.Unmarshal(body, &scheduleResult); err != nil {
+		return fmt.Errorf("error unmarshaling schedule result: %w", err)
 	}
 
-	return &apiResponse, nil
-}
+	for _, date := range scheduleResult["dates"].([]interface{}) {
+		for _, game := range date.(map[string]interface{})["games"].([]interface{}) {
+			gameMap := game.(map[string]interface{})
+			gameID := int(gameMap["gamePk"].(float64))
 
-type GameController struct {
-	gameModel *model.GameModel
-}
+			existingGame, _ := ctrl.gameModel.GetGameByID(gameID)
 
-func NewGameController(client *ent.Client) *GameController {
-	return &GameController{
-		gameModel: model.NewGameModel(client),
-	}
-}
+			if existingGame == nil {
+				homeTeamID := int(gameMap["teams"].(map[string]interface{})["home"].(map[string]interface{})["team"].(map[string]interface{})["id"].(float64))
+				awayTeamID := int(gameMap["teams"].(map[string]interface{})["away"].(map[string]interface{})["team"].(map[string]interface{})["id"].(float64))
 
-func (ctrl *GameController) FetchPostSeasonGames(gameIDs []int) error {
-	for _, gameID := range gameIDs {
-		nhlBoxScore, err := fetchNHLBoxScore(gameID)
-		if err != nil {
-			return err
+				if gameMap["status"].(map[string]interface{})["detailedState"].(string) != "Final" {
+					continue
+				}
+
+				homeScore := int(gameMap["teams"].(map[string]interface{})["home"].(map[string]interface{})["score"].(float64))
+				awayScore := int(gameMap["teams"].(map[string]interface{})["away"].(map[string]interface{})["score"].(float64))
+
+				homeTeam, err := ctrl.teamModel.GetTeamByID(homeTeamID)
+				if err != nil {
+					return fmt.Errorf("error getting home team: %w", err)
+				}
+				if err := ctrl.teamModel.SetPlayoffCompetitor(homeTeam); err != nil {
+					return fmt.Errorf("error setting home team as playoff competitor: %w", err)
+				}
+
+				awayTeam, err := ctrl.teamModel.GetTeamByID(awayTeamID)
+				if err != nil {
+					return fmt.Errorf("error getting away team: %w", err)
+				}
+				if err := ctrl.teamModel.SetPlayoffCompetitor(awayTeam); err != nil {
+					return fmt.Errorf("error setting away team as playoff competitor: %w", err)
+				}
+
+				err = ctrl.fetchBoxscore(gameID, homeScore, awayScore, homeTeam, awayTeam)
+				if err != nil {
+					return fmt.Errorf("error fetching game data %d: %w", gameID, err)
+				}
+			} else {
+				fmt.Printf("Game %d already exists in the database\n", gameID)
+			}
 		}
-
-		fmt.Printf(
-			"GameID: %d | Status: %s | Away Team: %s (%d) | Home Team: %s (%d)\n",
-			nhlBoxScore.GameID,
-			nhlBoxScore.Status.AbstractGameState,
-			nhlBoxScore.Teams.Away.Team.Name,
-			nhlBoxScore.Teams.Away.Score,
-			nhlBoxScore.Teams.Home.Team.Name,
-			nhlBoxScore.Teams.Home.Score,
-		)
-
-		// Add game creation or update logic her
 	}
+	fmt.Println("----- Successfully fetched post season games")
+	return nil
+}
+
+func (ctrl *GameController) fetchBoxscore(gameID, homeScore, awayScore int, homeTeam, awayTeam *ent.Team) error {
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	const nhlApiBoxScoreURLFormat = "https://statsapi.web.nhl.com/api/v1/game/%d/boxscore"
+	boxScoreURL := fmt.Sprintf(nhlApiBoxScoreURLFormat, gameID)
+	resp, err := httpClient.Get(boxScoreURL)
+	if err != nil {
+		fmt.Printf("Error fetching box score for game %d: %s\n", gameID, err.Error())
+		return err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body for game %d: %s\n", gameID, err.Error())
+		return err
+	}
+
+	var boxscoreResult map[string]interface{}
+	json.Unmarshal([]byte(body), &boxscoreResult)
+
+	// Get home goalie
+	homeGoalieID := int(boxscoreResult["teams"].(map[string]interface{})["home"].(map[string]interface{})["goalies"].([]interface{})[0].(float64))
+	homeGoalie, err := ctrl.playerModel.GetPlayerByID(homeGoalieID)
+	if err != nil {
+		fmt.Printf("Error getting home goalie: %v\n", err)
+		return nil
+	}
+
+	// Get away goalie
+	awayGoalieID := int(boxscoreResult["teams"].(map[string]interface{})["away"].(map[string]interface{})["goalies"].([]interface{})[0].(float64))
+	awayGoalie, err := ctrl.playerModel.GetPlayerByID(awayGoalieID)
+	if err != nil {
+		fmt.Printf("Error getting away goalie: %v\n", err)
+		return nil
+	}
+
+	// Create game entity
+	_, err = ctrl.gameModel.CreateGame(gameID, homeScore, awayScore, homeTeam, awayTeam, homeGoalie, awayGoalie)
+	if err != nil {
+		fmt.Printf("Error creating game entity: %v\n", err)
+		return err
+	}
+	fmt.Printf("Fetched game %d\n", gameID)
 
 	return nil
 }
