@@ -37,7 +37,7 @@ func main() {
 	viper.AutomaticEnv()
 
 	// Build Connection String
-	connectionString := "postgres://" + viper.GetString("DB_USER") + ":" + viper.GetString("DB_PASS") + "@" + viper.GetString("DB_HOST_LOCAL") + ":" + viper.GetString("DB_PORT") + "/" + viper.GetString("DB_NAME") + "?sslmode=disable"
+	connectionString := "postgres://" + viper.GetString("DB_USER") + ":" + viper.GetString("DB_PASS") + "@" + viper.GetString("DB_HOST") + ":" + viper.GetString("DB_PORT") + "/" + viper.GetString("DB_NAME") + "?sslmode=disable"
 
 	// Create a new Ent client instance
 	client, err := ent.Open(dialect.Postgres, connectionString)

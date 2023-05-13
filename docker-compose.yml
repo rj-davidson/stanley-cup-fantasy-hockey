@@ -1,18 +1,6 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres
-    restart: always
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASS}
-      POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "5432:5432"
-    volumes:
-      - db-data:/var/lib/postgresql/data
-
   server:
     build:
       context: ./server
@@ -20,8 +8,6 @@ services:
     command: ["./main", "-init-data"]
     ports:
       - '8080:8080'
-    depends_on:
-      - db
 
   client:
     build:
@@ -29,6 +15,3 @@ services:
       dockerfile: Dockerfile
     ports:
       - '3000:3000'
-
-volumes:
-  db-data:

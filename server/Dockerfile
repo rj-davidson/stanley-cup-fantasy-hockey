@@ -1,19 +1,9 @@
-# Dockerfile
 FROM golang:latest
-
-# Set the working directory for the app
-WORKDIR /go/src/app
-
-# Copy the app code into the container
+WORKDIR /app/
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
-
 COPY .env .
-# Install dependencies and build the app
-RUN go get -d -v ./...
-RUN go build -o main .
-
-# Expose port 8080 for the app
+RUN go generate ./db/ent && go build -o main .
 EXPOSE 8080
-
-# Set the entrypoint for the container to run the app
-CMD ["./main"]
+CMD ["/app/main"]
