@@ -19,7 +19,7 @@ const LeaguePage: React.FC<LeaguePageProps> = () => {
     const fetchLeague = async () => {
       try {
         const response = await fetch(
-          `http://localhost:8080/leagues/${leagueId}`,
+          `${process.env.API_URL}/leagues/${leagueId}`,
         );
         if (response.ok) {
           const leagueData = await response.json();

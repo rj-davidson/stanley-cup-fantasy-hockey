@@ -22,7 +22,7 @@ const CreateLeaguePage = () => {
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        const response = await fetch('http://localhost:8080/players'); // Replace with your API endpoint
+        const response = await fetch(`${process.env.API_URL}/players`);
         const data = await response.json();
         setPlayers(data);
       } catch (error) {
@@ -76,7 +76,7 @@ const CreateLeaguePage = () => {
     try {
       setIsLoading(true);
 
-      const response = await fetch('http://localhost:8080/leagues', {
+      const response = await fetch(`${process.env.API_URL}/leagues`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
