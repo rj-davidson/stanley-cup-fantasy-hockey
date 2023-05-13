@@ -39,7 +39,9 @@ const League: NextPage = () => {
   useEffect(() => {
     const fetchLeagues = async () => {
       try {
-        const response = await fetch(`${process.env.API_URL}/leagues`);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/leagues`,
+        );
         if (response.ok) {
           const leagues = await response.json();
           const publicLeagues = leagues.filter(

@@ -22,7 +22,9 @@ const CreateLeaguePage = () => {
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        const response = await fetch(`${process.env.API_URL}/players`);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/players`,
+        );
         const data = await response.json();
         setPlayers(data);
       } catch (error) {
@@ -76,13 +78,16 @@ const CreateLeaguePage = () => {
     try {
       setIsLoading(true);
 
-      const response = await fetch(`${process.env.API_URL}/leagues`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/leagues`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(league),
         },
-        body: JSON.stringify(league),
-      });
+      );
 
       if (response.ok) {
         router.push('/league');
