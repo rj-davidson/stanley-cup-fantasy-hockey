@@ -28,14 +28,14 @@ const (
 	Table = "games"
 	// AwayTeamTable is the table that holds the awayTeam relation/edge.
 	AwayTeamTable = "games"
-	// AwayTeamInverseTable is the table name for the Team entity.
+	// AwayTeamInverseTable is the table name for the TeamID entity.
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	AwayTeamInverseTable = "teams"
 	// AwayTeamColumn is the table column denoting the awayTeam relation/edge.
 	AwayTeamColumn = "team_away_games"
 	// HomeTeamTable is the table that holds the homeTeam relation/edge.
 	HomeTeamTable = "games"
-	// HomeTeamInverseTable is the table name for the Team entity.
+	// HomeTeamInverseTable is the table name for the TeamID entity.
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	HomeTeamInverseTable = "teams"
 	// HomeTeamColumn is the table column denoting the homeTeam relation/edge.

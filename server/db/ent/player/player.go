@@ -38,7 +38,7 @@ const (
 	Table = "players"
 	// TeamTable is the table that holds the team relation/edge.
 	TeamTable = "players"
-	// TeamInverseTable is the table name for the Team entity.
+	// TeamInverseTable is the table name for the TeamID entity.
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.

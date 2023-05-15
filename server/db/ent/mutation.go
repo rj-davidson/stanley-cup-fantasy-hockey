@@ -31,7 +31,7 @@ const (
 	TypeGame   = "Game"
 	TypeLeague = "League"
 	TypePlayer = "Player"
-	TypeTeam   = "Team"
+	TypeTeam   = "TeamID"
 )
 
 // EntryMutation represents an operation that mutates the Entry nodes in the graph.
@@ -3562,7 +3562,7 @@ func (m *TeamMutation) OldField(ctx context.Context, name string) (ent.Value, er
 	case team.FieldEliminated:
 		return m.OldEliminated(ctx)
 	}
-	return nil, fmt.Errorf("unknown Team field %s", name)
+	return nil, fmt.Errorf("unknown TeamID field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
@@ -3592,7 +3592,7 @@ func (m *TeamMutation) SetField(name string, value ent.Value) error {
 		m.SetEliminated(v)
 		return nil
 	}
-	return fmt.Errorf("unknown Team field %s", name)
+	return fmt.Errorf("unknown TeamID field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
@@ -3614,7 +3614,7 @@ func (m *TeamMutation) AddedField(name string) (ent.Value, bool) {
 func (m *TeamMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	}
-	return fmt.Errorf("unknown Team numeric field %s", name)
+	return fmt.Errorf("unknown TeamID numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
@@ -3633,7 +3633,7 @@ func (m *TeamMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *TeamMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown Team nullable field %s", name)
+	return fmt.Errorf("unknown TeamID nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
@@ -3650,7 +3650,7 @@ func (m *TeamMutation) ResetField(name string) error {
 		m.ResetEliminated()
 		return nil
 	}
-	return fmt.Errorf("unknown Team field %s", name)
+	return fmt.Errorf("unknown TeamID field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
@@ -3769,7 +3769,7 @@ func (m *TeamMutation) EdgeCleared(name string) bool {
 func (m *TeamMutation) ClearEdge(name string) error {
 	switch name {
 	}
-	return fmt.Errorf("unknown Team unique edge %s", name)
+	return fmt.Errorf("unknown TeamID unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
@@ -3786,5 +3786,5 @@ func (m *TeamMutation) ResetEdge(name string) error {
 		m.ResetAwayGames()
 		return nil
 	}
-	return fmt.Errorf("unknown Team edge %s", name)
+	return fmt.Errorf("unknown TeamID edge %s", name)
 }

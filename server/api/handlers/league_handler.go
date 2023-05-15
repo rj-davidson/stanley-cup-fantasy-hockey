@@ -46,7 +46,7 @@ func GetLeagueByID(client *ent.Client) fiber.Handler {
 		// Create a set of type team struct (no duplicates)
 		teamSet := make(map[int]TeamStruct)
 		playerSet := make(map[int]PlayerStruct)
-		var response Response
+		var response LeagueBundle
 		response.League = LeagueStruct{
 			ID:           l.ID,
 			Name:         l.Name,
@@ -73,7 +73,7 @@ func GetLeagueByID(client *ent.Client) fiber.Handler {
 					Assists:  p.Assists,
 					Shutouts: p.Shutouts,
 					Wins:     p.Wins,
-					Team:     p.Edges.Team.ID,
+					TeamID:   p.Edges.Team.ID,
 				}
 				pIDs = append(pIDs, p.ID)
 			}
@@ -101,7 +101,7 @@ type EntryResponse struct {
 	PlayerIDs []int  `json:"playerIDs,omitempty"`
 }
 
-type Response struct {
+type LeagueBundle struct {
 	League  LeagueStruct    `json:"league"`
 	Players []PlayerStruct  `json:"players"`
 	Entries []EntryResponse `json:"entries"`
@@ -133,7 +133,7 @@ type PlayerStruct struct {
 	Assists  int    `json:"assists"`
 	Shutouts int    `json:"shutouts"`
 	Wins     int    `json:"wins"`
-	Team     int    `json:"team"`
+	TeamID   int    `json:"team_id"`
 }
 
 type TeamStruct struct {
@@ -142,32 +142,23 @@ type TeamStruct struct {
 	Eliminated bool   `json:"eliminated"`
 }
 
-func validatePlayers(pm *model.PlayerModel, playerData []PlayerStruct) ([]*ent.Player, error) {
-	playerIDs := make([]int, len(playerData))
-	for i, player := range playerData {
-		playerIDs[i] = player.ID
-	}
-
-	return pm.GetPlayersByID(playerIDs)
-}
-
 func CreateLeague(lm *model.LeagueModel, em *model.EntryModel, pm *model.PlayerModel) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Parse the request body
-		var leagueData LeagueStruct
-		err := c.BodyParser(&leagueData)
+		var leagueBundle LeagueBundle
+		err := c.BodyParser(&leagueBundle)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		// Create a new league entity
 		newLeague, err := lm.CreateLeague(
-			leagueData.Season,
-			leagueData.Public,
-			leagueData.NumForwards,
-			leagueData.NumDefenders,
-			leagueData.NumGoalies,
-			leagueData.Name,
+			leagueBundle.League.Season,
+			leagueBundle.League.Public,
+			leagueBundle.League.NumForwards,
+			leagueBundle.League.NumDefenders,
+			leagueBundle.League.NumGoalies,
+			leagueBundle.League.Name,
 		)
 		fmt.Printf("Created league: %+v\n", newLeague)
 		if err != nil {
@@ -175,9 +166,9 @@ func CreateLeague(lm *model.LeagueModel, em *model.EntryModel, pm *model.PlayerM
 		}
 
 		// Iterate over the entries and add them to the league
-		for _, entryData := range leagueData.Entries {
+		for _, entryData := range leagueBundle.Entries {
 			// Validate the players by their IDs
-			players, err := validatePlayers(pm, entryData.Players)
+			players, err := pm.GetPlayersByID(entryData.PlayerIDs)
 
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch forwards"})

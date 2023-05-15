@@ -373,7 +373,7 @@ func (tq *TeamQuery) WithAwayGames(opts ...func(*GameQuery)) *TeamQuery {
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Team.Query().
+//	client.TeamID.Query().
 //		GroupBy(team.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
@@ -395,7 +395,7 @@ func (tq *TeamQuery) GroupBy(field string, fields ...string) *TeamGroupBy {
 //		Name string `json:"name,omitempty"`
 //	}
 //
-//	client.Team.Query().
+//	client.TeamID.Query().
 //		Select(team.FieldName).
 //		Scan(ctx, &v)
 func (tq *TeamQuery) Select(fields ...string) *TeamSelect {

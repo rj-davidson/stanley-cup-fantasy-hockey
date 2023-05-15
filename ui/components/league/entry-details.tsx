@@ -1,20 +1,29 @@
 import React from 'react';
-import { Entry, Player } from '@/types';
-import { Typography, Box, Stack } from '@mui/material';
-import PlayerDetails from '@/components/league/player';
+import { Entry, Player, Team } from '@/types';
+import { Box, Stack, Typography } from '@mui/material';
+import PlayerDetails from '@/components/league/player-details';
 
 interface EntryDetailsProps {
   entry: Entry;
+  teams: Team[];
+  players: Player[];
 }
 
-const EntryDetails: React.FC<EntryDetailsProps> = ({ entry }) => {
-  const { owner_name, players } = entry;
+const EntryDetails: React.FC<EntryDetailsProps> = ({
+  entry,
+  teams,
+  players,
+}) => {
+  const { owner_name, playerIDs } = entry;
 
-  // Calculate total points for each position
   const calculateTotalPoints = (players: Player[]) => {
     return players.reduce((total, player) => {
       return total + getPlayerPoints(player);
     }, 0);
+  };
+
+  const getPlayerById = (id: number): Player | undefined => {
+    return players.find((player) => player.id === id);
   };
 
   // Calculate points based on position
@@ -29,31 +38,17 @@ const EntryDetails: React.FC<EntryDetailsProps> = ({ entry }) => {
   };
 
   // Sort players by points in descending order
-  const sortedPlayers = players
-    ? [...players].sort((a, b) => {
-        const pointsA = getPlayerPoints(a);
-        const pointsB = getPlayerPoints(b);
-
-        if (pointsA !== pointsB) {
-          return pointsB - pointsA; // Sort by points in descending order
-        }
-
-        if (a.position !== b.position) {
-          if (a.position === 'Forward') return -1;
-          if (a.position === 'Defenseman')
-            return a.position === b.position ? -1 : 1;
-          if (a.position === 'Goalie') return 1;
-        }
-
-        return a.name.localeCompare(b.name);
-      })
+  const sortedPlayers = playerIDs
+    ? (playerIDs
+        .map((id) => getPlayerById(id))
+        .filter((player) => player !== undefined) as Player[])
     : [];
 
   // Calculate total points for each position
   const points = calculateTotalPoints(sortedPlayers);
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={1}>
       <Stack direction={'row'} justifyContent={'space-between'}>
         <Typography variant="h5">{owner_name}</Typography>
         <Typography variant="h6">{points}</Typography>
@@ -63,7 +58,7 @@ const EntryDetails: React.FC<EntryDetailsProps> = ({ entry }) => {
         <Box>
           <Stack spacing={1}>
             {sortedPlayers.map((player) => (
-              <PlayerDetails key={player.id} player={player} />
+              <PlayerDetails key={player.id} player={player} teams={teams} />
             ))}
           </Stack>
         </Box>

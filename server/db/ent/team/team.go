@@ -74,7 +74,7 @@ var (
 	IDValidator func(int) error
 )
 
-// OrderOption defines the ordering options for the Team queries.
+// OrderOption defines the ordering options for the TeamID queries.
 type OrderOption func(*sql.Selector)
 
 // ByID orders the results by the id field.

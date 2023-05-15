@@ -66,7 +66,7 @@ func (ctrl *TeamController) AddTeams() error {
 
 	for _, nhlTeam := range nhlTeams {
 		if utils.Contains(loadedTeamIDs, nhlTeam.ID) {
-			fmt.Println("Team already added: %s\n", nhlTeam.Name)
+			fmt.Println("TeamID already added: %s\n", nhlTeam.Name)
 			continue
 		} else {
 			_, err := ctrl.teamModel.CreateTeam(nhlTeam.Name, fmt.Sprintf("nhl_%d_logo.png", nhlTeam.ID), nhlTeam.ID, true)

@@ -1,7 +1,7 @@
 export interface Entry {
   id?: number;
   owner_name: string;
-  players?: Player[];
+  playerIDs?: number[];
 }
 
 export interface League {
@@ -12,7 +12,6 @@ export interface League {
   num_forwards: number;
   num_defenders: number;
   num_goalies: number;
-  entries: Entry[];
 }
 
 export interface Player {
@@ -23,5 +22,23 @@ export interface Player {
   assists: number;
   shutouts: number;
   wins: number;
-  team: string;
+  team_id: number;
+}
+
+export interface LeagueBundle {
+  league: League;
+  players: Player[];
+  entries: Entry[];
+  teams: Team[];
+}
+
+export interface CreateLeagueBundle {
+  league: League;
+  entries: Entry[];
+}
+
+export interface Team {
+  id: number;
+  name: string;
+  eliminated: boolean;
 }

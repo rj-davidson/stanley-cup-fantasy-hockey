@@ -58,7 +58,7 @@ func (f PlayerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 }
 
 // The TeamFunc type is an adapter to allow the use of ordinary
-// function as Team mutator.
+// function as TeamID mutator.
 type TeamFunc func(context.Context, *ent.TeamMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).

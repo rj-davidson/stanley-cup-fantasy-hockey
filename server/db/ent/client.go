@@ -1038,7 +1038,7 @@ func (c *TeamClient) mutate(ctx context.Context, m *TeamMutation) (Value, error)
 	case OpDelete, OpDeleteOne:
 		return (&TeamDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown Team mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown TeamID mutation op: %q", m.Op())
 	}
 }
 

@@ -12,7 +12,7 @@ interface Props {
 
 export default function CreateEntryForm(props: Props) {
   const [ownerName, setOwnerName] = useState('');
-  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+  const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
 
   useEffect(() => {
     setSelectedPlayers(
@@ -33,16 +33,16 @@ export default function CreateEntryForm(props: Props) {
     }
     const entry: Entry = {
       owner_name: ownerName,
-      players: selectedPlayers.map((p) => p),
+      playerIDs: selectedPlayers.map((p) => p),
     };
     props.onCreateEntry(entry);
   };
 
   const handlePlayerChange =
     (index: number) => (event: any, value: Player | null) => {
-      setSelectedPlayers((oldArray: Player[]) => {
+      setSelectedPlayers((oldArray: number[]) => {
         const newArray = [...oldArray];
-        newArray[index] = value || oldArray[index];
+        newArray[index] = value ? value.id : oldArray[index];
         return newArray;
       });
     };
@@ -79,12 +79,12 @@ export default function CreateEntryForm(props: Props) {
         key={selectedIndex}
         id={`player-select-${selectedIndex}`}
         options={filteredPlayers.filter(
-          (p: Player) => !selectedPlayers.includes(p),
+          (p: Player) => !selectedPlayers.includes(p.id),
         )}
         getOptionLabel={(option) => option.name}
         style={{ width: 300 }}
         renderInput={(params) => <TextField {...params} label={label} />}
-        value={selectedPlayers[selectedIndex]}
+        value={players.find((p) => p.id === selectedPlayers[selectedIndex])}
         onChange={handlePlayerChange(selectedIndex)}
       />
     );
