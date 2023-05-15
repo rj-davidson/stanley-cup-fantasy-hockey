@@ -79,8 +79,8 @@ func main() {
 func initializeData(client *ent.Client) {
 	// Add teams
 	{
-		teamController := controller.NewNHLController(client)
-		err := teamController.AddNHLTeams()
+		teamController := controller.NewTeamController(client)
+		err := teamController.AddTeams()
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -105,21 +105,28 @@ func initRoutes(app *fiber.App, client *ent.Client) {
 	pm := model.NewPlayerModel(client)
 	em := model.NewEntryModel(client)
 
-	api.RegisterLeagueRoutes(app, lm, em, pm)
+	api.RegisterLeagueRoutes(app, lm, em, pm, client)
 	api.RegisterPlayerRoutes(app, pm)
 }
 
 func updateData(client *ent.Client) {
 	// Update playoff games
 	updatePlayoffGames(client)
+	fmt.Println("[Update] playoff games completed")
 
 	// Update player points
 	updatePlayerPoints(client)
+	fmt.Println("[Update] player points completed")
 
 	// Update goalie wins and shutouts
 	updateGoalieStats(client)
+	fmt.Println("[Update] goalie stats completed")
 
-	fmt.Println("Data update completed")
+	// Update eliminated teams
+	updateTeamEliminated(client)
+	fmt.Println("[Update] eliminated teams completed")
+
+	fmt.Println("-- DATA UPDATE COMPLETE --")
 }
 
 func updatePlayoffGames(client *ent.Client) {
@@ -156,11 +163,16 @@ func updateGoalieStats(client *ent.Client) {
 	}
 }
 
+func updateTeamEliminated(client *ent.Client) {
+	teamController := controller.NewTeamController(client)
+	teamController.UpdateEliminatedTeams()
+}
+
 func scheduleDataUpdates(client *ent.Client) {
 	c := cron.New()
 
-	// Schedule data updates every 10 minutes
-	_, err := c.AddFunc("*/10 * * * *", func() {
+	// Schedule data updates every 20 minutes
+	_, err := c.AddFunc("*/20 * * * *", func() {
 		fmt.Println("Running data update...")
 		updateData(client)
 	})

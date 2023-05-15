@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
@@ -59,11 +60,11 @@ func (tm *TeamModel) ListTeams() ([]*ent.Team, error) {
 		All(context.Background())
 }
 
-func (tm *TeamModel) SetPlayoffCompetitor(t *ent.Team) error {
+func (tm *TeamModel) SetEliminatedStatus(t *ent.Team, eliminated bool) error {
 	// set team t.eliminated to false
 	_, err := tm.client.Team.
 		UpdateOneID(t.ID).
-		SetEliminated(false).
+		SetEliminated(eliminated).
 		Save(context.Background())
 	if err != nil {
 		return err
@@ -80,6 +81,25 @@ func (tm *TeamModel) ListPlayoffTeams() ([]*ent.Team, error) {
 		All(context.Background())
 }
 
+// ListGamesByTeam returns a list of games that a team has played in
+func (tm *TeamModel) ListGamesByTeam(t *ent.Team) ([]*ent.Game, error) {
+	var games []*ent.Game
+	homeGames, err := t.QueryHomeGames().All(context.Background())
+	if err != nil {
+		fmt.Printf("error querying home games: %v", err)
+	}
+
+	games = append(games, homeGames...)
+	awayGames, err := t.QueryAwayGames().All(context.Background())
+	if err != nil {
+		fmt.Println("error querying away games: %v", err)
+	}
+
+	games = append(games, awayGames...)
+	return games, nil
+}
+
+// ListTeamIDs returns a list of all team ids
 func (tm *TeamModel) ListTeamIDs() ([]int, error) {
 	teams, err := tm.client.Team.
 		Query().

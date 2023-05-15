@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent"
@@ -22,7 +23,7 @@ type NHLApiResponse struct {
 
 const nhlApiUrl = "https://statsapi.web.nhl.com/api/v1/teams"
 
-func fetchNHLTeams() ([]NHLTeam, error) {
+func fetchTeams() ([]NHLTeam, error) {
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 
 	resp, err := httpClient.Get(nhlApiUrl)
@@ -45,18 +46,18 @@ func fetchNHLTeams() ([]NHLTeam, error) {
 	return apiResponse.Teams, nil
 }
 
-type NHLController struct {
+type TeamController struct {
 	teamModel *model.TeamModel
 }
 
-func NewNHLController(client *ent.Client) *NHLController {
-	return &NHLController{
+func NewTeamController(client *ent.Client) *TeamController {
+	return &TeamController{
 		teamModel: model.NewTeamModel(client),
 	}
 }
 
-func (ctrl *NHLController) AddNHLTeams() error {
-	nhlTeams, err := fetchNHLTeams()
+func (ctrl *TeamController) AddTeams() error {
+	nhlTeams, err := fetchTeams()
 	if err != nil {
 		return err
 	}
@@ -78,4 +79,46 @@ func (ctrl *NHLController) AddNHLTeams() error {
 	}
 
 	return nil
+}
+
+func (ctrl *TeamController) UpdateEliminatedTeams() {
+	// Get all teams who have not been eliminated
+	teams, err := ctrl.teamModel.ListPlayoffTeams()
+	if err != nil {
+		fmt.Printf("Error getting playoff teams: %v", err)
+	}
+	for _, team := range teams {
+		games, err := ctrl.teamModel.ListGamesByTeam(team)
+		if err != nil {
+			fmt.Printf("Error getting games by team: %v", err)
+		}
+		// Dict of key: opposingTeam, value: wins
+		// If opposingTeam is not in dict, add it with value 0
+		oppoWins := make(map[int]int)
+
+		// Search each game
+		for _, game := range games {
+			awayTeamID := game.QueryAwayTeam().OnlyX(context.Background()).ID
+			homeTeamID := game.QueryHomeTeam().OnlyX(context.Background()).ID
+
+			// If team is home team
+			if game.QueryAwayTeam().OnlyX(context.Background()) != team && game.AwayScore > game.HomeScore {
+				oppoWins[awayTeamID] += 1
+			}
+			// If team is away team
+			if game.QueryHomeTeam().OnlyX(context.Background()) != team && game.HomeScore > game.AwayScore {
+				oppoWins[homeTeamID] += 1
+			}
+		}
+
+		// If any opposing team has 4 wins, team is eliminated
+		for _, wins := range oppoWins {
+			if wins == 4 {
+				_, err := team.Update().SetEliminated(true).Save(context.Background())
+				if err != nil {
+					fmt.Printf("Error updating team playoff elimination status: %v", err)
+				}
+			}
+		}
+	}
 }

@@ -66,7 +66,7 @@ func (ctrl *GameController) FetchPostSeasonGames() error {
 				if err != nil {
 					return fmt.Errorf("error getting home team: %w", err)
 				}
-				if err := ctrl.teamModel.SetPlayoffCompetitor(homeTeam); err != nil {
+				if err := ctrl.teamModel.SetEliminatedStatus(homeTeam, false); err != nil {
 					return fmt.Errorf("error setting home team as playoff competitor: %w", err)
 				}
 
@@ -74,7 +74,7 @@ func (ctrl *GameController) FetchPostSeasonGames() error {
 				if err != nil {
 					return fmt.Errorf("error getting away team: %w", err)
 				}
-				if err := ctrl.teamModel.SetPlayoffCompetitor(awayTeam); err != nil {
+				if err := ctrl.teamModel.SetEliminatedStatus(awayTeam, false); err != nil {
 					return fmt.Errorf("error setting away team as playoff competitor: %w", err)
 				}
 

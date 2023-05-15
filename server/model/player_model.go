@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 )
 
@@ -126,4 +127,21 @@ func (pm *PlayerModel) UpdateGoalieShutouts(goalie *ent.Player, shutouts int) (*
 		return nil, err
 	}
 	return p, nil
+}
+
+// GetPlayersByEntryIDs returns set of unique players for a list of entries
+func (pm *PlayerModel) GetPlayersByEntries(entries []*ent.Entry) ([]*ent.Player, error) {
+	var IDs []int
+	for _, e := range entries {
+		IDs = append(IDs, e.ID)
+	}
+	players, err := pm.client.Player.
+		Query().
+		Where(player.HasEntriesWith(entry.IDIn(IDs...))).
+		All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return players, nil
 }
