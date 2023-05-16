@@ -58,7 +58,7 @@ func main() {
 	// Add CORS middleware
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "http://" + viper.GetString("IP_HOST") +
-			":3000, http://localhost:3000, http://" + viper.GetString("DOMAIN") + ", http://" +
+			":3000, http://localhost:3000, https://" + viper.GetString("DOMAIN") + ", http://" +
 			viper.GetString("IP HOST") + ":80, http://" + viper.GetString("IP_HOST"),
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
