@@ -25,6 +25,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, teams }) => {
 
   const playerNameStyle = {
     color: team?.eliminated ? 'grey' : 'black',
+    textDecoration: team?.eliminated ? 'line-through' : 'none',
   };
 
   return (
