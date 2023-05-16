@@ -9,7 +9,7 @@ import {
   FormControl,
   Button,
 } from '@mui/material';
-import { League } from '@/types';
+import { Entry, League } from '@/types';
 
 interface Props {
   onCreateLeague: (league: League) => void;
@@ -31,7 +31,6 @@ export default function CreateLeagueForm(props: Props) {
       num_forwards: parseInt(numForwards),
       num_defenders: parseInt(numDefenders),
       num_goalies: parseInt(numGoalies),
-      entries: [],
     };
     props.onCreateLeague(league);
   };
