@@ -8,15 +8,15 @@ import (
 )
 
 func RegisterLeagueRoutes(app *fiber.App, lm *model.LeagueModel, em *model.EntryModel, pm *model.PlayerModel, client *ent.Client) {
-	app.Post("/leagues", handlers.CreateLeague(lm, em, pm))
-	app.Get("/leagues", handlers.ListLeagues(lm))
-	app.Get("/leagues/:id", handlers.GetLeagueByID(client))
+	app.Post("/api/leagues", handlers.CreateLeague(lm, em, pm))
+	app.Get("/api/leagues", handlers.ListLeagues(lm))
+	app.Get("/api/leagues/:id", handlers.GetLeagueByID(client))
 	// Add other league routes if needed
 }
 
 func RegisterPlayerRoutes(app *fiber.App, pm *model.PlayerModel) {
-	app.Get("/players", handlers.ListPlayers(pm))
-	app.Get("/players/:id", handlers.GetPlayerByID(pm))
-	app.Delete("/players/:id", handlers.DeletePlayer(pm))
+	app.Get("/api/players", handlers.ListPlayers(pm))
+	app.Get("/api/players/:id", handlers.GetPlayerByID(pm))
+	app.Delete("/api/players/:id", handlers.DeletePlayer(pm))
 	// Add other player routes if needed
 }
