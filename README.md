@@ -4,7 +4,7 @@
 This is a fantasy hockey app that allows users to create a team and compete against other users in a league. The app will allow users to draft players, make trades, and view stats. The app will also allow users to view the current standings and view the current playoff picture.
 
 ## Website Demo
-![hockey.rjd.app](https://hockey.rjd.app/
+![hockey.rjd.app](https://hockey.rjd.app/)
 
 ## Table of Contents
 * [Installation](#installation)
@@ -13,7 +13,7 @@ This is a fantasy hockey app that allows users to create a team and compete agai
 * [Technologies](#technologies)
 
 ## Installation
-The app is divided into two services, server and client. The database configuration is setup for PostgreSQL. The server is built with Go and has been tested on Go 1.18+. The client is built with Next.js and has been tested on Node 16.13.0+.
+The app is divided into two services, server and client. The database configuration is set up for PostgreSQL. The server is built with Go and has been tested on Go 1.18+. The client is built with Next.js and has been tested on Node 16.13.0+.
 
 To install the server, navigate to the server directory and build main.go. The server requires a .env (server/.env) file with the following variables:
 ```
