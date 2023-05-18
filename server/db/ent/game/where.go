@@ -189,44 +189,21 @@ func HasHomeTeamWith(preds ...predicate.Team) predicate.Game {
 	})
 }
 
-// HasSkaterStats applies the HasEdge predicate on the "skaterStats" edge.
-func HasSkaterStats() predicate.Game {
+// HasGameStats applies the HasEdge predicate on the "gameStats" edge.
+func HasGameStats() predicate.Game {
 	return predicate.Game(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, SkaterStatsTable, SkaterStatsColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, GameStatsTable, GameStatsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasSkaterStatsWith applies the HasEdge predicate on the "skaterStats" edge with a given conditions (other predicates).
-func HasSkaterStatsWith(preds ...predicate.SkaterStats) predicate.Game {
+// HasGameStatsWith applies the HasEdge predicate on the "gameStats" edge with a given conditions (other predicates).
+func HasGameStatsWith(preds ...predicate.GameStats) predicate.Game {
 	return predicate.Game(func(s *sql.Selector) {
-		step := newSkaterStatsStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasGoalieStats applies the HasEdge predicate on the "goalieStats" edge.
-func HasGoalieStats() predicate.Game {
-	return predicate.Game(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, GoalieStatsTable, GoalieStatsPrimaryKey...),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasGoalieStatsWith applies the HasEdge predicate on the "goalieStats" edge with a given conditions (other predicates).
-func HasGoalieStatsWith(preds ...predicate.GoalieStats) predicate.Game {
-	return predicate.Game(func(s *sql.Selector) {
-		step := newGoalieStatsStep()
+		step := newGameStatsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

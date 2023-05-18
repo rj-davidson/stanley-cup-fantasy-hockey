@@ -31,7 +31,6 @@ func (Game) Edges() []ent.Edge {
 			Ref("homeGames").
 			Unique().
 			Required(),
-		edge.To("skaterStats", SkaterStats.Type),
-		edge.To("goalieStats", GoalieStats.Type),
+		edge.From("gameStats", GameStats.Type).Ref("game").Unique(),
 	}
 }

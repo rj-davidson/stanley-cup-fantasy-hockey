@@ -15,7 +15,7 @@ func NewGameModel(client *ent.Client) *GameModel {
 }
 
 // CreateGame creates a new game in the database.
-func (gm *GameModel) CreateGame(id int, homeScore, awayScore int, homeTeam, awayTeam *ent.Team, homeGoalie, awayGoalie *ent.Player) (*ent.Game, error) {
+func (gm *GameModel) CreateGame(id int, homeScore, awayScore int, homeTeam, awayTeam *ent.Team) (*ent.Game, error) {
 	game, err := gm.client.Game.
 		Create().
 		SetID(id).
@@ -23,8 +23,6 @@ func (gm *GameModel) CreateGame(id int, homeScore, awayScore int, homeTeam, away
 		SetAwayScore(awayScore).
 		SetHomeTeam(homeTeam).
 		SetAwayTeam(awayTeam).
-		SetHomeGoalie(homeGoalie).
-		SetAwayGoalie(awayGoalie).
 		Save(context.Background())
 
 	if err != nil {
@@ -41,8 +39,6 @@ func (gm *GameModel) GetGameByID(id int) (*ent.Game, error) {
 		Where(game.ID(id)).
 		WithHomeTeam().
 		WithAwayTeam().
-		WithHomeGoalie().
-		WithAwayGoalie().
 		Only(context.Background())
 }
 
@@ -73,7 +69,5 @@ func (gm *GameModel) ListGames() ([]*ent.Game, error) {
 		Query().
 		WithHomeTeam().
 		WithAwayTeam().
-		WithHomeGoalie().
-		WithAwayGoalie().
 		All(context.Background())
 }

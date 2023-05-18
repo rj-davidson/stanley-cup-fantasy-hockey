@@ -12,11 +12,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/gamestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/league"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/predicate"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/skaterstats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/stats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
@@ -29,13 +29,13 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeEntry       = "Entry"
-	TypeGame        = "Game"
-	TypeGoalieStats = "GoalieStats"
-	TypeLeague      = "League"
-	TypePlayer      = "Player"
-	TypeSkaterStats = "SkaterStats"
-	TypeTeam        = "Team"
+	TypeEntry     = "Entry"
+	TypeGame      = "Game"
+	TypeGameStats = "GameStats"
+	TypeLeague    = "League"
+	TypePlayer    = "Player"
+	TypeStats     = "Stats"
+	TypeTeam      = "Team"
 )
 
 // EntryMutation represents an operation that mutates the Entry nodes in the graph.
@@ -519,27 +519,23 @@ func (m *EntryMutation) ResetEdge(name string) error {
 // GameMutation represents an operation that mutates the Game nodes in the graph.
 type GameMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *int
-	homeScore          *int
-	addhomeScore       *int
-	awayScore          *int
-	addawayScore       *int
-	clearedFields      map[string]struct{}
-	awayTeam           *int
-	clearedawayTeam    bool
-	homeTeam           *int
-	clearedhomeTeam    bool
-	skaterStats        map[int]struct{}
-	removedskaterStats map[int]struct{}
-	clearedskaterStats bool
-	goalieStats        map[int]struct{}
-	removedgoalieStats map[int]struct{}
-	clearedgoalieStats bool
-	done               bool
-	oldValue           func(context.Context) (*Game, error)
-	predicates         []predicate.Game
+	op               Op
+	typ              string
+	id               *int
+	homeScore        *int
+	addhomeScore     *int
+	awayScore        *int
+	addawayScore     *int
+	clearedFields    map[string]struct{}
+	awayTeam         *int
+	clearedawayTeam  bool
+	homeTeam         *int
+	clearedhomeTeam  bool
+	gameStats        *int
+	clearedgameStats bool
+	done             bool
+	oldValue         func(context.Context) (*Game, error)
+	predicates       []predicate.Game
 }
 
 var _ ent.Mutation = (*GameMutation)(nil)
@@ -836,112 +832,43 @@ func (m *GameMutation) ResetHomeTeam() {
 	m.clearedhomeTeam = false
 }
 
-// AddSkaterStatIDs adds the "skaterStats" edge to the SkaterStats entity by ids.
-func (m *GameMutation) AddSkaterStatIDs(ids ...int) {
-	if m.skaterStats == nil {
-		m.skaterStats = make(map[int]struct{})
-	}
-	for i := range ids {
-		m.skaterStats[ids[i]] = struct{}{}
-	}
+// SetGameStatsID sets the "gameStats" edge to the GameStats entity by id.
+func (m *GameMutation) SetGameStatsID(id int) {
+	m.gameStats = &id
 }
 
-// ClearSkaterStats clears the "skaterStats" edge to the SkaterStats entity.
-func (m *GameMutation) ClearSkaterStats() {
-	m.clearedskaterStats = true
+// ClearGameStats clears the "gameStats" edge to the GameStats entity.
+func (m *GameMutation) ClearGameStats() {
+	m.clearedgameStats = true
 }
 
-// SkaterStatsCleared reports if the "skaterStats" edge to the SkaterStats entity was cleared.
-func (m *GameMutation) SkaterStatsCleared() bool {
-	return m.clearedskaterStats
+// GameStatsCleared reports if the "gameStats" edge to the GameStats entity was cleared.
+func (m *GameMutation) GameStatsCleared() bool {
+	return m.clearedgameStats
 }
 
-// RemoveSkaterStatIDs removes the "skaterStats" edge to the SkaterStats entity by IDs.
-func (m *GameMutation) RemoveSkaterStatIDs(ids ...int) {
-	if m.removedskaterStats == nil {
-		m.removedskaterStats = make(map[int]struct{})
-	}
-	for i := range ids {
-		delete(m.skaterStats, ids[i])
-		m.removedskaterStats[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedSkaterStats returns the removed IDs of the "skaterStats" edge to the SkaterStats entity.
-func (m *GameMutation) RemovedSkaterStatsIDs() (ids []int) {
-	for id := range m.removedskaterStats {
-		ids = append(ids, id)
+// GameStatsID returns the "gameStats" edge ID in the mutation.
+func (m *GameMutation) GameStatsID() (id int, exists bool) {
+	if m.gameStats != nil {
+		return *m.gameStats, true
 	}
 	return
 }
 
-// SkaterStatsIDs returns the "skaterStats" edge IDs in the mutation.
-func (m *GameMutation) SkaterStatsIDs() (ids []int) {
-	for id := range m.skaterStats {
-		ids = append(ids, id)
+// GameStatsIDs returns the "gameStats" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GameStatsID instead. It exists only for internal usage by the builders.
+func (m *GameMutation) GameStatsIDs() (ids []int) {
+	if id := m.gameStats; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetSkaterStats resets all changes to the "skaterStats" edge.
-func (m *GameMutation) ResetSkaterStats() {
-	m.skaterStats = nil
-	m.clearedskaterStats = false
-	m.removedskaterStats = nil
-}
-
-// AddGoalieStatIDs adds the "goalieStats" edge to the GoalieStats entity by ids.
-func (m *GameMutation) AddGoalieStatIDs(ids ...int) {
-	if m.goalieStats == nil {
-		m.goalieStats = make(map[int]struct{})
-	}
-	for i := range ids {
-		m.goalieStats[ids[i]] = struct{}{}
-	}
-}
-
-// ClearGoalieStats clears the "goalieStats" edge to the GoalieStats entity.
-func (m *GameMutation) ClearGoalieStats() {
-	m.clearedgoalieStats = true
-}
-
-// GoalieStatsCleared reports if the "goalieStats" edge to the GoalieStats entity was cleared.
-func (m *GameMutation) GoalieStatsCleared() bool {
-	return m.clearedgoalieStats
-}
-
-// RemoveGoalieStatIDs removes the "goalieStats" edge to the GoalieStats entity by IDs.
-func (m *GameMutation) RemoveGoalieStatIDs(ids ...int) {
-	if m.removedgoalieStats == nil {
-		m.removedgoalieStats = make(map[int]struct{})
-	}
-	for i := range ids {
-		delete(m.goalieStats, ids[i])
-		m.removedgoalieStats[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedGoalieStats returns the removed IDs of the "goalieStats" edge to the GoalieStats entity.
-func (m *GameMutation) RemovedGoalieStatsIDs() (ids []int) {
-	for id := range m.removedgoalieStats {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// GoalieStatsIDs returns the "goalieStats" edge IDs in the mutation.
-func (m *GameMutation) GoalieStatsIDs() (ids []int) {
-	for id := range m.goalieStats {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetGoalieStats resets all changes to the "goalieStats" edge.
-func (m *GameMutation) ResetGoalieStats() {
-	m.goalieStats = nil
-	m.clearedgoalieStats = false
-	m.removedgoalieStats = nil
+// ResetGameStats resets all changes to the "gameStats" edge.
+func (m *GameMutation) ResetGameStats() {
+	m.gameStats = nil
+	m.clearedgameStats = false
 }
 
 // Where appends a list predicates to the GameMutation builder.
@@ -1121,18 +1048,15 @@ func (m *GameMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GameMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 3)
 	if m.awayTeam != nil {
 		edges = append(edges, game.EdgeAwayTeam)
 	}
 	if m.homeTeam != nil {
 		edges = append(edges, game.EdgeHomeTeam)
 	}
-	if m.skaterStats != nil {
-		edges = append(edges, game.EdgeSkaterStats)
-	}
-	if m.goalieStats != nil {
-		edges = append(edges, game.EdgeGoalieStats)
+	if m.gameStats != nil {
+		edges = append(edges, game.EdgeGameStats)
 	}
 	return edges
 }
@@ -1149,68 +1073,37 @@ func (m *GameMutation) AddedIDs(name string) []ent.Value {
 		if id := m.homeTeam; id != nil {
 			return []ent.Value{*id}
 		}
-	case game.EdgeSkaterStats:
-		ids := make([]ent.Value, 0, len(m.skaterStats))
-		for id := range m.skaterStats {
-			ids = append(ids, id)
+	case game.EdgeGameStats:
+		if id := m.gameStats; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
-	case game.EdgeGoalieStats:
-		ids := make([]ent.Value, 0, len(m.goalieStats))
-		for id := range m.goalieStats {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GameMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
-	if m.removedskaterStats != nil {
-		edges = append(edges, game.EdgeSkaterStats)
-	}
-	if m.removedgoalieStats != nil {
-		edges = append(edges, game.EdgeGoalieStats)
-	}
+	edges := make([]string, 0, 3)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *GameMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	case game.EdgeSkaterStats:
-		ids := make([]ent.Value, 0, len(m.removedskaterStats))
-		for id := range m.removedskaterStats {
-			ids = append(ids, id)
-		}
-		return ids
-	case game.EdgeGoalieStats:
-		ids := make([]ent.Value, 0, len(m.removedgoalieStats))
-		for id := range m.removedgoalieStats {
-			ids = append(ids, id)
-		}
-		return ids
-	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GameMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 3)
 	if m.clearedawayTeam {
 		edges = append(edges, game.EdgeAwayTeam)
 	}
 	if m.clearedhomeTeam {
 		edges = append(edges, game.EdgeHomeTeam)
 	}
-	if m.clearedskaterStats {
-		edges = append(edges, game.EdgeSkaterStats)
-	}
-	if m.clearedgoalieStats {
-		edges = append(edges, game.EdgeGoalieStats)
+	if m.clearedgameStats {
+		edges = append(edges, game.EdgeGameStats)
 	}
 	return edges
 }
@@ -1223,10 +1116,8 @@ func (m *GameMutation) EdgeCleared(name string) bool {
 		return m.clearedawayTeam
 	case game.EdgeHomeTeam:
 		return m.clearedhomeTeam
-	case game.EdgeSkaterStats:
-		return m.clearedskaterStats
-	case game.EdgeGoalieStats:
-		return m.clearedgoalieStats
+	case game.EdgeGameStats:
+		return m.clearedgameStats
 	}
 	return false
 }
@@ -1240,6 +1131,9 @@ func (m *GameMutation) ClearEdge(name string) error {
 		return nil
 	case game.EdgeHomeTeam:
 		m.ClearHomeTeam()
+		return nil
+	case game.EdgeGameStats:
+		m.ClearGameStats()
 		return nil
 	}
 	return fmt.Errorf("unknown Game unique edge %s", name)
@@ -1255,18 +1149,15 @@ func (m *GameMutation) ResetEdge(name string) error {
 	case game.EdgeHomeTeam:
 		m.ResetHomeTeam()
 		return nil
-	case game.EdgeSkaterStats:
-		m.ResetSkaterStats()
-		return nil
-	case game.EdgeGoalieStats:
-		m.ResetGoalieStats()
+	case game.EdgeGameStats:
+		m.ResetGameStats()
 		return nil
 	}
 	return fmt.Errorf("unknown Game edge %s", name)
 }
 
-// GoalieStatsMutation represents an operation that mutates the GoalieStats nodes in the graph.
-type GoalieStatsMutation struct {
+// GameStatsMutation represents an operation that mutates the GameStats nodes in the graph.
+type GameStatsMutation struct {
 	config
 	op            Op
 	typ           string
@@ -1276,31 +1167,29 @@ type GoalieStatsMutation struct {
 	assists       *int
 	addassists    *int
 	win           *bool
-	loss          *bool
-	home          *bool
+	shutout       *bool
+	homeGame      *bool
 	clearedFields map[string]struct{}
-	game          map[int]struct{}
-	removedgame   map[int]struct{}
+	game          *int
 	clearedgame   bool
-	player        map[int]struct{}
-	removedplayer map[int]struct{}
+	player        *int
 	clearedplayer bool
 	done          bool
-	oldValue      func(context.Context) (*GoalieStats, error)
-	predicates    []predicate.GoalieStats
+	oldValue      func(context.Context) (*GameStats, error)
+	predicates    []predicate.GameStats
 }
 
-var _ ent.Mutation = (*GoalieStatsMutation)(nil)
+var _ ent.Mutation = (*GameStatsMutation)(nil)
 
-// goaliestatsOption allows management of the mutation configuration using functional options.
-type goaliestatsOption func(*GoalieStatsMutation)
+// gamestatsOption allows management of the mutation configuration using functional options.
+type gamestatsOption func(*GameStatsMutation)
 
-// newGoalieStatsMutation creates new mutation for the GoalieStats entity.
-func newGoalieStatsMutation(c config, op Op, opts ...goaliestatsOption) *GoalieStatsMutation {
-	m := &GoalieStatsMutation{
+// newGameStatsMutation creates new mutation for the GameStats entity.
+func newGameStatsMutation(c config, op Op, opts ...gamestatsOption) *GameStatsMutation {
+	m := &GameStatsMutation{
 		config:        c,
 		op:            op,
-		typ:           TypeGoalieStats,
+		typ:           TypeGameStats,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -1309,20 +1198,20 @@ func newGoalieStatsMutation(c config, op Op, opts ...goaliestatsOption) *GoalieS
 	return m
 }
 
-// withGoalieStatsID sets the ID field of the mutation.
-func withGoalieStatsID(id int) goaliestatsOption {
-	return func(m *GoalieStatsMutation) {
+// withGameStatsID sets the ID field of the mutation.
+func withGameStatsID(id int) gamestatsOption {
+	return func(m *GameStatsMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *GoalieStats
+			value *GameStats
 		)
-		m.oldValue = func(ctx context.Context) (*GoalieStats, error) {
+		m.oldValue = func(ctx context.Context) (*GameStats, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().GoalieStats.Get(ctx, id)
+					value, err = m.Client().GameStats.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -1331,10 +1220,10 @@ func withGoalieStatsID(id int) goaliestatsOption {
 	}
 }
 
-// withGoalieStats sets the old GoalieStats of the mutation.
-func withGoalieStats(node *GoalieStats) goaliestatsOption {
-	return func(m *GoalieStatsMutation) {
-		m.oldValue = func(context.Context) (*GoalieStats, error) {
+// withGameStats sets the old GameStats of the mutation.
+func withGameStats(node *GameStats) gamestatsOption {
+	return func(m *GameStatsMutation) {
+		m.oldValue = func(context.Context) (*GameStats, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -1343,7 +1232,7 @@ func withGoalieStats(node *GoalieStats) goaliestatsOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m GoalieStatsMutation) Client() *Client {
+func (m GameStatsMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -1351,7 +1240,7 @@ func (m GoalieStatsMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m GoalieStatsMutation) Tx() (*Tx, error) {
+func (m GameStatsMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -1362,7 +1251,7 @@ func (m GoalieStatsMutation) Tx() (*Tx, error) {
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *GoalieStatsMutation) ID() (id int, exists bool) {
+func (m *GameStatsMutation) ID() (id int, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -1373,7 +1262,7 @@ func (m *GoalieStatsMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *GoalieStatsMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *GameStatsMutation) IDs(ctx context.Context) ([]int, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
@@ -1382,20 +1271,20 @@ func (m *GoalieStatsMutation) IDs(ctx context.Context) ([]int, error) {
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().GoalieStats.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().GameStats.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
 // SetGoals sets the "goals" field.
-func (m *GoalieStatsMutation) SetGoals(i int) {
+func (m *GameStatsMutation) SetGoals(i int) {
 	m.goals = &i
 	m.addgoals = nil
 }
 
 // Goals returns the value of the "goals" field in the mutation.
-func (m *GoalieStatsMutation) Goals() (r int, exists bool) {
+func (m *GameStatsMutation) Goals() (r int, exists bool) {
 	v := m.goals
 	if v == nil {
 		return
@@ -1403,10 +1292,10 @@ func (m *GoalieStatsMutation) Goals() (r int, exists bool) {
 	return *v, true
 }
 
-// OldGoals returns the old "goals" field's value of the GoalieStats entity.
-// If the GoalieStats object wasn't provided to the builder, the object is fetched from the database.
+// OldGoals returns the old "goals" field's value of the GameStats entity.
+// If the GameStats object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GoalieStatsMutation) OldGoals(ctx context.Context) (v int, err error) {
+func (m *GameStatsMutation) OldGoals(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGoals is only allowed on UpdateOne operations")
 	}
@@ -1421,7 +1310,7 @@ func (m *GoalieStatsMutation) OldGoals(ctx context.Context) (v int, err error) {
 }
 
 // AddGoals adds i to the "goals" field.
-func (m *GoalieStatsMutation) AddGoals(i int) {
+func (m *GameStatsMutation) AddGoals(i int) {
 	if m.addgoals != nil {
 		*m.addgoals += i
 	} else {
@@ -1430,7 +1319,7 @@ func (m *GoalieStatsMutation) AddGoals(i int) {
 }
 
 // AddedGoals returns the value that was added to the "goals" field in this mutation.
-func (m *GoalieStatsMutation) AddedGoals() (r int, exists bool) {
+func (m *GameStatsMutation) AddedGoals() (r int, exists bool) {
 	v := m.addgoals
 	if v == nil {
 		return
@@ -1439,19 +1328,19 @@ func (m *GoalieStatsMutation) AddedGoals() (r int, exists bool) {
 }
 
 // ResetGoals resets all changes to the "goals" field.
-func (m *GoalieStatsMutation) ResetGoals() {
+func (m *GameStatsMutation) ResetGoals() {
 	m.goals = nil
 	m.addgoals = nil
 }
 
 // SetAssists sets the "assists" field.
-func (m *GoalieStatsMutation) SetAssists(i int) {
+func (m *GameStatsMutation) SetAssists(i int) {
 	m.assists = &i
 	m.addassists = nil
 }
 
 // Assists returns the value of the "assists" field in the mutation.
-func (m *GoalieStatsMutation) Assists() (r int, exists bool) {
+func (m *GameStatsMutation) Assists() (r int, exists bool) {
 	v := m.assists
 	if v == nil {
 		return
@@ -1459,10 +1348,10 @@ func (m *GoalieStatsMutation) Assists() (r int, exists bool) {
 	return *v, true
 }
 
-// OldAssists returns the old "assists" field's value of the GoalieStats entity.
-// If the GoalieStats object wasn't provided to the builder, the object is fetched from the database.
+// OldAssists returns the old "assists" field's value of the GameStats entity.
+// If the GameStats object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GoalieStatsMutation) OldAssists(ctx context.Context) (v int, err error) {
+func (m *GameStatsMutation) OldAssists(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAssists is only allowed on UpdateOne operations")
 	}
@@ -1477,7 +1366,7 @@ func (m *GoalieStatsMutation) OldAssists(ctx context.Context) (v int, err error)
 }
 
 // AddAssists adds i to the "assists" field.
-func (m *GoalieStatsMutation) AddAssists(i int) {
+func (m *GameStatsMutation) AddAssists(i int) {
 	if m.addassists != nil {
 		*m.addassists += i
 	} else {
@@ -1486,7 +1375,7 @@ func (m *GoalieStatsMutation) AddAssists(i int) {
 }
 
 // AddedAssists returns the value that was added to the "assists" field in this mutation.
-func (m *GoalieStatsMutation) AddedAssists() (r int, exists bool) {
+func (m *GameStatsMutation) AddedAssists() (r int, exists bool) {
 	v := m.addassists
 	if v == nil {
 		return
@@ -1495,18 +1384,18 @@ func (m *GoalieStatsMutation) AddedAssists() (r int, exists bool) {
 }
 
 // ResetAssists resets all changes to the "assists" field.
-func (m *GoalieStatsMutation) ResetAssists() {
+func (m *GameStatsMutation) ResetAssists() {
 	m.assists = nil
 	m.addassists = nil
 }
 
 // SetWin sets the "win" field.
-func (m *GoalieStatsMutation) SetWin(b bool) {
+func (m *GameStatsMutation) SetWin(b bool) {
 	m.win = &b
 }
 
 // Win returns the value of the "win" field in the mutation.
-func (m *GoalieStatsMutation) Win() (r bool, exists bool) {
+func (m *GameStatsMutation) Win() (r bool, exists bool) {
 	v := m.win
 	if v == nil {
 		return
@@ -1514,10 +1403,10 @@ func (m *GoalieStatsMutation) Win() (r bool, exists bool) {
 	return *v, true
 }
 
-// OldWin returns the old "win" field's value of the GoalieStats entity.
-// If the GoalieStats object wasn't provided to the builder, the object is fetched from the database.
+// OldWin returns the old "win" field's value of the GameStats entity.
+// If the GameStats object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GoalieStatsMutation) OldWin(ctx context.Context) (v bool, err error) {
+func (m *GameStatsMutation) OldWin(ctx context.Context) (v bool, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldWin is only allowed on UpdateOne operations")
 	}
@@ -1532,199 +1421,169 @@ func (m *GoalieStatsMutation) OldWin(ctx context.Context) (v bool, err error) {
 }
 
 // ResetWin resets all changes to the "win" field.
-func (m *GoalieStatsMutation) ResetWin() {
+func (m *GameStatsMutation) ResetWin() {
 	m.win = nil
 }
 
-// SetLoss sets the "loss" field.
-func (m *GoalieStatsMutation) SetLoss(b bool) {
-	m.loss = &b
+// SetShutout sets the "shutout" field.
+func (m *GameStatsMutation) SetShutout(b bool) {
+	m.shutout = &b
 }
 
-// Loss returns the value of the "loss" field in the mutation.
-func (m *GoalieStatsMutation) Loss() (r bool, exists bool) {
-	v := m.loss
+// Shutout returns the value of the "shutout" field in the mutation.
+func (m *GameStatsMutation) Shutout() (r bool, exists bool) {
+	v := m.shutout
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldLoss returns the old "loss" field's value of the GoalieStats entity.
-// If the GoalieStats object wasn't provided to the builder, the object is fetched from the database.
+// OldShutout returns the old "shutout" field's value of the GameStats entity.
+// If the GameStats object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GoalieStatsMutation) OldLoss(ctx context.Context) (v bool, err error) {
+func (m *GameStatsMutation) OldShutout(ctx context.Context) (v bool, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldLoss is only allowed on UpdateOne operations")
+		return v, errors.New("OldShutout is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldLoss requires an ID field in the mutation")
+		return v, errors.New("OldShutout requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldLoss: %w", err)
+		return v, fmt.Errorf("querying old value for OldShutout: %w", err)
 	}
-	return oldValue.Loss, nil
+	return oldValue.Shutout, nil
 }
 
-// ResetLoss resets all changes to the "loss" field.
-func (m *GoalieStatsMutation) ResetLoss() {
-	m.loss = nil
+// ResetShutout resets all changes to the "shutout" field.
+func (m *GameStatsMutation) ResetShutout() {
+	m.shutout = nil
 }
 
-// SetHome sets the "home" field.
-func (m *GoalieStatsMutation) SetHome(b bool) {
-	m.home = &b
+// SetHomeGame sets the "homeGame" field.
+func (m *GameStatsMutation) SetHomeGame(b bool) {
+	m.homeGame = &b
 }
 
-// Home returns the value of the "home" field in the mutation.
-func (m *GoalieStatsMutation) Home() (r bool, exists bool) {
-	v := m.home
+// HomeGame returns the value of the "homeGame" field in the mutation.
+func (m *GameStatsMutation) HomeGame() (r bool, exists bool) {
+	v := m.homeGame
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldHome returns the old "home" field's value of the GoalieStats entity.
-// If the GoalieStats object wasn't provided to the builder, the object is fetched from the database.
+// OldHomeGame returns the old "homeGame" field's value of the GameStats entity.
+// If the GameStats object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GoalieStatsMutation) OldHome(ctx context.Context) (v bool, err error) {
+func (m *GameStatsMutation) OldHomeGame(ctx context.Context) (v bool, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldHome is only allowed on UpdateOne operations")
+		return v, errors.New("OldHomeGame is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldHome requires an ID field in the mutation")
+		return v, errors.New("OldHomeGame requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldHome: %w", err)
+		return v, fmt.Errorf("querying old value for OldHomeGame: %w", err)
 	}
-	return oldValue.Home, nil
+	return oldValue.HomeGame, nil
 }
 
-// ResetHome resets all changes to the "home" field.
-func (m *GoalieStatsMutation) ResetHome() {
-	m.home = nil
+// ResetHomeGame resets all changes to the "homeGame" field.
+func (m *GameStatsMutation) ResetHomeGame() {
+	m.homeGame = nil
 }
 
-// AddGameIDs adds the "game" edge to the Game entity by ids.
-func (m *GoalieStatsMutation) AddGameIDs(ids ...int) {
-	if m.game == nil {
-		m.game = make(map[int]struct{})
-	}
-	for i := range ids {
-		m.game[ids[i]] = struct{}{}
-	}
+// SetGameID sets the "game" edge to the Game entity by id.
+func (m *GameStatsMutation) SetGameID(id int) {
+	m.game = &id
 }
 
 // ClearGame clears the "game" edge to the Game entity.
-func (m *GoalieStatsMutation) ClearGame() {
+func (m *GameStatsMutation) ClearGame() {
 	m.clearedgame = true
 }
 
 // GameCleared reports if the "game" edge to the Game entity was cleared.
-func (m *GoalieStatsMutation) GameCleared() bool {
+func (m *GameStatsMutation) GameCleared() bool {
 	return m.clearedgame
 }
 
-// RemoveGameIDs removes the "game" edge to the Game entity by IDs.
-func (m *GoalieStatsMutation) RemoveGameIDs(ids ...int) {
-	if m.removedgame == nil {
-		m.removedgame = make(map[int]struct{})
-	}
-	for i := range ids {
-		delete(m.game, ids[i])
-		m.removedgame[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedGame returns the removed IDs of the "game" edge to the Game entity.
-func (m *GoalieStatsMutation) RemovedGameIDs() (ids []int) {
-	for id := range m.removedgame {
-		ids = append(ids, id)
+// GameID returns the "game" edge ID in the mutation.
+func (m *GameStatsMutation) GameID() (id int, exists bool) {
+	if m.game != nil {
+		return *m.game, true
 	}
 	return
 }
 
 // GameIDs returns the "game" edge IDs in the mutation.
-func (m *GoalieStatsMutation) GameIDs() (ids []int) {
-	for id := range m.game {
-		ids = append(ids, id)
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GameID instead. It exists only for internal usage by the builders.
+func (m *GameStatsMutation) GameIDs() (ids []int) {
+	if id := m.game; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
 
 // ResetGame resets all changes to the "game" edge.
-func (m *GoalieStatsMutation) ResetGame() {
+func (m *GameStatsMutation) ResetGame() {
 	m.game = nil
 	m.clearedgame = false
-	m.removedgame = nil
 }
 
-// AddPlayerIDs adds the "player" edge to the Player entity by ids.
-func (m *GoalieStatsMutation) AddPlayerIDs(ids ...int) {
-	if m.player == nil {
-		m.player = make(map[int]struct{})
-	}
-	for i := range ids {
-		m.player[ids[i]] = struct{}{}
-	}
+// SetPlayerID sets the "player" edge to the Player entity by id.
+func (m *GameStatsMutation) SetPlayerID(id int) {
+	m.player = &id
 }
 
 // ClearPlayer clears the "player" edge to the Player entity.
-func (m *GoalieStatsMutation) ClearPlayer() {
+func (m *GameStatsMutation) ClearPlayer() {
 	m.clearedplayer = true
 }
 
 // PlayerCleared reports if the "player" edge to the Player entity was cleared.
-func (m *GoalieStatsMutation) PlayerCleared() bool {
+func (m *GameStatsMutation) PlayerCleared() bool {
 	return m.clearedplayer
 }
 
-// RemovePlayerIDs removes the "player" edge to the Player entity by IDs.
-func (m *GoalieStatsMutation) RemovePlayerIDs(ids ...int) {
-	if m.removedplayer == nil {
-		m.removedplayer = make(map[int]struct{})
-	}
-	for i := range ids {
-		delete(m.player, ids[i])
-		m.removedplayer[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedPlayer returns the removed IDs of the "player" edge to the Player entity.
-func (m *GoalieStatsMutation) RemovedPlayerIDs() (ids []int) {
-	for id := range m.removedplayer {
-		ids = append(ids, id)
+// PlayerID returns the "player" edge ID in the mutation.
+func (m *GameStatsMutation) PlayerID() (id int, exists bool) {
+	if m.player != nil {
+		return *m.player, true
 	}
 	return
 }
 
 // PlayerIDs returns the "player" edge IDs in the mutation.
-func (m *GoalieStatsMutation) PlayerIDs() (ids []int) {
-	for id := range m.player {
-		ids = append(ids, id)
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PlayerID instead. It exists only for internal usage by the builders.
+func (m *GameStatsMutation) PlayerIDs() (ids []int) {
+	if id := m.player; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
 
 // ResetPlayer resets all changes to the "player" edge.
-func (m *GoalieStatsMutation) ResetPlayer() {
+func (m *GameStatsMutation) ResetPlayer() {
 	m.player = nil
 	m.clearedplayer = false
-	m.removedplayer = nil
 }
 
-// Where appends a list predicates to the GoalieStatsMutation builder.
-func (m *GoalieStatsMutation) Where(ps ...predicate.GoalieStats) {
+// Where appends a list predicates to the GameStatsMutation builder.
+func (m *GameStatsMutation) Where(ps ...predicate.GameStats) {
 	m.predicates = append(m.predicates, ps...)
 }
 
-// WhereP appends storage-level predicates to the GoalieStatsMutation builder. Using this method,
+// WhereP appends storage-level predicates to the GameStatsMutation builder. Using this method,
 // users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *GoalieStatsMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.GoalieStats, len(ps))
+func (m *GameStatsMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.GameStats, len(ps))
 	for i := range ps {
 		p[i] = ps[i]
 	}
@@ -1732,39 +1591,39 @@ func (m *GoalieStatsMutation) WhereP(ps ...func(*sql.Selector)) {
 }
 
 // Op returns the operation name.
-func (m *GoalieStatsMutation) Op() Op {
+func (m *GameStatsMutation) Op() Op {
 	return m.op
 }
 
 // SetOp allows setting the mutation operation.
-func (m *GoalieStatsMutation) SetOp(op Op) {
+func (m *GameStatsMutation) SetOp(op Op) {
 	m.op = op
 }
 
-// Type returns the node type of this mutation (GoalieStats).
-func (m *GoalieStatsMutation) Type() string {
+// Type returns the node type of this mutation (GameStats).
+func (m *GameStatsMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *GoalieStatsMutation) Fields() []string {
+func (m *GameStatsMutation) Fields() []string {
 	fields := make([]string, 0, 5)
 	if m.goals != nil {
-		fields = append(fields, goaliestats.FieldGoals)
+		fields = append(fields, gamestats.FieldGoals)
 	}
 	if m.assists != nil {
-		fields = append(fields, goaliestats.FieldAssists)
+		fields = append(fields, gamestats.FieldAssists)
 	}
 	if m.win != nil {
-		fields = append(fields, goaliestats.FieldWin)
+		fields = append(fields, gamestats.FieldWin)
 	}
-	if m.loss != nil {
-		fields = append(fields, goaliestats.FieldLoss)
+	if m.shutout != nil {
+		fields = append(fields, gamestats.FieldShutout)
 	}
-	if m.home != nil {
-		fields = append(fields, goaliestats.FieldHome)
+	if m.homeGame != nil {
+		fields = append(fields, gamestats.FieldHomeGame)
 	}
 	return fields
 }
@@ -1772,18 +1631,18 @@ func (m *GoalieStatsMutation) Fields() []string {
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *GoalieStatsMutation) Field(name string) (ent.Value, bool) {
+func (m *GameStatsMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case goaliestats.FieldGoals:
+	case gamestats.FieldGoals:
 		return m.Goals()
-	case goaliestats.FieldAssists:
+	case gamestats.FieldAssists:
 		return m.Assists()
-	case goaliestats.FieldWin:
+	case gamestats.FieldWin:
 		return m.Win()
-	case goaliestats.FieldLoss:
-		return m.Loss()
-	case goaliestats.FieldHome:
-		return m.Home()
+	case gamestats.FieldShutout:
+		return m.Shutout()
+	case gamestats.FieldHomeGame:
+		return m.HomeGame()
 	}
 	return nil, false
 }
@@ -1791,75 +1650,75 @@ func (m *GoalieStatsMutation) Field(name string) (ent.Value, bool) {
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *GoalieStatsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+func (m *GameStatsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case goaliestats.FieldGoals:
+	case gamestats.FieldGoals:
 		return m.OldGoals(ctx)
-	case goaliestats.FieldAssists:
+	case gamestats.FieldAssists:
 		return m.OldAssists(ctx)
-	case goaliestats.FieldWin:
+	case gamestats.FieldWin:
 		return m.OldWin(ctx)
-	case goaliestats.FieldLoss:
-		return m.OldLoss(ctx)
-	case goaliestats.FieldHome:
-		return m.OldHome(ctx)
+	case gamestats.FieldShutout:
+		return m.OldShutout(ctx)
+	case gamestats.FieldHomeGame:
+		return m.OldHomeGame(ctx)
 	}
-	return nil, fmt.Errorf("unknown GoalieStats field %s", name)
+	return nil, fmt.Errorf("unknown GameStats field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *GoalieStatsMutation) SetField(name string, value ent.Value) error {
+func (m *GameStatsMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case goaliestats.FieldGoals:
+	case gamestats.FieldGoals:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGoals(v)
 		return nil
-	case goaliestats.FieldAssists:
+	case gamestats.FieldAssists:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAssists(v)
 		return nil
-	case goaliestats.FieldWin:
+	case gamestats.FieldWin:
 		v, ok := value.(bool)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetWin(v)
 		return nil
-	case goaliestats.FieldLoss:
+	case gamestats.FieldShutout:
 		v, ok := value.(bool)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetLoss(v)
+		m.SetShutout(v)
 		return nil
-	case goaliestats.FieldHome:
+	case gamestats.FieldHomeGame:
 		v, ok := value.(bool)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetHome(v)
+		m.SetHomeGame(v)
 		return nil
 	}
-	return fmt.Errorf("unknown GoalieStats field %s", name)
+	return fmt.Errorf("unknown GameStats field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *GoalieStatsMutation) AddedFields() []string {
+func (m *GameStatsMutation) AddedFields() []string {
 	var fields []string
 	if m.addgoals != nil {
-		fields = append(fields, goaliestats.FieldGoals)
+		fields = append(fields, gamestats.FieldGoals)
 	}
 	if m.addassists != nil {
-		fields = append(fields, goaliestats.FieldAssists)
+		fields = append(fields, gamestats.FieldAssists)
 	}
 	return fields
 }
@@ -1867,11 +1726,11 @@ func (m *GoalieStatsMutation) AddedFields() []string {
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *GoalieStatsMutation) AddedField(name string) (ent.Value, bool) {
+func (m *GameStatsMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case goaliestats.FieldGoals:
+	case gamestats.FieldGoals:
 		return m.AddedGoals()
-	case goaliestats.FieldAssists:
+	case gamestats.FieldAssists:
 		return m.AddedAssists()
 	}
 	return nil, false
@@ -1880,16 +1739,16 @@ func (m *GoalieStatsMutation) AddedField(name string) (ent.Value, bool) {
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *GoalieStatsMutation) AddField(name string, value ent.Value) error {
+func (m *GameStatsMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case goaliestats.FieldGoals:
+	case gamestats.FieldGoals:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGoals(v)
 		return nil
-	case goaliestats.FieldAssists:
+	case gamestats.FieldAssists:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
@@ -1897,134 +1756,110 @@ func (m *GoalieStatsMutation) AddField(name string, value ent.Value) error {
 		m.AddAssists(v)
 		return nil
 	}
-	return fmt.Errorf("unknown GoalieStats numeric field %s", name)
+	return fmt.Errorf("unknown GameStats numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *GoalieStatsMutation) ClearedFields() []string {
+func (m *GameStatsMutation) ClearedFields() []string {
 	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *GoalieStatsMutation) FieldCleared(name string) bool {
+func (m *GameStatsMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *GoalieStatsMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown GoalieStats nullable field %s", name)
+func (m *GameStatsMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown GameStats nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *GoalieStatsMutation) ResetField(name string) error {
+func (m *GameStatsMutation) ResetField(name string) error {
 	switch name {
-	case goaliestats.FieldGoals:
+	case gamestats.FieldGoals:
 		m.ResetGoals()
 		return nil
-	case goaliestats.FieldAssists:
+	case gamestats.FieldAssists:
 		m.ResetAssists()
 		return nil
-	case goaliestats.FieldWin:
+	case gamestats.FieldWin:
 		m.ResetWin()
 		return nil
-	case goaliestats.FieldLoss:
-		m.ResetLoss()
+	case gamestats.FieldShutout:
+		m.ResetShutout()
 		return nil
-	case goaliestats.FieldHome:
-		m.ResetHome()
+	case gamestats.FieldHomeGame:
+		m.ResetHomeGame()
 		return nil
 	}
-	return fmt.Errorf("unknown GoalieStats field %s", name)
+	return fmt.Errorf("unknown GameStats field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *GoalieStatsMutation) AddedEdges() []string {
+func (m *GameStatsMutation) AddedEdges() []string {
 	edges := make([]string, 0, 2)
 	if m.game != nil {
-		edges = append(edges, goaliestats.EdgeGame)
+		edges = append(edges, gamestats.EdgeGame)
 	}
 	if m.player != nil {
-		edges = append(edges, goaliestats.EdgePlayer)
+		edges = append(edges, gamestats.EdgePlayer)
 	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *GoalieStatsMutation) AddedIDs(name string) []ent.Value {
+func (m *GameStatsMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case goaliestats.EdgeGame:
-		ids := make([]ent.Value, 0, len(m.game))
-		for id := range m.game {
-			ids = append(ids, id)
+	case gamestats.EdgeGame:
+		if id := m.game; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
-	case goaliestats.EdgePlayer:
-		ids := make([]ent.Value, 0, len(m.player))
-		for id := range m.player {
-			ids = append(ids, id)
+	case gamestats.EdgePlayer:
+		if id := m.player; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *GoalieStatsMutation) RemovedEdges() []string {
+func (m *GameStatsMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.removedgame != nil {
-		edges = append(edges, goaliestats.EdgeGame)
-	}
-	if m.removedplayer != nil {
-		edges = append(edges, goaliestats.EdgePlayer)
-	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *GoalieStatsMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	case goaliestats.EdgeGame:
-		ids := make([]ent.Value, 0, len(m.removedgame))
-		for id := range m.removedgame {
-			ids = append(ids, id)
-		}
-		return ids
-	case goaliestats.EdgePlayer:
-		ids := make([]ent.Value, 0, len(m.removedplayer))
-		for id := range m.removedplayer {
-			ids = append(ids, id)
-		}
-		return ids
-	}
+func (m *GameStatsMutation) RemovedIDs(name string) []ent.Value {
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *GoalieStatsMutation) ClearedEdges() []string {
+func (m *GameStatsMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 2)
 	if m.clearedgame {
-		edges = append(edges, goaliestats.EdgeGame)
+		edges = append(edges, gamestats.EdgeGame)
 	}
 	if m.clearedplayer {
-		edges = append(edges, goaliestats.EdgePlayer)
+		edges = append(edges, gamestats.EdgePlayer)
 	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *GoalieStatsMutation) EdgeCleared(name string) bool {
+func (m *GameStatsMutation) EdgeCleared(name string) bool {
 	switch name {
-	case goaliestats.EdgeGame:
+	case gamestats.EdgeGame:
 		return m.clearedgame
-	case goaliestats.EdgePlayer:
+	case gamestats.EdgePlayer:
 		return m.clearedplayer
 	}
 	return false
@@ -2032,24 +1867,30 @@ func (m *GoalieStatsMutation) EdgeCleared(name string) bool {
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *GoalieStatsMutation) ClearEdge(name string) error {
+func (m *GameStatsMutation) ClearEdge(name string) error {
 	switch name {
+	case gamestats.EdgeGame:
+		m.ClearGame()
+		return nil
+	case gamestats.EdgePlayer:
+		m.ClearPlayer()
+		return nil
 	}
-	return fmt.Errorf("unknown GoalieStats unique edge %s", name)
+	return fmt.Errorf("unknown GameStats unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *GoalieStatsMutation) ResetEdge(name string) error {
+func (m *GameStatsMutation) ResetEdge(name string) error {
 	switch name {
-	case goaliestats.EdgeGame:
+	case gamestats.EdgeGame:
 		m.ResetGame()
 		return nil
-	case goaliestats.EdgePlayer:
+	case gamestats.EdgePlayer:
 		m.ResetPlayer()
 		return nil
 	}
-	return fmt.Errorf("unknown GoalieStats edge %s", name)
+	return fmt.Errorf("unknown GameStats edge %s", name)
 }
 
 // LeagueMutation represents an operation that mutates the League nodes in the graph.
@@ -2879,26 +2720,25 @@ func (m *LeagueMutation) ResetEdge(name string) error {
 // PlayerMutation represents an operation that mutates the Player nodes in the graph.
 type PlayerMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *int
-	name               *string
-	position           *player.Position
-	clearedFields      map[string]struct{}
-	team               *int
-	clearedteam        bool
-	entries            map[int]struct{}
-	removedentries     map[int]struct{}
-	clearedentries     bool
-	skaterStats        map[int]struct{}
-	removedskaterStats map[int]struct{}
-	clearedskaterStats bool
-	goalieStats        map[int]struct{}
-	removedgoalieStats map[int]struct{}
-	clearedgoalieStats bool
-	done               bool
-	oldValue           func(context.Context) (*Player, error)
-	predicates         []predicate.Player
+	op               Op
+	typ              string
+	id               *int
+	name             *string
+	position         *player.Position
+	clearedFields    map[string]struct{}
+	team             *int
+	clearedteam      bool
+	entries          map[int]struct{}
+	removedentries   map[int]struct{}
+	clearedentries   bool
+	stats            *int
+	clearedstats     bool
+	gameStats        map[int]struct{}
+	removedgameStats map[int]struct{}
+	clearedgameStats bool
+	done             bool
+	oldValue         func(context.Context) (*Player, error)
+	predicates       []predicate.Player
 }
 
 var _ ent.Mutation = (*PlayerMutation)(nil)
@@ -3170,112 +3010,97 @@ func (m *PlayerMutation) ResetEntries() {
 	m.removedentries = nil
 }
 
-// AddSkaterStatIDs adds the "skaterStats" edge to the SkaterStats entity by ids.
-func (m *PlayerMutation) AddSkaterStatIDs(ids ...int) {
-	if m.skaterStats == nil {
-		m.skaterStats = make(map[int]struct{})
+// SetStatsID sets the "stats" edge to the Stats entity by id.
+func (m *PlayerMutation) SetStatsID(id int) {
+	m.stats = &id
+}
+
+// ClearStats clears the "stats" edge to the Stats entity.
+func (m *PlayerMutation) ClearStats() {
+	m.clearedstats = true
+}
+
+// StatsCleared reports if the "stats" edge to the Stats entity was cleared.
+func (m *PlayerMutation) StatsCleared() bool {
+	return m.clearedstats
+}
+
+// StatsID returns the "stats" edge ID in the mutation.
+func (m *PlayerMutation) StatsID() (id int, exists bool) {
+	if m.stats != nil {
+		return *m.stats, true
+	}
+	return
+}
+
+// StatsIDs returns the "stats" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// StatsID instead. It exists only for internal usage by the builders.
+func (m *PlayerMutation) StatsIDs() (ids []int) {
+	if id := m.stats; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetStats resets all changes to the "stats" edge.
+func (m *PlayerMutation) ResetStats() {
+	m.stats = nil
+	m.clearedstats = false
+}
+
+// AddGameStatIDs adds the "gameStats" edge to the GameStats entity by ids.
+func (m *PlayerMutation) AddGameStatIDs(ids ...int) {
+	if m.gameStats == nil {
+		m.gameStats = make(map[int]struct{})
 	}
 	for i := range ids {
-		m.skaterStats[ids[i]] = struct{}{}
+		m.gameStats[ids[i]] = struct{}{}
 	}
 }
 
-// ClearSkaterStats clears the "skaterStats" edge to the SkaterStats entity.
-func (m *PlayerMutation) ClearSkaterStats() {
-	m.clearedskaterStats = true
+// ClearGameStats clears the "gameStats" edge to the GameStats entity.
+func (m *PlayerMutation) ClearGameStats() {
+	m.clearedgameStats = true
 }
 
-// SkaterStatsCleared reports if the "skaterStats" edge to the SkaterStats entity was cleared.
-func (m *PlayerMutation) SkaterStatsCleared() bool {
-	return m.clearedskaterStats
+// GameStatsCleared reports if the "gameStats" edge to the GameStats entity was cleared.
+func (m *PlayerMutation) GameStatsCleared() bool {
+	return m.clearedgameStats
 }
 
-// RemoveSkaterStatIDs removes the "skaterStats" edge to the SkaterStats entity by IDs.
-func (m *PlayerMutation) RemoveSkaterStatIDs(ids ...int) {
-	if m.removedskaterStats == nil {
-		m.removedskaterStats = make(map[int]struct{})
+// RemoveGameStatIDs removes the "gameStats" edge to the GameStats entity by IDs.
+func (m *PlayerMutation) RemoveGameStatIDs(ids ...int) {
+	if m.removedgameStats == nil {
+		m.removedgameStats = make(map[int]struct{})
 	}
 	for i := range ids {
-		delete(m.skaterStats, ids[i])
-		m.removedskaterStats[ids[i]] = struct{}{}
+		delete(m.gameStats, ids[i])
+		m.removedgameStats[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedSkaterStats returns the removed IDs of the "skaterStats" edge to the SkaterStats entity.
-func (m *PlayerMutation) RemovedSkaterStatsIDs() (ids []int) {
-	for id := range m.removedskaterStats {
+// RemovedGameStats returns the removed IDs of the "gameStats" edge to the GameStats entity.
+func (m *PlayerMutation) RemovedGameStatsIDs() (ids []int) {
+	for id := range m.removedgameStats {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// SkaterStatsIDs returns the "skaterStats" edge IDs in the mutation.
-func (m *PlayerMutation) SkaterStatsIDs() (ids []int) {
-	for id := range m.skaterStats {
+// GameStatsIDs returns the "gameStats" edge IDs in the mutation.
+func (m *PlayerMutation) GameStatsIDs() (ids []int) {
+	for id := range m.gameStats {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetSkaterStats resets all changes to the "skaterStats" edge.
-func (m *PlayerMutation) ResetSkaterStats() {
-	m.skaterStats = nil
-	m.clearedskaterStats = false
-	m.removedskaterStats = nil
-}
-
-// AddGoalieStatIDs adds the "goalieStats" edge to the GoalieStats entity by ids.
-func (m *PlayerMutation) AddGoalieStatIDs(ids ...int) {
-	if m.goalieStats == nil {
-		m.goalieStats = make(map[int]struct{})
-	}
-	for i := range ids {
-		m.goalieStats[ids[i]] = struct{}{}
-	}
-}
-
-// ClearGoalieStats clears the "goalieStats" edge to the GoalieStats entity.
-func (m *PlayerMutation) ClearGoalieStats() {
-	m.clearedgoalieStats = true
-}
-
-// GoalieStatsCleared reports if the "goalieStats" edge to the GoalieStats entity was cleared.
-func (m *PlayerMutation) GoalieStatsCleared() bool {
-	return m.clearedgoalieStats
-}
-
-// RemoveGoalieStatIDs removes the "goalieStats" edge to the GoalieStats entity by IDs.
-func (m *PlayerMutation) RemoveGoalieStatIDs(ids ...int) {
-	if m.removedgoalieStats == nil {
-		m.removedgoalieStats = make(map[int]struct{})
-	}
-	for i := range ids {
-		delete(m.goalieStats, ids[i])
-		m.removedgoalieStats[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedGoalieStats returns the removed IDs of the "goalieStats" edge to the GoalieStats entity.
-func (m *PlayerMutation) RemovedGoalieStatsIDs() (ids []int) {
-	for id := range m.removedgoalieStats {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// GoalieStatsIDs returns the "goalieStats" edge IDs in the mutation.
-func (m *PlayerMutation) GoalieStatsIDs() (ids []int) {
-	for id := range m.goalieStats {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetGoalieStats resets all changes to the "goalieStats" edge.
-func (m *PlayerMutation) ResetGoalieStats() {
-	m.goalieStats = nil
-	m.clearedgoalieStats = false
-	m.removedgoalieStats = nil
+// ResetGameStats resets all changes to the "gameStats" edge.
+func (m *PlayerMutation) ResetGameStats() {
+	m.gameStats = nil
+	m.clearedgameStats = false
+	m.removedgameStats = nil
 }
 
 // Where appends a list predicates to the PlayerMutation builder.
@@ -3435,11 +3260,11 @@ func (m *PlayerMutation) AddedEdges() []string {
 	if m.entries != nil {
 		edges = append(edges, player.EdgeEntries)
 	}
-	if m.skaterStats != nil {
-		edges = append(edges, player.EdgeSkaterStats)
+	if m.stats != nil {
+		edges = append(edges, player.EdgeStats)
 	}
-	if m.goalieStats != nil {
-		edges = append(edges, player.EdgeGoalieStats)
+	if m.gameStats != nil {
+		edges = append(edges, player.EdgeGameStats)
 	}
 	return edges
 }
@@ -3458,15 +3283,13 @@ func (m *PlayerMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case player.EdgeSkaterStats:
-		ids := make([]ent.Value, 0, len(m.skaterStats))
-		for id := range m.skaterStats {
-			ids = append(ids, id)
+	case player.EdgeStats:
+		if id := m.stats; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
-	case player.EdgeGoalieStats:
-		ids := make([]ent.Value, 0, len(m.goalieStats))
-		for id := range m.goalieStats {
+	case player.EdgeGameStats:
+		ids := make([]ent.Value, 0, len(m.gameStats))
+		for id := range m.gameStats {
 			ids = append(ids, id)
 		}
 		return ids
@@ -3480,11 +3303,8 @@ func (m *PlayerMutation) RemovedEdges() []string {
 	if m.removedentries != nil {
 		edges = append(edges, player.EdgeEntries)
 	}
-	if m.removedskaterStats != nil {
-		edges = append(edges, player.EdgeSkaterStats)
-	}
-	if m.removedgoalieStats != nil {
-		edges = append(edges, player.EdgeGoalieStats)
+	if m.removedgameStats != nil {
+		edges = append(edges, player.EdgeGameStats)
 	}
 	return edges
 }
@@ -3499,15 +3319,9 @@ func (m *PlayerMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case player.EdgeSkaterStats:
-		ids := make([]ent.Value, 0, len(m.removedskaterStats))
-		for id := range m.removedskaterStats {
-			ids = append(ids, id)
-		}
-		return ids
-	case player.EdgeGoalieStats:
-		ids := make([]ent.Value, 0, len(m.removedgoalieStats))
-		for id := range m.removedgoalieStats {
+	case player.EdgeGameStats:
+		ids := make([]ent.Value, 0, len(m.removedgameStats))
+		for id := range m.removedgameStats {
 			ids = append(ids, id)
 		}
 		return ids
@@ -3524,11 +3338,11 @@ func (m *PlayerMutation) ClearedEdges() []string {
 	if m.clearedentries {
 		edges = append(edges, player.EdgeEntries)
 	}
-	if m.clearedskaterStats {
-		edges = append(edges, player.EdgeSkaterStats)
+	if m.clearedstats {
+		edges = append(edges, player.EdgeStats)
 	}
-	if m.clearedgoalieStats {
-		edges = append(edges, player.EdgeGoalieStats)
+	if m.clearedgameStats {
+		edges = append(edges, player.EdgeGameStats)
 	}
 	return edges
 }
@@ -3541,10 +3355,10 @@ func (m *PlayerMutation) EdgeCleared(name string) bool {
 		return m.clearedteam
 	case player.EdgeEntries:
 		return m.clearedentries
-	case player.EdgeSkaterStats:
-		return m.clearedskaterStats
-	case player.EdgeGoalieStats:
-		return m.clearedgoalieStats
+	case player.EdgeStats:
+		return m.clearedstats
+	case player.EdgeGameStats:
+		return m.clearedgameStats
 	}
 	return false
 }
@@ -3555,6 +3369,9 @@ func (m *PlayerMutation) ClearEdge(name string) error {
 	switch name {
 	case player.EdgeTeam:
 		m.ClearTeam()
+		return nil
+	case player.EdgeStats:
+		m.ClearStats()
 		return nil
 	}
 	return fmt.Errorf("unknown Player unique edge %s", name)
@@ -3570,18 +3387,18 @@ func (m *PlayerMutation) ResetEdge(name string) error {
 	case player.EdgeEntries:
 		m.ResetEntries()
 		return nil
-	case player.EdgeSkaterStats:
-		m.ResetSkaterStats()
+	case player.EdgeStats:
+		m.ResetStats()
 		return nil
-	case player.EdgeGoalieStats:
-		m.ResetGoalieStats()
+	case player.EdgeGameStats:
+		m.ResetGameStats()
 		return nil
 	}
 	return fmt.Errorf("unknown Player edge %s", name)
 }
 
-// SkaterStatsMutation represents an operation that mutates the SkaterStats nodes in the graph.
-type SkaterStatsMutation struct {
+// StatsMutation represents an operation that mutates the Stats nodes in the graph.
+type StatsMutation struct {
 	config
 	op            Op
 	typ           string
@@ -3590,28 +3407,29 @@ type SkaterStatsMutation struct {
 	addgoals      *int
 	assists       *int
 	addassists    *int
-	home          *bool
+	shutouts      *int
+	addshutouts   *int
+	wins          *int
+	addwins       *int
 	clearedFields map[string]struct{}
-	game          *int
-	clearedgame   bool
 	player        *int
 	clearedplayer bool
 	done          bool
-	oldValue      func(context.Context) (*SkaterStats, error)
-	predicates    []predicate.SkaterStats
+	oldValue      func(context.Context) (*Stats, error)
+	predicates    []predicate.Stats
 }
 
-var _ ent.Mutation = (*SkaterStatsMutation)(nil)
+var _ ent.Mutation = (*StatsMutation)(nil)
 
-// skaterstatsOption allows management of the mutation configuration using functional options.
-type skaterstatsOption func(*SkaterStatsMutation)
+// statsOption allows management of the mutation configuration using functional options.
+type statsOption func(*StatsMutation)
 
-// newSkaterStatsMutation creates new mutation for the SkaterStats entity.
-func newSkaterStatsMutation(c config, op Op, opts ...skaterstatsOption) *SkaterStatsMutation {
-	m := &SkaterStatsMutation{
+// newStatsMutation creates new mutation for the Stats entity.
+func newStatsMutation(c config, op Op, opts ...statsOption) *StatsMutation {
+	m := &StatsMutation{
 		config:        c,
 		op:            op,
-		typ:           TypeSkaterStats,
+		typ:           TypeStats,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -3620,20 +3438,20 @@ func newSkaterStatsMutation(c config, op Op, opts ...skaterstatsOption) *SkaterS
 	return m
 }
 
-// withSkaterStatsID sets the ID field of the mutation.
-func withSkaterStatsID(id int) skaterstatsOption {
-	return func(m *SkaterStatsMutation) {
+// withStatsID sets the ID field of the mutation.
+func withStatsID(id int) statsOption {
+	return func(m *StatsMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *SkaterStats
+			value *Stats
 		)
-		m.oldValue = func(ctx context.Context) (*SkaterStats, error) {
+		m.oldValue = func(ctx context.Context) (*Stats, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().SkaterStats.Get(ctx, id)
+					value, err = m.Client().Stats.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -3642,10 +3460,10 @@ func withSkaterStatsID(id int) skaterstatsOption {
 	}
 }
 
-// withSkaterStats sets the old SkaterStats of the mutation.
-func withSkaterStats(node *SkaterStats) skaterstatsOption {
-	return func(m *SkaterStatsMutation) {
-		m.oldValue = func(context.Context) (*SkaterStats, error) {
+// withStats sets the old Stats of the mutation.
+func withStats(node *Stats) statsOption {
+	return func(m *StatsMutation) {
+		m.oldValue = func(context.Context) (*Stats, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -3654,7 +3472,7 @@ func withSkaterStats(node *SkaterStats) skaterstatsOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m SkaterStatsMutation) Client() *Client {
+func (m StatsMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -3662,7 +3480,7 @@ func (m SkaterStatsMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m SkaterStatsMutation) Tx() (*Tx, error) {
+func (m StatsMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -3673,7 +3491,7 @@ func (m SkaterStatsMutation) Tx() (*Tx, error) {
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *SkaterStatsMutation) ID() (id int, exists bool) {
+func (m *StatsMutation) ID() (id int, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -3684,7 +3502,7 @@ func (m *SkaterStatsMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *SkaterStatsMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *StatsMutation) IDs(ctx context.Context) ([]int, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
@@ -3693,20 +3511,20 @@ func (m *SkaterStatsMutation) IDs(ctx context.Context) ([]int, error) {
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().SkaterStats.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().Stats.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
 // SetGoals sets the "goals" field.
-func (m *SkaterStatsMutation) SetGoals(i int) {
+func (m *StatsMutation) SetGoals(i int) {
 	m.goals = &i
 	m.addgoals = nil
 }
 
 // Goals returns the value of the "goals" field in the mutation.
-func (m *SkaterStatsMutation) Goals() (r int, exists bool) {
+func (m *StatsMutation) Goals() (r int, exists bool) {
 	v := m.goals
 	if v == nil {
 		return
@@ -3714,10 +3532,10 @@ func (m *SkaterStatsMutation) Goals() (r int, exists bool) {
 	return *v, true
 }
 
-// OldGoals returns the old "goals" field's value of the SkaterStats entity.
-// If the SkaterStats object wasn't provided to the builder, the object is fetched from the database.
+// OldGoals returns the old "goals" field's value of the Stats entity.
+// If the Stats object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SkaterStatsMutation) OldGoals(ctx context.Context) (v int, err error) {
+func (m *StatsMutation) OldGoals(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGoals is only allowed on UpdateOne operations")
 	}
@@ -3732,7 +3550,7 @@ func (m *SkaterStatsMutation) OldGoals(ctx context.Context) (v int, err error) {
 }
 
 // AddGoals adds i to the "goals" field.
-func (m *SkaterStatsMutation) AddGoals(i int) {
+func (m *StatsMutation) AddGoals(i int) {
 	if m.addgoals != nil {
 		*m.addgoals += i
 	} else {
@@ -3741,7 +3559,7 @@ func (m *SkaterStatsMutation) AddGoals(i int) {
 }
 
 // AddedGoals returns the value that was added to the "goals" field in this mutation.
-func (m *SkaterStatsMutation) AddedGoals() (r int, exists bool) {
+func (m *StatsMutation) AddedGoals() (r int, exists bool) {
 	v := m.addgoals
 	if v == nil {
 		return
@@ -3750,19 +3568,19 @@ func (m *SkaterStatsMutation) AddedGoals() (r int, exists bool) {
 }
 
 // ResetGoals resets all changes to the "goals" field.
-func (m *SkaterStatsMutation) ResetGoals() {
+func (m *StatsMutation) ResetGoals() {
 	m.goals = nil
 	m.addgoals = nil
 }
 
 // SetAssists sets the "assists" field.
-func (m *SkaterStatsMutation) SetAssists(i int) {
+func (m *StatsMutation) SetAssists(i int) {
 	m.assists = &i
 	m.addassists = nil
 }
 
 // Assists returns the value of the "assists" field in the mutation.
-func (m *SkaterStatsMutation) Assists() (r int, exists bool) {
+func (m *StatsMutation) Assists() (r int, exists bool) {
 	v := m.assists
 	if v == nil {
 		return
@@ -3770,10 +3588,10 @@ func (m *SkaterStatsMutation) Assists() (r int, exists bool) {
 	return *v, true
 }
 
-// OldAssists returns the old "assists" field's value of the SkaterStats entity.
-// If the SkaterStats object wasn't provided to the builder, the object is fetched from the database.
+// OldAssists returns the old "assists" field's value of the Stats entity.
+// If the Stats object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SkaterStatsMutation) OldAssists(ctx context.Context) (v int, err error) {
+func (m *StatsMutation) OldAssists(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAssists is only allowed on UpdateOne operations")
 	}
@@ -3788,7 +3606,7 @@ func (m *SkaterStatsMutation) OldAssists(ctx context.Context) (v int, err error)
 }
 
 // AddAssists adds i to the "assists" field.
-func (m *SkaterStatsMutation) AddAssists(i int) {
+func (m *StatsMutation) AddAssists(i int) {
 	if m.addassists != nil {
 		*m.addassists += i
 	} else {
@@ -3797,7 +3615,7 @@ func (m *SkaterStatsMutation) AddAssists(i int) {
 }
 
 // AddedAssists returns the value that was added to the "assists" field in this mutation.
-func (m *SkaterStatsMutation) AddedAssists() (r int, exists bool) {
+func (m *StatsMutation) AddedAssists() (r int, exists bool) {
 	v := m.addassists
 	if v == nil {
 		return
@@ -3806,103 +3624,140 @@ func (m *SkaterStatsMutation) AddedAssists() (r int, exists bool) {
 }
 
 // ResetAssists resets all changes to the "assists" field.
-func (m *SkaterStatsMutation) ResetAssists() {
+func (m *StatsMutation) ResetAssists() {
 	m.assists = nil
 	m.addassists = nil
 }
 
-// SetHome sets the "home" field.
-func (m *SkaterStatsMutation) SetHome(b bool) {
-	m.home = &b
+// SetShutouts sets the "shutouts" field.
+func (m *StatsMutation) SetShutouts(i int) {
+	m.shutouts = &i
+	m.addshutouts = nil
 }
 
-// Home returns the value of the "home" field in the mutation.
-func (m *SkaterStatsMutation) Home() (r bool, exists bool) {
-	v := m.home
+// Shutouts returns the value of the "shutouts" field in the mutation.
+func (m *StatsMutation) Shutouts() (r int, exists bool) {
+	v := m.shutouts
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldHome returns the old "home" field's value of the SkaterStats entity.
-// If the SkaterStats object wasn't provided to the builder, the object is fetched from the database.
+// OldShutouts returns the old "shutouts" field's value of the Stats entity.
+// If the Stats object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SkaterStatsMutation) OldHome(ctx context.Context) (v bool, err error) {
+func (m *StatsMutation) OldShutouts(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldHome is only allowed on UpdateOne operations")
+		return v, errors.New("OldShutouts is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldHome requires an ID field in the mutation")
+		return v, errors.New("OldShutouts requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldHome: %w", err)
+		return v, fmt.Errorf("querying old value for OldShutouts: %w", err)
 	}
-	return oldValue.Home, nil
+	return oldValue.Shutouts, nil
 }
 
-// ResetHome resets all changes to the "home" field.
-func (m *SkaterStatsMutation) ResetHome() {
-	m.home = nil
-}
-
-// SetGameID sets the "game" edge to the Game entity by id.
-func (m *SkaterStatsMutation) SetGameID(id int) {
-	m.game = &id
-}
-
-// ClearGame clears the "game" edge to the Game entity.
-func (m *SkaterStatsMutation) ClearGame() {
-	m.clearedgame = true
-}
-
-// GameCleared reports if the "game" edge to the Game entity was cleared.
-func (m *SkaterStatsMutation) GameCleared() bool {
-	return m.clearedgame
-}
-
-// GameID returns the "game" edge ID in the mutation.
-func (m *SkaterStatsMutation) GameID() (id int, exists bool) {
-	if m.game != nil {
-		return *m.game, true
+// AddShutouts adds i to the "shutouts" field.
+func (m *StatsMutation) AddShutouts(i int) {
+	if m.addshutouts != nil {
+		*m.addshutouts += i
+	} else {
+		m.addshutouts = &i
 	}
-	return
 }
 
-// GameIDs returns the "game" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// GameID instead. It exists only for internal usage by the builders.
-func (m *SkaterStatsMutation) GameIDs() (ids []int) {
-	if id := m.game; id != nil {
-		ids = append(ids, *id)
+// AddedShutouts returns the value that was added to the "shutouts" field in this mutation.
+func (m *StatsMutation) AddedShutouts() (r int, exists bool) {
+	v := m.addshutouts
+	if v == nil {
+		return
 	}
-	return
+	return *v, true
 }
 
-// ResetGame resets all changes to the "game" edge.
-func (m *SkaterStatsMutation) ResetGame() {
-	m.game = nil
-	m.clearedgame = false
+// ResetShutouts resets all changes to the "shutouts" field.
+func (m *StatsMutation) ResetShutouts() {
+	m.shutouts = nil
+	m.addshutouts = nil
+}
+
+// SetWins sets the "wins" field.
+func (m *StatsMutation) SetWins(i int) {
+	m.wins = &i
+	m.addwins = nil
+}
+
+// Wins returns the value of the "wins" field in the mutation.
+func (m *StatsMutation) Wins() (r int, exists bool) {
+	v := m.wins
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWins returns the old "wins" field's value of the Stats entity.
+// If the Stats object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StatsMutation) OldWins(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWins is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWins requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWins: %w", err)
+	}
+	return oldValue.Wins, nil
+}
+
+// AddWins adds i to the "wins" field.
+func (m *StatsMutation) AddWins(i int) {
+	if m.addwins != nil {
+		*m.addwins += i
+	} else {
+		m.addwins = &i
+	}
+}
+
+// AddedWins returns the value that was added to the "wins" field in this mutation.
+func (m *StatsMutation) AddedWins() (r int, exists bool) {
+	v := m.addwins
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetWins resets all changes to the "wins" field.
+func (m *StatsMutation) ResetWins() {
+	m.wins = nil
+	m.addwins = nil
 }
 
 // SetPlayerID sets the "player" edge to the Player entity by id.
-func (m *SkaterStatsMutation) SetPlayerID(id int) {
+func (m *StatsMutation) SetPlayerID(id int) {
 	m.player = &id
 }
 
 // ClearPlayer clears the "player" edge to the Player entity.
-func (m *SkaterStatsMutation) ClearPlayer() {
+func (m *StatsMutation) ClearPlayer() {
 	m.clearedplayer = true
 }
 
 // PlayerCleared reports if the "player" edge to the Player entity was cleared.
-func (m *SkaterStatsMutation) PlayerCleared() bool {
+func (m *StatsMutation) PlayerCleared() bool {
 	return m.clearedplayer
 }
 
 // PlayerID returns the "player" edge ID in the mutation.
-func (m *SkaterStatsMutation) PlayerID() (id int, exists bool) {
+func (m *StatsMutation) PlayerID() (id int, exists bool) {
 	if m.player != nil {
 		return *m.player, true
 	}
@@ -3912,7 +3767,7 @@ func (m *SkaterStatsMutation) PlayerID() (id int, exists bool) {
 // PlayerIDs returns the "player" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // PlayerID instead. It exists only for internal usage by the builders.
-func (m *SkaterStatsMutation) PlayerIDs() (ids []int) {
+func (m *StatsMutation) PlayerIDs() (ids []int) {
 	if id := m.player; id != nil {
 		ids = append(ids, *id)
 	}
@@ -3920,20 +3775,20 @@ func (m *SkaterStatsMutation) PlayerIDs() (ids []int) {
 }
 
 // ResetPlayer resets all changes to the "player" edge.
-func (m *SkaterStatsMutation) ResetPlayer() {
+func (m *StatsMutation) ResetPlayer() {
 	m.player = nil
 	m.clearedplayer = false
 }
 
-// Where appends a list predicates to the SkaterStatsMutation builder.
-func (m *SkaterStatsMutation) Where(ps ...predicate.SkaterStats) {
+// Where appends a list predicates to the StatsMutation builder.
+func (m *StatsMutation) Where(ps ...predicate.Stats) {
 	m.predicates = append(m.predicates, ps...)
 }
 
-// WhereP appends storage-level predicates to the SkaterStatsMutation builder. Using this method,
+// WhereP appends storage-level predicates to the StatsMutation builder. Using this method,
 // users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *SkaterStatsMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.SkaterStats, len(ps))
+func (m *StatsMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Stats, len(ps))
 	for i := range ps {
 		p[i] = ps[i]
 	}
@@ -3941,33 +3796,36 @@ func (m *SkaterStatsMutation) WhereP(ps ...func(*sql.Selector)) {
 }
 
 // Op returns the operation name.
-func (m *SkaterStatsMutation) Op() Op {
+func (m *StatsMutation) Op() Op {
 	return m.op
 }
 
 // SetOp allows setting the mutation operation.
-func (m *SkaterStatsMutation) SetOp(op Op) {
+func (m *StatsMutation) SetOp(op Op) {
 	m.op = op
 }
 
-// Type returns the node type of this mutation (SkaterStats).
-func (m *SkaterStatsMutation) Type() string {
+// Type returns the node type of this mutation (Stats).
+func (m *StatsMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *SkaterStatsMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+func (m *StatsMutation) Fields() []string {
+	fields := make([]string, 0, 4)
 	if m.goals != nil {
-		fields = append(fields, skaterstats.FieldGoals)
+		fields = append(fields, stats.FieldGoals)
 	}
 	if m.assists != nil {
-		fields = append(fields, skaterstats.FieldAssists)
+		fields = append(fields, stats.FieldAssists)
 	}
-	if m.home != nil {
-		fields = append(fields, skaterstats.FieldHome)
+	if m.shutouts != nil {
+		fields = append(fields, stats.FieldShutouts)
+	}
+	if m.wins != nil {
+		fields = append(fields, stats.FieldWins)
 	}
 	return fields
 }
@@ -3975,14 +3833,16 @@ func (m *SkaterStatsMutation) Fields() []string {
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *SkaterStatsMutation) Field(name string) (ent.Value, bool) {
+func (m *StatsMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case skaterstats.FieldGoals:
+	case stats.FieldGoals:
 		return m.Goals()
-	case skaterstats.FieldAssists:
+	case stats.FieldAssists:
 		return m.Assists()
-	case skaterstats.FieldHome:
-		return m.Home()
+	case stats.FieldShutouts:
+		return m.Shutouts()
+	case stats.FieldWins:
+		return m.Wins()
 	}
 	return nil, false
 }
@@ -3990,57 +3850,72 @@ func (m *SkaterStatsMutation) Field(name string) (ent.Value, bool) {
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *SkaterStatsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+func (m *StatsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case skaterstats.FieldGoals:
+	case stats.FieldGoals:
 		return m.OldGoals(ctx)
-	case skaterstats.FieldAssists:
+	case stats.FieldAssists:
 		return m.OldAssists(ctx)
-	case skaterstats.FieldHome:
-		return m.OldHome(ctx)
+	case stats.FieldShutouts:
+		return m.OldShutouts(ctx)
+	case stats.FieldWins:
+		return m.OldWins(ctx)
 	}
-	return nil, fmt.Errorf("unknown SkaterStats field %s", name)
+	return nil, fmt.Errorf("unknown Stats field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *SkaterStatsMutation) SetField(name string, value ent.Value) error {
+func (m *StatsMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case skaterstats.FieldGoals:
+	case stats.FieldGoals:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGoals(v)
 		return nil
-	case skaterstats.FieldAssists:
+	case stats.FieldAssists:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAssists(v)
 		return nil
-	case skaterstats.FieldHome:
-		v, ok := value.(bool)
+	case stats.FieldShutouts:
+		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetHome(v)
+		m.SetShutouts(v)
+		return nil
+	case stats.FieldWins:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWins(v)
 		return nil
 	}
-	return fmt.Errorf("unknown SkaterStats field %s", name)
+	return fmt.Errorf("unknown Stats field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *SkaterStatsMutation) AddedFields() []string {
+func (m *StatsMutation) AddedFields() []string {
 	var fields []string
 	if m.addgoals != nil {
-		fields = append(fields, skaterstats.FieldGoals)
+		fields = append(fields, stats.FieldGoals)
 	}
 	if m.addassists != nil {
-		fields = append(fields, skaterstats.FieldAssists)
+		fields = append(fields, stats.FieldAssists)
+	}
+	if m.addshutouts != nil {
+		fields = append(fields, stats.FieldShutouts)
+	}
+	if m.addwins != nil {
+		fields = append(fields, stats.FieldWins)
 	}
 	return fields
 }
@@ -4048,12 +3923,16 @@ func (m *SkaterStatsMutation) AddedFields() []string {
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *SkaterStatsMutation) AddedField(name string) (ent.Value, bool) {
+func (m *StatsMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case skaterstats.FieldGoals:
+	case stats.FieldGoals:
 		return m.AddedGoals()
-	case skaterstats.FieldAssists:
+	case stats.FieldAssists:
 		return m.AddedAssists()
+	case stats.FieldShutouts:
+		return m.AddedShutouts()
+	case stats.FieldWins:
+		return m.AddedWins()
 	}
 	return nil, false
 }
@@ -4061,83 +3940,93 @@ func (m *SkaterStatsMutation) AddedField(name string) (ent.Value, bool) {
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *SkaterStatsMutation) AddField(name string, value ent.Value) error {
+func (m *StatsMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case skaterstats.FieldGoals:
+	case stats.FieldGoals:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddGoals(v)
 		return nil
-	case skaterstats.FieldAssists:
+	case stats.FieldAssists:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddAssists(v)
 		return nil
+	case stats.FieldShutouts:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddShutouts(v)
+		return nil
+	case stats.FieldWins:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddWins(v)
+		return nil
 	}
-	return fmt.Errorf("unknown SkaterStats numeric field %s", name)
+	return fmt.Errorf("unknown Stats numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *SkaterStatsMutation) ClearedFields() []string {
+func (m *StatsMutation) ClearedFields() []string {
 	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *SkaterStatsMutation) FieldCleared(name string) bool {
+func (m *StatsMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *SkaterStatsMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown SkaterStats nullable field %s", name)
+func (m *StatsMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Stats nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *SkaterStatsMutation) ResetField(name string) error {
+func (m *StatsMutation) ResetField(name string) error {
 	switch name {
-	case skaterstats.FieldGoals:
+	case stats.FieldGoals:
 		m.ResetGoals()
 		return nil
-	case skaterstats.FieldAssists:
+	case stats.FieldAssists:
 		m.ResetAssists()
 		return nil
-	case skaterstats.FieldHome:
-		m.ResetHome()
+	case stats.FieldShutouts:
+		m.ResetShutouts()
+		return nil
+	case stats.FieldWins:
+		m.ResetWins()
 		return nil
 	}
-	return fmt.Errorf("unknown SkaterStats field %s", name)
+	return fmt.Errorf("unknown Stats field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *SkaterStatsMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.game != nil {
-		edges = append(edges, skaterstats.EdgeGame)
-	}
+func (m *StatsMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
 	if m.player != nil {
-		edges = append(edges, skaterstats.EdgePlayer)
+		edges = append(edges, stats.EdgePlayer)
 	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *SkaterStatsMutation) AddedIDs(name string) []ent.Value {
+func (m *StatsMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case skaterstats.EdgeGame:
-		if id := m.game; id != nil {
-			return []ent.Value{*id}
-		}
-	case skaterstats.EdgePlayer:
+	case stats.EdgePlayer:
 		if id := m.player; id != nil {
 			return []ent.Value{*id}
 		}
@@ -4146,36 +4035,31 @@ func (m *SkaterStatsMutation) AddedIDs(name string) []ent.Value {
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *SkaterStatsMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+func (m *StatsMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *SkaterStatsMutation) RemovedIDs(name string) []ent.Value {
+func (m *StatsMutation) RemovedIDs(name string) []ent.Value {
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *SkaterStatsMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.clearedgame {
-		edges = append(edges, skaterstats.EdgeGame)
-	}
+func (m *StatsMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
 	if m.clearedplayer {
-		edges = append(edges, skaterstats.EdgePlayer)
+		edges = append(edges, stats.EdgePlayer)
 	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *SkaterStatsMutation) EdgeCleared(name string) bool {
+func (m *StatsMutation) EdgeCleared(name string) bool {
 	switch name {
-	case skaterstats.EdgeGame:
-		return m.clearedgame
-	case skaterstats.EdgePlayer:
+	case stats.EdgePlayer:
 		return m.clearedplayer
 	}
 	return false
@@ -4183,30 +4067,24 @@ func (m *SkaterStatsMutation) EdgeCleared(name string) bool {
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *SkaterStatsMutation) ClearEdge(name string) error {
+func (m *StatsMutation) ClearEdge(name string) error {
 	switch name {
-	case skaterstats.EdgeGame:
-		m.ClearGame()
-		return nil
-	case skaterstats.EdgePlayer:
+	case stats.EdgePlayer:
 		m.ClearPlayer()
 		return nil
 	}
-	return fmt.Errorf("unknown SkaterStats unique edge %s", name)
+	return fmt.Errorf("unknown Stats unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *SkaterStatsMutation) ResetEdge(name string) error {
+func (m *StatsMutation) ResetEdge(name string) error {
 	switch name {
-	case skaterstats.EdgeGame:
-		m.ResetGame()
-		return nil
-	case skaterstats.EdgePlayer:
+	case stats.EdgePlayer:
 		m.ResetPlayer()
 		return nil
 	}
-	return fmt.Errorf("unknown SkaterStats edge %s", name)
+	return fmt.Errorf("unknown Stats edge %s", name)
 }
 
 // TeamMutation represents an operation that mutates the Team nodes in the graph.

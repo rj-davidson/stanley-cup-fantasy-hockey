@@ -16,16 +16,12 @@ func NewPlayerModel(client *ent.Client) *PlayerModel {
 	return &PlayerModel{client: client}
 }
 
-func (pm *PlayerModel) CreatePlayer(name, position string, goals, assists, shutouts, wins, id int, team *ent.Team) (*ent.Player, error) {
+func (pm *PlayerModel) CreatePlayer(name, position string, id int, team *ent.Team) (*ent.Player, error) {
 	return pm.client.Player.
 		Create().
 		SetID(id).
 		SetName(name).
 		SetPosition(player.Position(position)).
-		SetGoals(goals).
-		SetAssists(assists).
-		SetShutouts(shutouts).
-		SetWins(wins).
 		SetTeam(team).
 		Save(context.Background())
 }
@@ -42,29 +38,12 @@ func (pm *PlayerModel) GetPlayersByID(ids []int) ([]*ent.Player, error) {
 		All(context.Background())
 }
 
-func (pm *PlayerModel) UpdatePlayer(id int, name, position string, goals, assists, shutouts, wins int, team *ent.Team) (*ent.Player, error) {
+func (pm *PlayerModel) UpdatePlayer(id int, name, position string, team *ent.Team) (*ent.Player, error) {
 	p, err := pm.client.Player.
 		UpdateOneID(id).
 		SetName(name).
 		SetPosition(player.Position(position)).
-		SetGoals(goals).
-		SetAssists(assists).
-		SetShutouts(shutouts).
-		SetWins(wins).
 		SetTeam(team).
-		Save(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	return p, nil
-}
-
-// Function for updating player stats
-func (pm *PlayerModel) UpdatePlayerPoints(player *ent.Player, goals, assists int) (*ent.Player, error) {
-	p, err := pm.client.Player.
-		UpdateOne(player).
-		SetGoals(goals).
-		SetAssists(assists).
 		Save(context.Background())
 	if err != nil {
 		return nil, err
@@ -105,31 +84,7 @@ func (pm *PlayerModel) ListPlayerIDs() ([]int, error) {
 	return playerIDs, nil
 }
 
-// UpdateGoalieWins updates the wins for a goalie
-func (pm *PlayerModel) UpdateGoalieWins(goalie *ent.Player, wins int) (*ent.Player, error) {
-	p, err := pm.client.Player.
-		UpdateOne(goalie).
-		SetWins(wins).
-		Save(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	return p, nil
-}
-
-// UpdateGoalieShutouts updates the shutouts for a goalie
-func (pm *PlayerModel) UpdateGoalieShutouts(goalie *ent.Player, shutouts int) (*ent.Player, error) {
-	p, err := pm.client.Player.
-		UpdateOne(goalie).
-		SetShutouts(shutouts).
-		Save(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	return p, nil
-}
-
-// GetPlayersByEntryIDs returns set of unique players for a list of entries
+// GetPlayersByEntries returns set of unique players for a list of entries
 func (pm *PlayerModel) GetPlayersByEntries(entries []*ent.Entry) ([]*ent.Player, error) {
 	var IDs []int
 	for _, e := range entries {

@@ -111,29 +111,19 @@ func (ctrl *GameController) fetchBoxscore(gameID, homeScore, awayScore int, home
 	var boxscoreResult map[string]interface{}
 	json.Unmarshal([]byte(body), &boxscoreResult)
 
-	// Get home goalie
-	homeGoalieID := int(boxscoreResult["teams"].(map[string]interface{})["home"].(map[string]interface{})["goalies"].([]interface{})[0].(float64))
-	homeGoalie, err := ctrl.playerModel.GetPlayerByID(homeGoalieID)
-	if err != nil {
-		fmt.Printf("Error getting home goalie: %v\n", err)
-		return nil
-	}
-
-	// Get away goalie
-	awayGoalieID := int(boxscoreResult["teams"].(map[string]interface{})["away"].(map[string]interface{})["goalies"].([]interface{})[0].(float64))
-	awayGoalie, err := ctrl.playerModel.GetPlayerByID(awayGoalieID)
-	if err != nil {
-		fmt.Printf("Error getting away goalie: %v\n", err)
-		return nil
-	}
+	//homeGoalieID := int(boxscoreResult["teams"].(map[string]interface{})["home"].(map[string]interface{})["goalies"].([]interface{})[0].(float64))
 
 	// Create game entity
-	_, err = ctrl.gameModel.CreateGame(gameID, homeScore, awayScore, homeTeam, awayTeam, homeGoalie, awayGoalie)
+	game, err = ctrl.gameModel.CreateGame(gameID, homeScore, awayScore, homeTeam, awayTeam)
 	if err != nil {
 		fmt.Printf("Error creating game entity: %v\n", err)
 		return err
 	}
 	fmt.Printf("Fetched game %d\n", gameID)
+
+	// Create gameStats for home and away teams using playerID
+	homeSkaterIDs := boxscoreResult["teams"].(map[string]interface{})["home"].(map[string]interface{})["skaters"].([]interface{})
+	awaySkaterIDs := boxscoreResult["teams"].(map[string]interface{})["away"].(map[string]interface{})["skaters"].([]interface{})
 
 	return nil
 }

@@ -16,14 +16,14 @@ type Tx struct {
 	Entry *EntryClient
 	// Game is the client for interacting with the Game builders.
 	Game *GameClient
-	// GoalieStats is the client for interacting with the GoalieStats builders.
-	GoalieStats *GoalieStatsClient
+	// GameStats is the client for interacting with the GameStats builders.
+	GameStats *GameStatsClient
 	// League is the client for interacting with the League builders.
 	League *LeagueClient
 	// Player is the client for interacting with the Player builders.
 	Player *PlayerClient
-	// SkaterStats is the client for interacting with the SkaterStats builders.
-	SkaterStats *SkaterStatsClient
+	// Stats is the client for interacting with the Stats builders.
+	Stats *StatsClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 
@@ -159,10 +159,10 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Entry = NewEntryClient(tx.config)
 	tx.Game = NewGameClient(tx.config)
-	tx.GoalieStats = NewGoalieStatsClient(tx.config)
+	tx.GameStats = NewGameStatsClient(tx.config)
 	tx.League = NewLeagueClient(tx.config)
 	tx.Player = NewPlayerClient(tx.config)
-	tx.SkaterStats = NewSkaterStatsClient(tx.config)
+	tx.Stats = NewStatsClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 }
 

@@ -25,7 +25,7 @@ func (Player) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("team", Team.Type).Ref("players").Unique(),
 		edge.From("entries", Entry.Type).Ref("players"),
-		edge.To("skaterStats", SkaterStats.Type),
-		edge.To("goalieStats", GoalieStats.Type),
+		edge.From("stats", Stats.Type).Ref("player").Unique(),
+		edge.From("gameStats", GameStats.Type).Ref("player"),
 	}
 }

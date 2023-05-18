@@ -10,8 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/skaterstats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/gamestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
@@ -62,34 +61,23 @@ func (gc *GameCreate) SetHomeTeam(t *Team) *GameCreate {
 	return gc.SetHomeTeamID(t.ID)
 }
 
-// AddSkaterStatIDs adds the "skaterStats" edge to the SkaterStats entity by IDs.
-func (gc *GameCreate) AddSkaterStatIDs(ids ...int) *GameCreate {
-	gc.mutation.AddSkaterStatIDs(ids...)
+// SetGameStatsID sets the "gameStats" edge to the GameStats entity by ID.
+func (gc *GameCreate) SetGameStatsID(id int) *GameCreate {
+	gc.mutation.SetGameStatsID(id)
 	return gc
 }
 
-// AddSkaterStats adds the "skaterStats" edges to the SkaterStats entity.
-func (gc *GameCreate) AddSkaterStats(s ...*SkaterStats) *GameCreate {
-	ids := make([]int, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
+// SetNillableGameStatsID sets the "gameStats" edge to the GameStats entity by ID if the given value is not nil.
+func (gc *GameCreate) SetNillableGameStatsID(id *int) *GameCreate {
+	if id != nil {
+		gc = gc.SetGameStatsID(*id)
 	}
-	return gc.AddSkaterStatIDs(ids...)
-}
-
-// AddGoalieStatIDs adds the "goalieStats" edge to the GoalieStats entity by IDs.
-func (gc *GameCreate) AddGoalieStatIDs(ids ...int) *GameCreate {
-	gc.mutation.AddGoalieStatIDs(ids...)
 	return gc
 }
 
-// AddGoalieStats adds the "goalieStats" edges to the GoalieStats entity.
-func (gc *GameCreate) AddGoalieStats(g ...*GoalieStats) *GameCreate {
-	ids := make([]int, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
-	}
-	return gc.AddGoalieStatIDs(ids...)
+// SetGameStats sets the "gameStats" edge to the GameStats entity.
+func (gc *GameCreate) SetGameStats(g *GameStats) *GameCreate {
+	return gc.SetGameStatsID(g.ID)
 }
 
 // Mutation returns the GameMutation object of the builder.
@@ -217,36 +205,21 @@ func (gc *GameCreate) createSpec() (*Game, *sqlgraph.CreateSpec) {
 		_node.team_home_games = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.SkaterStatsIDs(); len(nodes) > 0 {
+	if nodes := gc.mutation.GameStatsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   game.SkaterStatsTable,
-			Columns: []string{game.SkaterStatsColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   game.GameStatsTable,
+			Columns: []string{game.GameStatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(skaterstats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(gamestats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := gc.mutation.GoalieStatsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   game.GoalieStatsTable,
-			Columns: game.GoalieStatsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goaliestats.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
+		_node.game_stats_game = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

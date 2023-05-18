@@ -14,10 +14,10 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/gamestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/league"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/skaterstats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/stats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
@@ -79,13 +79,13 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			entry.Table:       entry.ValidColumn,
-			game.Table:        game.ValidColumn,
-			goaliestats.Table: goaliestats.ValidColumn,
-			league.Table:      league.ValidColumn,
-			player.Table:      player.ValidColumn,
-			skaterstats.Table: skaterstats.ValidColumn,
-			team.Table:        team.ValidColumn,
+			entry.Table:     entry.ValidColumn,
+			game.Table:      game.ValidColumn,
+			gamestats.Table: gamestats.ValidColumn,
+			league.Table:    league.ValidColumn,
+			player.Table:    player.ValidColumn,
+			stats.Table:     stats.ValidColumn,
+			team.Table:      team.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

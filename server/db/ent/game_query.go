@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -12,24 +11,22 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/gamestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/predicate"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/skaterstats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
 // GameQuery is the builder for querying Game entities.
 type GameQuery struct {
 	config
-	ctx             *QueryContext
-	order           []game.OrderOption
-	inters          []Interceptor
-	predicates      []predicate.Game
-	withAwayTeam    *TeamQuery
-	withHomeTeam    *TeamQuery
-	withSkaterStats *SkaterStatsQuery
-	withGoalieStats *GoalieStatsQuery
-	withFKs         bool
+	ctx           *QueryContext
+	order         []game.OrderOption
+	inters        []Interceptor
+	predicates    []predicate.Game
+	withAwayTeam  *TeamQuery
+	withHomeTeam  *TeamQuery
+	withGameStats *GameStatsQuery
+	withFKs       bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -110,9 +107,9 @@ func (gq *GameQuery) QueryHomeTeam() *TeamQuery {
 	return query
 }
 
-// QuerySkaterStats chains the current query on the "skaterStats" edge.
-func (gq *GameQuery) QuerySkaterStats() *SkaterStatsQuery {
-	query := (&SkaterStatsClient{config: gq.config}).Query()
+// QueryGameStats chains the current query on the "gameStats" edge.
+func (gq *GameQuery) QueryGameStats() *GameStatsQuery {
+	query := (&GameStatsClient{config: gq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := gq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -123,30 +120,8 @@ func (gq *GameQuery) QuerySkaterStats() *SkaterStatsQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(game.Table, game.FieldID, selector),
-			sqlgraph.To(skaterstats.Table, skaterstats.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, game.SkaterStatsTable, game.SkaterStatsColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryGoalieStats chains the current query on the "goalieStats" edge.
-func (gq *GameQuery) QueryGoalieStats() *GoalieStatsQuery {
-	query := (&GoalieStatsClient{config: gq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := gq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(game.Table, game.FieldID, selector),
-			sqlgraph.To(goaliestats.Table, goaliestats.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, game.GoalieStatsTable, game.GoalieStatsPrimaryKey...),
+			sqlgraph.To(gamestats.Table, gamestats.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, game.GameStatsTable, game.GameStatsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
 		return fromU, nil
@@ -341,15 +316,14 @@ func (gq *GameQuery) Clone() *GameQuery {
 		return nil
 	}
 	return &GameQuery{
-		config:          gq.config,
-		ctx:             gq.ctx.Clone(),
-		order:           append([]game.OrderOption{}, gq.order...),
-		inters:          append([]Interceptor{}, gq.inters...),
-		predicates:      append([]predicate.Game{}, gq.predicates...),
-		withAwayTeam:    gq.withAwayTeam.Clone(),
-		withHomeTeam:    gq.withHomeTeam.Clone(),
-		withSkaterStats: gq.withSkaterStats.Clone(),
-		withGoalieStats: gq.withGoalieStats.Clone(),
+		config:        gq.config,
+		ctx:           gq.ctx.Clone(),
+		order:         append([]game.OrderOption{}, gq.order...),
+		inters:        append([]Interceptor{}, gq.inters...),
+		predicates:    append([]predicate.Game{}, gq.predicates...),
+		withAwayTeam:  gq.withAwayTeam.Clone(),
+		withHomeTeam:  gq.withHomeTeam.Clone(),
+		withGameStats: gq.withGameStats.Clone(),
 		// clone intermediate query.
 		sql:  gq.sql.Clone(),
 		path: gq.path,
@@ -378,25 +352,14 @@ func (gq *GameQuery) WithHomeTeam(opts ...func(*TeamQuery)) *GameQuery {
 	return gq
 }
 
-// WithSkaterStats tells the query-builder to eager-load the nodes that are connected to
-// the "skaterStats" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GameQuery) WithSkaterStats(opts ...func(*SkaterStatsQuery)) *GameQuery {
-	query := (&SkaterStatsClient{config: gq.config}).Query()
+// WithGameStats tells the query-builder to eager-load the nodes that are connected to
+// the "gameStats" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GameQuery) WithGameStats(opts ...func(*GameStatsQuery)) *GameQuery {
+	query := (&GameStatsClient{config: gq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withSkaterStats = query
-	return gq
-}
-
-// WithGoalieStats tells the query-builder to eager-load the nodes that are connected to
-// the "goalieStats" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GameQuery) WithGoalieStats(opts ...func(*GoalieStatsQuery)) *GameQuery {
-	query := (&GoalieStatsClient{config: gq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	gq.withGoalieStats = query
+	gq.withGameStats = query
 	return gq
 }
 
@@ -479,14 +442,13 @@ func (gq *GameQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Game, e
 		nodes       = []*Game{}
 		withFKs     = gq.withFKs
 		_spec       = gq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [3]bool{
 			gq.withAwayTeam != nil,
 			gq.withHomeTeam != nil,
-			gq.withSkaterStats != nil,
-			gq.withGoalieStats != nil,
+			gq.withGameStats != nil,
 		}
 	)
-	if gq.withAwayTeam != nil || gq.withHomeTeam != nil {
+	if gq.withAwayTeam != nil || gq.withHomeTeam != nil || gq.withGameStats != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -522,17 +484,9 @@ func (gq *GameQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Game, e
 			return nil, err
 		}
 	}
-	if query := gq.withSkaterStats; query != nil {
-		if err := gq.loadSkaterStats(ctx, query, nodes,
-			func(n *Game) { n.Edges.SkaterStats = []*SkaterStats{} },
-			func(n *Game, e *SkaterStats) { n.Edges.SkaterStats = append(n.Edges.SkaterStats, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := gq.withGoalieStats; query != nil {
-		if err := gq.loadGoalieStats(ctx, query, nodes,
-			func(n *Game) { n.Edges.GoalieStats = []*GoalieStats{} },
-			func(n *Game, e *GoalieStats) { n.Edges.GoalieStats = append(n.Edges.GoalieStats, e) }); err != nil {
+	if query := gq.withGameStats; query != nil {
+		if err := gq.loadGameStats(ctx, query, nodes, nil,
+			func(n *Game, e *GameStats) { n.Edges.GameStats = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -603,94 +557,34 @@ func (gq *GameQuery) loadHomeTeam(ctx context.Context, query *TeamQuery, nodes [
 	}
 	return nil
 }
-func (gq *GameQuery) loadSkaterStats(ctx context.Context, query *SkaterStatsQuery, nodes []*Game, init func(*Game), assign func(*Game, *SkaterStats)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Game)
+func (gq *GameQuery) loadGameStats(ctx context.Context, query *GameStatsQuery, nodes []*Game, init func(*Game), assign func(*Game, *GameStats)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Game)
 	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
+		if nodes[i].game_stats_game == nil {
+			continue
 		}
+		fk := *nodes[i].game_stats_game
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.withFKs = true
-	query.Where(predicate.SkaterStats(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(game.SkaterStatsColumn), fks...))
-	}))
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(gamestats.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.game_skater_stats
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "game_skater_stats" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "game_skater_stats" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "game_stats_game" returned %v`, n.ID)
 		}
-		assign(node, n)
-	}
-	return nil
-}
-func (gq *GameQuery) loadGoalieStats(ctx context.Context, query *GoalieStatsQuery, nodes []*Game, init func(*Game), assign func(*Game, *GoalieStats)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Game)
-	nids := make(map[int]map[*Game]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
-		if init != nil {
-			init(node)
-		}
-	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(game.GoalieStatsTable)
-		s.Join(joinT).On(s.C(goaliestats.FieldID), joinT.C(game.GoalieStatsPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(game.GoalieStatsPrimaryKey[0]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(game.GoalieStatsPrimaryKey[0]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
-	}
-	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
-		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-			assign := spec.Assign
-			values := spec.ScanValues
-			spec.ScanValues = func(columns []string) ([]any, error) {
-				values, err := values(columns[1:])
-				if err != nil {
-					return nil, err
-				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
-			}
-			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
-				if nids[inValue] == nil {
-					nids[inValue] = map[*Game]struct{}{byID[outValue]: {}}
-					return assign(columns[1:], values[1:])
-				}
-				nids[inValue][byID[outValue]] = struct{}{}
-				return nil
-			}
-		})
-	})
-	neighbors, err := withInterceptors[[]*GoalieStats](ctx, query, qr, query.inters)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected "goalieStats" node returned %v`, n.ID)
-		}
-		for kn := range nodes {
-			assign(kn, n)
+		for i := range nodes {
+			assign(nodes[i], n)
 		}
 	}
 	return nil

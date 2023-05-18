@@ -10,9 +10,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/gamestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/skaterstats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/stats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
@@ -75,34 +75,38 @@ func (pc *PlayerCreate) AddEntries(e ...*Entry) *PlayerCreate {
 	return pc.AddEntryIDs(ids...)
 }
 
-// AddSkaterStatIDs adds the "skaterStats" edge to the SkaterStats entity by IDs.
-func (pc *PlayerCreate) AddSkaterStatIDs(ids ...int) *PlayerCreate {
-	pc.mutation.AddSkaterStatIDs(ids...)
+// SetStatsID sets the "stats" edge to the Stats entity by ID.
+func (pc *PlayerCreate) SetStatsID(id int) *PlayerCreate {
+	pc.mutation.SetStatsID(id)
 	return pc
 }
 
-// AddSkaterStats adds the "skaterStats" edges to the SkaterStats entity.
-func (pc *PlayerCreate) AddSkaterStats(s ...*SkaterStats) *PlayerCreate {
-	ids := make([]int, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
+// SetNillableStatsID sets the "stats" edge to the Stats entity by ID if the given value is not nil.
+func (pc *PlayerCreate) SetNillableStatsID(id *int) *PlayerCreate {
+	if id != nil {
+		pc = pc.SetStatsID(*id)
 	}
-	return pc.AddSkaterStatIDs(ids...)
-}
-
-// AddGoalieStatIDs adds the "goalieStats" edge to the GoalieStats entity by IDs.
-func (pc *PlayerCreate) AddGoalieStatIDs(ids ...int) *PlayerCreate {
-	pc.mutation.AddGoalieStatIDs(ids...)
 	return pc
 }
 
-// AddGoalieStats adds the "goalieStats" edges to the GoalieStats entity.
-func (pc *PlayerCreate) AddGoalieStats(g ...*GoalieStats) *PlayerCreate {
+// SetStats sets the "stats" edge to the Stats entity.
+func (pc *PlayerCreate) SetStats(s *Stats) *PlayerCreate {
+	return pc.SetStatsID(s.ID)
+}
+
+// AddGameStatIDs adds the "gameStats" edge to the GameStats entity by IDs.
+func (pc *PlayerCreate) AddGameStatIDs(ids ...int) *PlayerCreate {
+	pc.mutation.AddGameStatIDs(ids...)
+	return pc
+}
+
+// AddGameStats adds the "gameStats" edges to the GameStats entity.
+func (pc *PlayerCreate) AddGameStats(g ...*GameStats) *PlayerCreate {
 	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
-	return pc.AddGoalieStatIDs(ids...)
+	return pc.AddGameStatIDs(ids...)
 }
 
 // Mutation returns the PlayerMutation object of the builder.
@@ -228,31 +232,32 @@ func (pc *PlayerCreate) createSpec() (*Player, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := pc.mutation.SkaterStatsIDs(); len(nodes) > 0 {
+	if nodes := pc.mutation.StatsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   player.SkaterStatsTable,
-			Columns: []string{player.SkaterStatsColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   player.StatsTable,
+			Columns: []string{player.StatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(skaterstats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(stats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.stats_player = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := pc.mutation.GoalieStatsIDs(); len(nodes) > 0 {
+	if nodes := pc.mutation.GameStatsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   player.GoalieStatsTable,
-			Columns: player.GoalieStatsPrimaryKey,
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   player.GameStatsTable,
+			Columns: []string{player.GameStatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goaliestats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(gamestats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

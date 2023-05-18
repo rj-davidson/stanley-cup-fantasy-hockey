@@ -11,10 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/gamestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/predicate"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/skaterstats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/stats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
@@ -77,34 +77,38 @@ func (pu *PlayerUpdate) AddEntries(e ...*Entry) *PlayerUpdate {
 	return pu.AddEntryIDs(ids...)
 }
 
-// AddSkaterStatIDs adds the "skaterStats" edge to the SkaterStats entity by IDs.
-func (pu *PlayerUpdate) AddSkaterStatIDs(ids ...int) *PlayerUpdate {
-	pu.mutation.AddSkaterStatIDs(ids...)
+// SetStatsID sets the "stats" edge to the Stats entity by ID.
+func (pu *PlayerUpdate) SetStatsID(id int) *PlayerUpdate {
+	pu.mutation.SetStatsID(id)
 	return pu
 }
 
-// AddSkaterStats adds the "skaterStats" edges to the SkaterStats entity.
-func (pu *PlayerUpdate) AddSkaterStats(s ...*SkaterStats) *PlayerUpdate {
-	ids := make([]int, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
+// SetNillableStatsID sets the "stats" edge to the Stats entity by ID if the given value is not nil.
+func (pu *PlayerUpdate) SetNillableStatsID(id *int) *PlayerUpdate {
+	if id != nil {
+		pu = pu.SetStatsID(*id)
 	}
-	return pu.AddSkaterStatIDs(ids...)
-}
-
-// AddGoalieStatIDs adds the "goalieStats" edge to the GoalieStats entity by IDs.
-func (pu *PlayerUpdate) AddGoalieStatIDs(ids ...int) *PlayerUpdate {
-	pu.mutation.AddGoalieStatIDs(ids...)
 	return pu
 }
 
-// AddGoalieStats adds the "goalieStats" edges to the GoalieStats entity.
-func (pu *PlayerUpdate) AddGoalieStats(g ...*GoalieStats) *PlayerUpdate {
+// SetStats sets the "stats" edge to the Stats entity.
+func (pu *PlayerUpdate) SetStats(s *Stats) *PlayerUpdate {
+	return pu.SetStatsID(s.ID)
+}
+
+// AddGameStatIDs adds the "gameStats" edge to the GameStats entity by IDs.
+func (pu *PlayerUpdate) AddGameStatIDs(ids ...int) *PlayerUpdate {
+	pu.mutation.AddGameStatIDs(ids...)
+	return pu
+}
+
+// AddGameStats adds the "gameStats" edges to the GameStats entity.
+func (pu *PlayerUpdate) AddGameStats(g ...*GameStats) *PlayerUpdate {
 	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
-	return pu.AddGoalieStatIDs(ids...)
+	return pu.AddGameStatIDs(ids...)
 }
 
 // Mutation returns the PlayerMutation object of the builder.
@@ -139,46 +143,31 @@ func (pu *PlayerUpdate) RemoveEntries(e ...*Entry) *PlayerUpdate {
 	return pu.RemoveEntryIDs(ids...)
 }
 
-// ClearSkaterStats clears all "skaterStats" edges to the SkaterStats entity.
-func (pu *PlayerUpdate) ClearSkaterStats() *PlayerUpdate {
-	pu.mutation.ClearSkaterStats()
+// ClearStats clears the "stats" edge to the Stats entity.
+func (pu *PlayerUpdate) ClearStats() *PlayerUpdate {
+	pu.mutation.ClearStats()
 	return pu
 }
 
-// RemoveSkaterStatIDs removes the "skaterStats" edge to SkaterStats entities by IDs.
-func (pu *PlayerUpdate) RemoveSkaterStatIDs(ids ...int) *PlayerUpdate {
-	pu.mutation.RemoveSkaterStatIDs(ids...)
+// ClearGameStats clears all "gameStats" edges to the GameStats entity.
+func (pu *PlayerUpdate) ClearGameStats() *PlayerUpdate {
+	pu.mutation.ClearGameStats()
 	return pu
 }
 
-// RemoveSkaterStats removes "skaterStats" edges to SkaterStats entities.
-func (pu *PlayerUpdate) RemoveSkaterStats(s ...*SkaterStats) *PlayerUpdate {
-	ids := make([]int, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
-	}
-	return pu.RemoveSkaterStatIDs(ids...)
-}
-
-// ClearGoalieStats clears all "goalieStats" edges to the GoalieStats entity.
-func (pu *PlayerUpdate) ClearGoalieStats() *PlayerUpdate {
-	pu.mutation.ClearGoalieStats()
+// RemoveGameStatIDs removes the "gameStats" edge to GameStats entities by IDs.
+func (pu *PlayerUpdate) RemoveGameStatIDs(ids ...int) *PlayerUpdate {
+	pu.mutation.RemoveGameStatIDs(ids...)
 	return pu
 }
 
-// RemoveGoalieStatIDs removes the "goalieStats" edge to GoalieStats entities by IDs.
-func (pu *PlayerUpdate) RemoveGoalieStatIDs(ids ...int) *PlayerUpdate {
-	pu.mutation.RemoveGoalieStatIDs(ids...)
-	return pu
-}
-
-// RemoveGoalieStats removes "goalieStats" edges to GoalieStats entities.
-func (pu *PlayerUpdate) RemoveGoalieStats(g ...*GoalieStats) *PlayerUpdate {
+// RemoveGameStats removes "gameStats" edges to GameStats entities.
+func (pu *PlayerUpdate) RemoveGameStats(g ...*GameStats) *PlayerUpdate {
 	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
-	return pu.RemoveGoalieStatIDs(ids...)
+	return pu.RemoveGameStatIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -310,44 +299,28 @@ func (pu *PlayerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if pu.mutation.SkaterStatsCleared() {
+	if pu.mutation.StatsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   player.SkaterStatsTable,
-			Columns: []string{player.SkaterStatsColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   player.StatsTable,
+			Columns: []string{player.StatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(skaterstats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(stats.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := pu.mutation.RemovedSkaterStatsIDs(); len(nodes) > 0 && !pu.mutation.SkaterStatsCleared() {
+	if nodes := pu.mutation.StatsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   player.SkaterStatsTable,
-			Columns: []string{player.SkaterStatsColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   player.StatsTable,
+			Columns: []string{player.StatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(skaterstats.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := pu.mutation.SkaterStatsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   player.SkaterStatsTable,
-			Columns: []string{player.SkaterStatsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(skaterstats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(stats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -355,28 +328,28 @@ func (pu *PlayerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if pu.mutation.GoalieStatsCleared() {
+	if pu.mutation.GameStatsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   player.GoalieStatsTable,
-			Columns: player.GoalieStatsPrimaryKey,
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   player.GameStatsTable,
+			Columns: []string{player.GameStatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goaliestats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(gamestats.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := pu.mutation.RemovedGoalieStatsIDs(); len(nodes) > 0 && !pu.mutation.GoalieStatsCleared() {
+	if nodes := pu.mutation.RemovedGameStatsIDs(); len(nodes) > 0 && !pu.mutation.GameStatsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   player.GoalieStatsTable,
-			Columns: player.GoalieStatsPrimaryKey,
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   player.GameStatsTable,
+			Columns: []string{player.GameStatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goaliestats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(gamestats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -384,15 +357,15 @@ func (pu *PlayerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := pu.mutation.GoalieStatsIDs(); len(nodes) > 0 {
+	if nodes := pu.mutation.GameStatsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   player.GoalieStatsTable,
-			Columns: player.GoalieStatsPrimaryKey,
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   player.GameStatsTable,
+			Columns: []string{player.GameStatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goaliestats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(gamestats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -466,34 +439,38 @@ func (puo *PlayerUpdateOne) AddEntries(e ...*Entry) *PlayerUpdateOne {
 	return puo.AddEntryIDs(ids...)
 }
 
-// AddSkaterStatIDs adds the "skaterStats" edge to the SkaterStats entity by IDs.
-func (puo *PlayerUpdateOne) AddSkaterStatIDs(ids ...int) *PlayerUpdateOne {
-	puo.mutation.AddSkaterStatIDs(ids...)
+// SetStatsID sets the "stats" edge to the Stats entity by ID.
+func (puo *PlayerUpdateOne) SetStatsID(id int) *PlayerUpdateOne {
+	puo.mutation.SetStatsID(id)
 	return puo
 }
 
-// AddSkaterStats adds the "skaterStats" edges to the SkaterStats entity.
-func (puo *PlayerUpdateOne) AddSkaterStats(s ...*SkaterStats) *PlayerUpdateOne {
-	ids := make([]int, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
+// SetNillableStatsID sets the "stats" edge to the Stats entity by ID if the given value is not nil.
+func (puo *PlayerUpdateOne) SetNillableStatsID(id *int) *PlayerUpdateOne {
+	if id != nil {
+		puo = puo.SetStatsID(*id)
 	}
-	return puo.AddSkaterStatIDs(ids...)
-}
-
-// AddGoalieStatIDs adds the "goalieStats" edge to the GoalieStats entity by IDs.
-func (puo *PlayerUpdateOne) AddGoalieStatIDs(ids ...int) *PlayerUpdateOne {
-	puo.mutation.AddGoalieStatIDs(ids...)
 	return puo
 }
 
-// AddGoalieStats adds the "goalieStats" edges to the GoalieStats entity.
-func (puo *PlayerUpdateOne) AddGoalieStats(g ...*GoalieStats) *PlayerUpdateOne {
+// SetStats sets the "stats" edge to the Stats entity.
+func (puo *PlayerUpdateOne) SetStats(s *Stats) *PlayerUpdateOne {
+	return puo.SetStatsID(s.ID)
+}
+
+// AddGameStatIDs adds the "gameStats" edge to the GameStats entity by IDs.
+func (puo *PlayerUpdateOne) AddGameStatIDs(ids ...int) *PlayerUpdateOne {
+	puo.mutation.AddGameStatIDs(ids...)
+	return puo
+}
+
+// AddGameStats adds the "gameStats" edges to the GameStats entity.
+func (puo *PlayerUpdateOne) AddGameStats(g ...*GameStats) *PlayerUpdateOne {
 	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
-	return puo.AddGoalieStatIDs(ids...)
+	return puo.AddGameStatIDs(ids...)
 }
 
 // Mutation returns the PlayerMutation object of the builder.
@@ -528,46 +505,31 @@ func (puo *PlayerUpdateOne) RemoveEntries(e ...*Entry) *PlayerUpdateOne {
 	return puo.RemoveEntryIDs(ids...)
 }
 
-// ClearSkaterStats clears all "skaterStats" edges to the SkaterStats entity.
-func (puo *PlayerUpdateOne) ClearSkaterStats() *PlayerUpdateOne {
-	puo.mutation.ClearSkaterStats()
+// ClearStats clears the "stats" edge to the Stats entity.
+func (puo *PlayerUpdateOne) ClearStats() *PlayerUpdateOne {
+	puo.mutation.ClearStats()
 	return puo
 }
 
-// RemoveSkaterStatIDs removes the "skaterStats" edge to SkaterStats entities by IDs.
-func (puo *PlayerUpdateOne) RemoveSkaterStatIDs(ids ...int) *PlayerUpdateOne {
-	puo.mutation.RemoveSkaterStatIDs(ids...)
+// ClearGameStats clears all "gameStats" edges to the GameStats entity.
+func (puo *PlayerUpdateOne) ClearGameStats() *PlayerUpdateOne {
+	puo.mutation.ClearGameStats()
 	return puo
 }
 
-// RemoveSkaterStats removes "skaterStats" edges to SkaterStats entities.
-func (puo *PlayerUpdateOne) RemoveSkaterStats(s ...*SkaterStats) *PlayerUpdateOne {
-	ids := make([]int, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
-	}
-	return puo.RemoveSkaterStatIDs(ids...)
-}
-
-// ClearGoalieStats clears all "goalieStats" edges to the GoalieStats entity.
-func (puo *PlayerUpdateOne) ClearGoalieStats() *PlayerUpdateOne {
-	puo.mutation.ClearGoalieStats()
+// RemoveGameStatIDs removes the "gameStats" edge to GameStats entities by IDs.
+func (puo *PlayerUpdateOne) RemoveGameStatIDs(ids ...int) *PlayerUpdateOne {
+	puo.mutation.RemoveGameStatIDs(ids...)
 	return puo
 }
 
-// RemoveGoalieStatIDs removes the "goalieStats" edge to GoalieStats entities by IDs.
-func (puo *PlayerUpdateOne) RemoveGoalieStatIDs(ids ...int) *PlayerUpdateOne {
-	puo.mutation.RemoveGoalieStatIDs(ids...)
-	return puo
-}
-
-// RemoveGoalieStats removes "goalieStats" edges to GoalieStats entities.
-func (puo *PlayerUpdateOne) RemoveGoalieStats(g ...*GoalieStats) *PlayerUpdateOne {
+// RemoveGameStats removes "gameStats" edges to GameStats entities.
+func (puo *PlayerUpdateOne) RemoveGameStats(g ...*GameStats) *PlayerUpdateOne {
 	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
-	return puo.RemoveGoalieStatIDs(ids...)
+	return puo.RemoveGameStatIDs(ids...)
 }
 
 // Where appends a list predicates to the PlayerUpdate builder.
@@ -729,44 +691,28 @@ func (puo *PlayerUpdateOne) sqlSave(ctx context.Context) (_node *Player, err err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if puo.mutation.SkaterStatsCleared() {
+	if puo.mutation.StatsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   player.SkaterStatsTable,
-			Columns: []string{player.SkaterStatsColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   player.StatsTable,
+			Columns: []string{player.StatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(skaterstats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(stats.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := puo.mutation.RemovedSkaterStatsIDs(); len(nodes) > 0 && !puo.mutation.SkaterStatsCleared() {
+	if nodes := puo.mutation.StatsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   player.SkaterStatsTable,
-			Columns: []string{player.SkaterStatsColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   player.StatsTable,
+			Columns: []string{player.StatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(skaterstats.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := puo.mutation.SkaterStatsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   player.SkaterStatsTable,
-			Columns: []string{player.SkaterStatsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(skaterstats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(stats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -774,28 +720,28 @@ func (puo *PlayerUpdateOne) sqlSave(ctx context.Context) (_node *Player, err err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if puo.mutation.GoalieStatsCleared() {
+	if puo.mutation.GameStatsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   player.GoalieStatsTable,
-			Columns: player.GoalieStatsPrimaryKey,
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   player.GameStatsTable,
+			Columns: []string{player.GameStatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goaliestats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(gamestats.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := puo.mutation.RemovedGoalieStatsIDs(); len(nodes) > 0 && !puo.mutation.GoalieStatsCleared() {
+	if nodes := puo.mutation.RemovedGameStatsIDs(); len(nodes) > 0 && !puo.mutation.GameStatsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   player.GoalieStatsTable,
-			Columns: player.GoalieStatsPrimaryKey,
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   player.GameStatsTable,
+			Columns: []string{player.GameStatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goaliestats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(gamestats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -803,15 +749,15 @@ func (puo *PlayerUpdateOne) sqlSave(ctx context.Context) (_node *Player, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := puo.mutation.GoalieStatsIDs(); len(nodes) > 0 {
+	if nodes := puo.mutation.GameStatsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   player.GoalieStatsTable,
-			Columns: player.GoalieStatsPrimaryKey,
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   player.GameStatsTable,
+			Columns: []string{player.GameStatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goaliestats.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(gamestats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

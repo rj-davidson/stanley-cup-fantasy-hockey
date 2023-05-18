@@ -12,58 +12,59 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/gamestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/predicate"
 )
 
-// GoalieStatsQuery is the builder for querying GoalieStats entities.
-type GoalieStatsQuery struct {
+// GameStatsQuery is the builder for querying GameStats entities.
+type GameStatsQuery struct {
 	config
 	ctx        *QueryContext
-	order      []goaliestats.OrderOption
+	order      []gamestats.OrderOption
 	inters     []Interceptor
-	predicates []predicate.GoalieStats
+	predicates []predicate.GameStats
 	withGame   *GameQuery
 	withPlayer *PlayerQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the GoalieStatsQuery builder.
-func (gsq *GoalieStatsQuery) Where(ps ...predicate.GoalieStats) *GoalieStatsQuery {
+// Where adds a new predicate for the GameStatsQuery builder.
+func (gsq *GameStatsQuery) Where(ps ...predicate.GameStats) *GameStatsQuery {
 	gsq.predicates = append(gsq.predicates, ps...)
 	return gsq
 }
 
 // Limit the number of records to be returned by this query.
-func (gsq *GoalieStatsQuery) Limit(limit int) *GoalieStatsQuery {
+func (gsq *GameStatsQuery) Limit(limit int) *GameStatsQuery {
 	gsq.ctx.Limit = &limit
 	return gsq
 }
 
 // Offset to start from.
-func (gsq *GoalieStatsQuery) Offset(offset int) *GoalieStatsQuery {
+func (gsq *GameStatsQuery) Offset(offset int) *GameStatsQuery {
 	gsq.ctx.Offset = &offset
 	return gsq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (gsq *GoalieStatsQuery) Unique(unique bool) *GoalieStatsQuery {
+func (gsq *GameStatsQuery) Unique(unique bool) *GameStatsQuery {
 	gsq.ctx.Unique = &unique
 	return gsq
 }
 
 // Order specifies how the records should be ordered.
-func (gsq *GoalieStatsQuery) Order(o ...goaliestats.OrderOption) *GoalieStatsQuery {
+func (gsq *GameStatsQuery) Order(o ...gamestats.OrderOption) *GameStatsQuery {
 	gsq.order = append(gsq.order, o...)
 	return gsq
 }
 
 // QueryGame chains the current query on the "game" edge.
-func (gsq *GoalieStatsQuery) QueryGame() *GameQuery {
+func (gsq *GameStatsQuery) QueryGame() *GameQuery {
 	query := (&GameClient{config: gsq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := gsq.prepareQuery(ctx); err != nil {
@@ -74,9 +75,9 @@ func (gsq *GoalieStatsQuery) QueryGame() *GameQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(goaliestats.Table, goaliestats.FieldID, selector),
+			sqlgraph.From(gamestats.Table, gamestats.FieldID, selector),
 			sqlgraph.To(game.Table, game.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, goaliestats.GameTable, goaliestats.GamePrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2O, false, gamestats.GameTable, gamestats.GameColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gsq.driver.Dialect(), step)
 		return fromU, nil
@@ -85,7 +86,7 @@ func (gsq *GoalieStatsQuery) QueryGame() *GameQuery {
 }
 
 // QueryPlayer chains the current query on the "player" edge.
-func (gsq *GoalieStatsQuery) QueryPlayer() *PlayerQuery {
+func (gsq *GameStatsQuery) QueryPlayer() *PlayerQuery {
 	query := (&PlayerClient{config: gsq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := gsq.prepareQuery(ctx); err != nil {
@@ -96,9 +97,9 @@ func (gsq *GoalieStatsQuery) QueryPlayer() *PlayerQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(goaliestats.Table, goaliestats.FieldID, selector),
+			sqlgraph.From(gamestats.Table, gamestats.FieldID, selector),
 			sqlgraph.To(player.Table, player.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, goaliestats.PlayerTable, goaliestats.PlayerPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, false, gamestats.PlayerTable, gamestats.PlayerColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gsq.driver.Dialect(), step)
 		return fromU, nil
@@ -106,21 +107,21 @@ func (gsq *GoalieStatsQuery) QueryPlayer() *PlayerQuery {
 	return query
 }
 
-// First returns the first GoalieStats entity from the query.
-// Returns a *NotFoundError when no GoalieStats was found.
-func (gsq *GoalieStatsQuery) First(ctx context.Context) (*GoalieStats, error) {
+// First returns the first GameStats entity from the query.
+// Returns a *NotFoundError when no GameStats was found.
+func (gsq *GameStatsQuery) First(ctx context.Context) (*GameStats, error) {
 	nodes, err := gsq.Limit(1).All(setContextOp(ctx, gsq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{goaliestats.Label}
+		return nil, &NotFoundError{gamestats.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (gsq *GoalieStatsQuery) FirstX(ctx context.Context) *GoalieStats {
+func (gsq *GameStatsQuery) FirstX(ctx context.Context) *GameStats {
 	node, err := gsq.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -128,22 +129,22 @@ func (gsq *GoalieStatsQuery) FirstX(ctx context.Context) *GoalieStats {
 	return node
 }
 
-// FirstID returns the first GoalieStats ID from the query.
-// Returns a *NotFoundError when no GoalieStats ID was found.
-func (gsq *GoalieStatsQuery) FirstID(ctx context.Context) (id int, err error) {
+// FirstID returns the first GameStats ID from the query.
+// Returns a *NotFoundError when no GameStats ID was found.
+func (gsq *GameStatsQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = gsq.Limit(1).IDs(setContextOp(ctx, gsq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{goaliestats.Label}
+		err = &NotFoundError{gamestats.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (gsq *GoalieStatsQuery) FirstIDX(ctx context.Context) int {
+func (gsq *GameStatsQuery) FirstIDX(ctx context.Context) int {
 	id, err := gsq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -151,10 +152,10 @@ func (gsq *GoalieStatsQuery) FirstIDX(ctx context.Context) int {
 	return id
 }
 
-// Only returns a single GoalieStats entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one GoalieStats entity is found.
-// Returns a *NotFoundError when no GoalieStats entities are found.
-func (gsq *GoalieStatsQuery) Only(ctx context.Context) (*GoalieStats, error) {
+// Only returns a single GameStats entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one GameStats entity is found.
+// Returns a *NotFoundError when no GameStats entities are found.
+func (gsq *GameStatsQuery) Only(ctx context.Context) (*GameStats, error) {
 	nodes, err := gsq.Limit(2).All(setContextOp(ctx, gsq.ctx, "Only"))
 	if err != nil {
 		return nil, err
@@ -163,14 +164,14 @@ func (gsq *GoalieStatsQuery) Only(ctx context.Context) (*GoalieStats, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{goaliestats.Label}
+		return nil, &NotFoundError{gamestats.Label}
 	default:
-		return nil, &NotSingularError{goaliestats.Label}
+		return nil, &NotSingularError{gamestats.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (gsq *GoalieStatsQuery) OnlyX(ctx context.Context) *GoalieStats {
+func (gsq *GameStatsQuery) OnlyX(ctx context.Context) *GameStats {
 	node, err := gsq.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -178,10 +179,10 @@ func (gsq *GoalieStatsQuery) OnlyX(ctx context.Context) *GoalieStats {
 	return node
 }
 
-// OnlyID is like Only, but returns the only GoalieStats ID in the query.
-// Returns a *NotSingularError when more than one GoalieStats ID is found.
+// OnlyID is like Only, but returns the only GameStats ID in the query.
+// Returns a *NotSingularError when more than one GameStats ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (gsq *GoalieStatsQuery) OnlyID(ctx context.Context) (id int, err error) {
+func (gsq *GameStatsQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = gsq.Limit(2).IDs(setContextOp(ctx, gsq.ctx, "OnlyID")); err != nil {
 		return
@@ -190,15 +191,15 @@ func (gsq *GoalieStatsQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{goaliestats.Label}
+		err = &NotFoundError{gamestats.Label}
 	default:
-		err = &NotSingularError{goaliestats.Label}
+		err = &NotSingularError{gamestats.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (gsq *GoalieStatsQuery) OnlyIDX(ctx context.Context) int {
+func (gsq *GameStatsQuery) OnlyIDX(ctx context.Context) int {
 	id, err := gsq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -206,18 +207,18 @@ func (gsq *GoalieStatsQuery) OnlyIDX(ctx context.Context) int {
 	return id
 }
 
-// All executes the query and returns a list of GoalieStatsSlice.
-func (gsq *GoalieStatsQuery) All(ctx context.Context) ([]*GoalieStats, error) {
+// All executes the query and returns a list of GameStatsSlice.
+func (gsq *GameStatsQuery) All(ctx context.Context) ([]*GameStats, error) {
 	ctx = setContextOp(ctx, gsq.ctx, "All")
 	if err := gsq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*GoalieStats, *GoalieStatsQuery]()
-	return withInterceptors[[]*GoalieStats](ctx, gsq, qr, gsq.inters)
+	qr := querierAll[[]*GameStats, *GameStatsQuery]()
+	return withInterceptors[[]*GameStats](ctx, gsq, qr, gsq.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (gsq *GoalieStatsQuery) AllX(ctx context.Context) []*GoalieStats {
+func (gsq *GameStatsQuery) AllX(ctx context.Context) []*GameStats {
 	nodes, err := gsq.All(ctx)
 	if err != nil {
 		panic(err)
@@ -225,20 +226,20 @@ func (gsq *GoalieStatsQuery) AllX(ctx context.Context) []*GoalieStats {
 	return nodes
 }
 
-// IDs executes the query and returns a list of GoalieStats IDs.
-func (gsq *GoalieStatsQuery) IDs(ctx context.Context) (ids []int, err error) {
+// IDs executes the query and returns a list of GameStats IDs.
+func (gsq *GameStatsQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if gsq.ctx.Unique == nil && gsq.path != nil {
 		gsq.Unique(true)
 	}
 	ctx = setContextOp(ctx, gsq.ctx, "IDs")
-	if err = gsq.Select(goaliestats.FieldID).Scan(ctx, &ids); err != nil {
+	if err = gsq.Select(gamestats.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (gsq *GoalieStatsQuery) IDsX(ctx context.Context) []int {
+func (gsq *GameStatsQuery) IDsX(ctx context.Context) []int {
 	ids, err := gsq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -247,16 +248,16 @@ func (gsq *GoalieStatsQuery) IDsX(ctx context.Context) []int {
 }
 
 // Count returns the count of the given query.
-func (gsq *GoalieStatsQuery) Count(ctx context.Context) (int, error) {
+func (gsq *GameStatsQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, gsq.ctx, "Count")
 	if err := gsq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, gsq, querierCount[*GoalieStatsQuery](), gsq.inters)
+	return withInterceptors[int](ctx, gsq, querierCount[*GameStatsQuery](), gsq.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (gsq *GoalieStatsQuery) CountX(ctx context.Context) int {
+func (gsq *GameStatsQuery) CountX(ctx context.Context) int {
 	count, err := gsq.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -265,7 +266,7 @@ func (gsq *GoalieStatsQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (gsq *GoalieStatsQuery) Exist(ctx context.Context) (bool, error) {
+func (gsq *GameStatsQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, gsq.ctx, "Exist")
 	switch _, err := gsq.FirstID(ctx); {
 	case IsNotFound(err):
@@ -278,7 +279,7 @@ func (gsq *GoalieStatsQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (gsq *GoalieStatsQuery) ExistX(ctx context.Context) bool {
+func (gsq *GameStatsQuery) ExistX(ctx context.Context) bool {
 	exist, err := gsq.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -286,18 +287,18 @@ func (gsq *GoalieStatsQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the GoalieStatsQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the GameStatsQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (gsq *GoalieStatsQuery) Clone() *GoalieStatsQuery {
+func (gsq *GameStatsQuery) Clone() *GameStatsQuery {
 	if gsq == nil {
 		return nil
 	}
-	return &GoalieStatsQuery{
+	return &GameStatsQuery{
 		config:     gsq.config,
 		ctx:        gsq.ctx.Clone(),
-		order:      append([]goaliestats.OrderOption{}, gsq.order...),
+		order:      append([]gamestats.OrderOption{}, gsq.order...),
 		inters:     append([]Interceptor{}, gsq.inters...),
-		predicates: append([]predicate.GoalieStats{}, gsq.predicates...),
+		predicates: append([]predicate.GameStats{}, gsq.predicates...),
 		withGame:   gsq.withGame.Clone(),
 		withPlayer: gsq.withPlayer.Clone(),
 		// clone intermediate query.
@@ -308,7 +309,7 @@ func (gsq *GoalieStatsQuery) Clone() *GoalieStatsQuery {
 
 // WithGame tells the query-builder to eager-load the nodes that are connected to
 // the "game" edge. The optional arguments are used to configure the query builder of the edge.
-func (gsq *GoalieStatsQuery) WithGame(opts ...func(*GameQuery)) *GoalieStatsQuery {
+func (gsq *GameStatsQuery) WithGame(opts ...func(*GameQuery)) *GameStatsQuery {
 	query := (&GameClient{config: gsq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -319,7 +320,7 @@ func (gsq *GoalieStatsQuery) WithGame(opts ...func(*GameQuery)) *GoalieStatsQuer
 
 // WithPlayer tells the query-builder to eager-load the nodes that are connected to
 // the "player" edge. The optional arguments are used to configure the query builder of the edge.
-func (gsq *GoalieStatsQuery) WithPlayer(opts ...func(*PlayerQuery)) *GoalieStatsQuery {
+func (gsq *GameStatsQuery) WithPlayer(opts ...func(*PlayerQuery)) *GameStatsQuery {
 	query := (&PlayerClient{config: gsq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -338,15 +339,15 @@ func (gsq *GoalieStatsQuery) WithPlayer(opts ...func(*PlayerQuery)) *GoalieStats
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.GoalieStats.Query().
-//		GroupBy(goaliestats.FieldGoals).
+//	client.GameStats.Query().
+//		GroupBy(gamestats.FieldGoals).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (gsq *GoalieStatsQuery) GroupBy(field string, fields ...string) *GoalieStatsGroupBy {
+func (gsq *GameStatsQuery) GroupBy(field string, fields ...string) *GameStatsGroupBy {
 	gsq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &GoalieStatsGroupBy{build: gsq}
+	grbuild := &GameStatsGroupBy{build: gsq}
 	grbuild.flds = &gsq.ctx.Fields
-	grbuild.label = goaliestats.Label
+	grbuild.label = gamestats.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -360,23 +361,23 @@ func (gsq *GoalieStatsQuery) GroupBy(field string, fields ...string) *GoalieStat
 //		Goals int `json:"goals,omitempty"`
 //	}
 //
-//	client.GoalieStats.Query().
-//		Select(goaliestats.FieldGoals).
+//	client.GameStats.Query().
+//		Select(gamestats.FieldGoals).
 //		Scan(ctx, &v)
-func (gsq *GoalieStatsQuery) Select(fields ...string) *GoalieStatsSelect {
+func (gsq *GameStatsQuery) Select(fields ...string) *GameStatsSelect {
 	gsq.ctx.Fields = append(gsq.ctx.Fields, fields...)
-	sbuild := &GoalieStatsSelect{GoalieStatsQuery: gsq}
-	sbuild.label = goaliestats.Label
+	sbuild := &GameStatsSelect{GameStatsQuery: gsq}
+	sbuild.label = gamestats.Label
 	sbuild.flds, sbuild.scan = &gsq.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a GoalieStatsSelect configured with the given aggregations.
-func (gsq *GoalieStatsQuery) Aggregate(fns ...AggregateFunc) *GoalieStatsSelect {
+// Aggregate returns a GameStatsSelect configured with the given aggregations.
+func (gsq *GameStatsQuery) Aggregate(fns ...AggregateFunc) *GameStatsSelect {
 	return gsq.Select().Aggregate(fns...)
 }
 
-func (gsq *GoalieStatsQuery) prepareQuery(ctx context.Context) error {
+func (gsq *GameStatsQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range gsq.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -388,7 +389,7 @@ func (gsq *GoalieStatsQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range gsq.ctx.Fields {
-		if !goaliestats.ValidColumn(f) {
+		if !gamestats.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -402,20 +403,27 @@ func (gsq *GoalieStatsQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (gsq *GoalieStatsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*GoalieStats, error) {
+func (gsq *GameStatsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*GameStats, error) {
 	var (
-		nodes       = []*GoalieStats{}
+		nodes       = []*GameStats{}
+		withFKs     = gsq.withFKs
 		_spec       = gsq.querySpec()
 		loadedTypes = [2]bool{
 			gsq.withGame != nil,
 			gsq.withPlayer != nil,
 		}
 	)
+	if gsq.withPlayer != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, gamestats.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*GoalieStats).scanValues(nil, columns)
+		return (*GameStats).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &GoalieStats{config: gsq.config}
+		node := &GameStats{config: gsq.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -430,146 +438,82 @@ func (gsq *GoalieStatsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 		return nodes, nil
 	}
 	if query := gsq.withGame; query != nil {
-		if err := gsq.loadGame(ctx, query, nodes,
-			func(n *GoalieStats) { n.Edges.Game = []*Game{} },
-			func(n *GoalieStats, e *Game) { n.Edges.Game = append(n.Edges.Game, e) }); err != nil {
+		if err := gsq.loadGame(ctx, query, nodes, nil,
+			func(n *GameStats, e *Game) { n.Edges.Game = e }); err != nil {
 			return nil, err
 		}
 	}
 	if query := gsq.withPlayer; query != nil {
-		if err := gsq.loadPlayer(ctx, query, nodes,
-			func(n *GoalieStats) { n.Edges.Player = []*Player{} },
-			func(n *GoalieStats, e *Player) { n.Edges.Player = append(n.Edges.Player, e) }); err != nil {
+		if err := gsq.loadPlayer(ctx, query, nodes, nil,
+			func(n *GameStats, e *Player) { n.Edges.Player = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (gsq *GoalieStatsQuery) loadGame(ctx context.Context, query *GameQuery, nodes []*GoalieStats, init func(*GoalieStats), assign func(*GoalieStats, *Game)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*GoalieStats)
-	nids := make(map[int]map[*GoalieStats]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
-		if init != nil {
-			init(node)
-		}
+func (gsq *GameStatsQuery) loadGame(ctx context.Context, query *GameQuery, nodes []*GameStats, init func(*GameStats), assign func(*GameStats, *Game)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*GameStats)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
 	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(goaliestats.GameTable)
-		s.Join(joinT).On(s.C(game.FieldID), joinT.C(goaliestats.GamePrimaryKey[0]))
-		s.Where(sql.InValues(joinT.C(goaliestats.GamePrimaryKey[1]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(goaliestats.GamePrimaryKey[1]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
-	}
-	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
-		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-			assign := spec.Assign
-			values := spec.ScanValues
-			spec.ScanValues = func(columns []string) ([]any, error) {
-				values, err := values(columns[1:])
-				if err != nil {
-					return nil, err
-				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
-			}
-			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
-				if nids[inValue] == nil {
-					nids[inValue] = map[*GoalieStats]struct{}{byID[outValue]: {}}
-					return assign(columns[1:], values[1:])
-				}
-				nids[inValue][byID[outValue]] = struct{}{}
-				return nil
-			}
-		})
-	})
-	neighbors, err := withInterceptors[[]*Game](ctx, query, qr, query.inters)
+	query.withFKs = true
+	query.Where(predicate.Game(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(gamestats.GameColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
+		fk := n.game_stats_game
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "game_stats_game" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected "game" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "game_stats_game" returned %v for node %v`, *fk, n.ID)
 		}
-		for kn := range nodes {
-			assign(kn, n)
-		}
+		assign(node, n)
 	}
 	return nil
 }
-func (gsq *GoalieStatsQuery) loadPlayer(ctx context.Context, query *PlayerQuery, nodes []*GoalieStats, init func(*GoalieStats), assign func(*GoalieStats, *Player)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*GoalieStats)
-	nids := make(map[int]map[*GoalieStats]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
-		if init != nil {
-			init(node)
+func (gsq *GameStatsQuery) loadPlayer(ctx context.Context, query *PlayerQuery, nodes []*GameStats, init func(*GameStats), assign func(*GameStats, *Player)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*GameStats)
+	for i := range nodes {
+		if nodes[i].game_stats_player == nil {
+			continue
 		}
+		fk := *nodes[i].game_stats_player
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(goaliestats.PlayerTable)
-		s.Join(joinT).On(s.C(player.FieldID), joinT.C(goaliestats.PlayerPrimaryKey[0]))
-		s.Where(sql.InValues(joinT.C(goaliestats.PlayerPrimaryKey[1]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(goaliestats.PlayerPrimaryKey[1]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
+	if len(ids) == 0 {
+		return nil
 	}
-	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
-		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-			assign := spec.Assign
-			values := spec.ScanValues
-			spec.ScanValues = func(columns []string) ([]any, error) {
-				values, err := values(columns[1:])
-				if err != nil {
-					return nil, err
-				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
-			}
-			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
-				if nids[inValue] == nil {
-					nids[inValue] = map[*GoalieStats]struct{}{byID[outValue]: {}}
-					return assign(columns[1:], values[1:])
-				}
-				nids[inValue][byID[outValue]] = struct{}{}
-				return nil
-			}
-		})
-	})
-	neighbors, err := withInterceptors[[]*Player](ctx, query, qr, query.inters)
+	query.Where(player.IDIn(ids...))
+	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected "player" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "game_stats_player" returned %v`, n.ID)
 		}
-		for kn := range nodes {
-			assign(kn, n)
+		for i := range nodes {
+			assign(nodes[i], n)
 		}
 	}
 	return nil
 }
 
-func (gsq *GoalieStatsQuery) sqlCount(ctx context.Context) (int, error) {
+func (gsq *GameStatsQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := gsq.querySpec()
 	_spec.Node.Columns = gsq.ctx.Fields
 	if len(gsq.ctx.Fields) > 0 {
@@ -578,8 +522,8 @@ func (gsq *GoalieStatsQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, gsq.driver, _spec)
 }
 
-func (gsq *GoalieStatsQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(goaliestats.Table, goaliestats.Columns, sqlgraph.NewFieldSpec(goaliestats.FieldID, field.TypeInt))
+func (gsq *GameStatsQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(gamestats.Table, gamestats.Columns, sqlgraph.NewFieldSpec(gamestats.FieldID, field.TypeInt))
 	_spec.From = gsq.sql
 	if unique := gsq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -588,9 +532,9 @@ func (gsq *GoalieStatsQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := gsq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, goaliestats.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, gamestats.FieldID)
 		for i := range fields {
-			if fields[i] != goaliestats.FieldID {
+			if fields[i] != gamestats.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -618,12 +562,12 @@ func (gsq *GoalieStatsQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (gsq *GoalieStatsQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (gsq *GameStatsQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(gsq.driver.Dialect())
-	t1 := builder.Table(goaliestats.Table)
+	t1 := builder.Table(gamestats.Table)
 	columns := gsq.ctx.Fields
 	if len(columns) == 0 {
-		columns = goaliestats.Columns
+		columns = gamestats.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if gsq.sql != nil {
@@ -650,28 +594,28 @@ func (gsq *GoalieStatsQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// GoalieStatsGroupBy is the group-by builder for GoalieStats entities.
-type GoalieStatsGroupBy struct {
+// GameStatsGroupBy is the group-by builder for GameStats entities.
+type GameStatsGroupBy struct {
 	selector
-	build *GoalieStatsQuery
+	build *GameStatsQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (gsgb *GoalieStatsGroupBy) Aggregate(fns ...AggregateFunc) *GoalieStatsGroupBy {
+func (gsgb *GameStatsGroupBy) Aggregate(fns ...AggregateFunc) *GameStatsGroupBy {
 	gsgb.fns = append(gsgb.fns, fns...)
 	return gsgb
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (gsgb *GoalieStatsGroupBy) Scan(ctx context.Context, v any) error {
+func (gsgb *GameStatsGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, gsgb.build.ctx, "GroupBy")
 	if err := gsgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*GoalieStatsQuery, *GoalieStatsGroupBy](ctx, gsgb.build, gsgb, gsgb.build.inters, v)
+	return scanWithInterceptors[*GameStatsQuery, *GameStatsGroupBy](ctx, gsgb.build, gsgb, gsgb.build.inters, v)
 }
 
-func (gsgb *GoalieStatsGroupBy) sqlScan(ctx context.Context, root *GoalieStatsQuery, v any) error {
+func (gsgb *GameStatsGroupBy) sqlScan(ctx context.Context, root *GameStatsQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(gsgb.fns))
 	for _, fn := range gsgb.fns {
@@ -698,28 +642,28 @@ func (gsgb *GoalieStatsGroupBy) sqlScan(ctx context.Context, root *GoalieStatsQu
 	return sql.ScanSlice(rows, v)
 }
 
-// GoalieStatsSelect is the builder for selecting fields of GoalieStats entities.
-type GoalieStatsSelect struct {
-	*GoalieStatsQuery
+// GameStatsSelect is the builder for selecting fields of GameStats entities.
+type GameStatsSelect struct {
+	*GameStatsQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (gss *GoalieStatsSelect) Aggregate(fns ...AggregateFunc) *GoalieStatsSelect {
+func (gss *GameStatsSelect) Aggregate(fns ...AggregateFunc) *GameStatsSelect {
 	gss.fns = append(gss.fns, fns...)
 	return gss
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (gss *GoalieStatsSelect) Scan(ctx context.Context, v any) error {
+func (gss *GameStatsSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, gss.ctx, "Select")
 	if err := gss.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*GoalieStatsQuery, *GoalieStatsSelect](ctx, gss.GoalieStatsQuery, gss, gss.inters, v)
+	return scanWithInterceptors[*GameStatsQuery, *GameStatsSelect](ctx, gss.GameStatsQuery, gss, gss.inters, v)
 }
 
-func (gss *GoalieStatsSelect) sqlScan(ctx context.Context, root *GoalieStatsQuery, v any) error {
+func (gss *GameStatsSelect) sqlScan(ctx context.Context, root *GameStatsQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(gss.fns))
 	for _, fn := range gss.fns {

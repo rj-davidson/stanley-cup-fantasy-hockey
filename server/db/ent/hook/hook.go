@@ -33,16 +33,16 @@ func (f GameFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GameMutation", m)
 }
 
-// The GoalieStatsFunc type is an adapter to allow the use of ordinary
-// function as GoalieStats mutator.
-type GoalieStatsFunc func(context.Context, *ent.GoalieStatsMutation) (ent.Value, error)
+// The GameStatsFunc type is an adapter to allow the use of ordinary
+// function as GameStats mutator.
+type GameStatsFunc func(context.Context, *ent.GameStatsMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f GoalieStatsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.GoalieStatsMutation); ok {
+func (f GameStatsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GameStatsMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GoalieStatsMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GameStatsMutation", m)
 }
 
 // The LeagueFunc type is an adapter to allow the use of ordinary
@@ -69,16 +69,16 @@ func (f PlayerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PlayerMutation", m)
 }
 
-// The SkaterStatsFunc type is an adapter to allow the use of ordinary
-// function as SkaterStats mutator.
-type SkaterStatsFunc func(context.Context, *ent.SkaterStatsMutation) (ent.Value, error)
+// The StatsFunc type is an adapter to allow the use of ordinary
+// function as Stats mutator.
+type StatsFunc func(context.Context, *ent.StatsMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f SkaterStatsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.SkaterStatsMutation); ok {
+func (f StatsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.StatsMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SkaterStatsMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.StatsMutation", m)
 }
 
 // The TeamFunc type is an adapter to allow the use of ordinary

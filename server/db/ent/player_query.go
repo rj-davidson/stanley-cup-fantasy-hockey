@@ -12,25 +12,25 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/gamestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/predicate"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/skaterstats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/stats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
 // PlayerQuery is the builder for querying Player entities.
 type PlayerQuery struct {
 	config
-	ctx             *QueryContext
-	order           []player.OrderOption
-	inters          []Interceptor
-	predicates      []predicate.Player
-	withTeam        *TeamQuery
-	withEntries     *EntryQuery
-	withSkaterStats *SkaterStatsQuery
-	withGoalieStats *GoalieStatsQuery
-	withFKs         bool
+	ctx           *QueryContext
+	order         []player.OrderOption
+	inters        []Interceptor
+	predicates    []predicate.Player
+	withTeam      *TeamQuery
+	withEntries   *EntryQuery
+	withStats     *StatsQuery
+	withGameStats *GameStatsQuery
+	withFKs       bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -111,9 +111,9 @@ func (pq *PlayerQuery) QueryEntries() *EntryQuery {
 	return query
 }
 
-// QuerySkaterStats chains the current query on the "skaterStats" edge.
-func (pq *PlayerQuery) QuerySkaterStats() *SkaterStatsQuery {
-	query := (&SkaterStatsClient{config: pq.config}).Query()
+// QueryStats chains the current query on the "stats" edge.
+func (pq *PlayerQuery) QueryStats() *StatsQuery {
+	query := (&StatsClient{config: pq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := pq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -124,8 +124,8 @@ func (pq *PlayerQuery) QuerySkaterStats() *SkaterStatsQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(player.Table, player.FieldID, selector),
-			sqlgraph.To(skaterstats.Table, skaterstats.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, player.SkaterStatsTable, player.SkaterStatsColumn),
+			sqlgraph.To(stats.Table, stats.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, player.StatsTable, player.StatsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -133,9 +133,9 @@ func (pq *PlayerQuery) QuerySkaterStats() *SkaterStatsQuery {
 	return query
 }
 
-// QueryGoalieStats chains the current query on the "goalieStats" edge.
-func (pq *PlayerQuery) QueryGoalieStats() *GoalieStatsQuery {
-	query := (&GoalieStatsClient{config: pq.config}).Query()
+// QueryGameStats chains the current query on the "gameStats" edge.
+func (pq *PlayerQuery) QueryGameStats() *GameStatsQuery {
+	query := (&GameStatsClient{config: pq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := pq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -146,8 +146,8 @@ func (pq *PlayerQuery) QueryGoalieStats() *GoalieStatsQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(player.Table, player.FieldID, selector),
-			sqlgraph.To(goaliestats.Table, goaliestats.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, player.GoalieStatsTable, player.GoalieStatsPrimaryKey...),
+			sqlgraph.To(gamestats.Table, gamestats.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, player.GameStatsTable, player.GameStatsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -342,15 +342,15 @@ func (pq *PlayerQuery) Clone() *PlayerQuery {
 		return nil
 	}
 	return &PlayerQuery{
-		config:          pq.config,
-		ctx:             pq.ctx.Clone(),
-		order:           append([]player.OrderOption{}, pq.order...),
-		inters:          append([]Interceptor{}, pq.inters...),
-		predicates:      append([]predicate.Player{}, pq.predicates...),
-		withTeam:        pq.withTeam.Clone(),
-		withEntries:     pq.withEntries.Clone(),
-		withSkaterStats: pq.withSkaterStats.Clone(),
-		withGoalieStats: pq.withGoalieStats.Clone(),
+		config:        pq.config,
+		ctx:           pq.ctx.Clone(),
+		order:         append([]player.OrderOption{}, pq.order...),
+		inters:        append([]Interceptor{}, pq.inters...),
+		predicates:    append([]predicate.Player{}, pq.predicates...),
+		withTeam:      pq.withTeam.Clone(),
+		withEntries:   pq.withEntries.Clone(),
+		withStats:     pq.withStats.Clone(),
+		withGameStats: pq.withGameStats.Clone(),
 		// clone intermediate query.
 		sql:  pq.sql.Clone(),
 		path: pq.path,
@@ -379,25 +379,25 @@ func (pq *PlayerQuery) WithEntries(opts ...func(*EntryQuery)) *PlayerQuery {
 	return pq
 }
 
-// WithSkaterStats tells the query-builder to eager-load the nodes that are connected to
-// the "skaterStats" edge. The optional arguments are used to configure the query builder of the edge.
-func (pq *PlayerQuery) WithSkaterStats(opts ...func(*SkaterStatsQuery)) *PlayerQuery {
-	query := (&SkaterStatsClient{config: pq.config}).Query()
+// WithStats tells the query-builder to eager-load the nodes that are connected to
+// the "stats" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PlayerQuery) WithStats(opts ...func(*StatsQuery)) *PlayerQuery {
+	query := (&StatsClient{config: pq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	pq.withSkaterStats = query
+	pq.withStats = query
 	return pq
 }
 
-// WithGoalieStats tells the query-builder to eager-load the nodes that are connected to
-// the "goalieStats" edge. The optional arguments are used to configure the query builder of the edge.
-func (pq *PlayerQuery) WithGoalieStats(opts ...func(*GoalieStatsQuery)) *PlayerQuery {
-	query := (&GoalieStatsClient{config: pq.config}).Query()
+// WithGameStats tells the query-builder to eager-load the nodes that are connected to
+// the "gameStats" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PlayerQuery) WithGameStats(opts ...func(*GameStatsQuery)) *PlayerQuery {
+	query := (&GameStatsClient{config: pq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	pq.withGoalieStats = query
+	pq.withGameStats = query
 	return pq
 }
 
@@ -483,11 +483,11 @@ func (pq *PlayerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Playe
 		loadedTypes = [4]bool{
 			pq.withTeam != nil,
 			pq.withEntries != nil,
-			pq.withSkaterStats != nil,
-			pq.withGoalieStats != nil,
+			pq.withStats != nil,
+			pq.withGameStats != nil,
 		}
 	)
-	if pq.withTeam != nil {
+	if pq.withTeam != nil || pq.withStats != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -524,17 +524,16 @@ func (pq *PlayerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Playe
 			return nil, err
 		}
 	}
-	if query := pq.withSkaterStats; query != nil {
-		if err := pq.loadSkaterStats(ctx, query, nodes,
-			func(n *Player) { n.Edges.SkaterStats = []*SkaterStats{} },
-			func(n *Player, e *SkaterStats) { n.Edges.SkaterStats = append(n.Edges.SkaterStats, e) }); err != nil {
+	if query := pq.withStats; query != nil {
+		if err := pq.loadStats(ctx, query, nodes, nil,
+			func(n *Player, e *Stats) { n.Edges.Stats = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := pq.withGoalieStats; query != nil {
-		if err := pq.loadGoalieStats(ctx, query, nodes,
-			func(n *Player) { n.Edges.GoalieStats = []*GoalieStats{} },
-			func(n *Player, e *GoalieStats) { n.Edges.GoalieStats = append(n.Edges.GoalieStats, e) }); err != nil {
+	if query := pq.withGameStats; query != nil {
+		if err := pq.loadGameStats(ctx, query, nodes,
+			func(n *Player) { n.Edges.GameStats = []*GameStats{} },
+			func(n *Player, e *GameStats) { n.Edges.GameStats = append(n.Edges.GameStats, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -634,7 +633,39 @@ func (pq *PlayerQuery) loadEntries(ctx context.Context, query *EntryQuery, nodes
 	}
 	return nil
 }
-func (pq *PlayerQuery) loadSkaterStats(ctx context.Context, query *SkaterStatsQuery, nodes []*Player, init func(*Player), assign func(*Player, *SkaterStats)) error {
+func (pq *PlayerQuery) loadStats(ctx context.Context, query *StatsQuery, nodes []*Player, init func(*Player), assign func(*Player, *Stats)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Player)
+	for i := range nodes {
+		if nodes[i].stats_player == nil {
+			continue
+		}
+		fk := *nodes[i].stats_player
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(stats.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "stats_player" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (pq *PlayerQuery) loadGameStats(ctx context.Context, query *GameStatsQuery, nodes []*Player, init func(*Player), assign func(*Player, *GameStats)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Player)
 	for i := range nodes {
@@ -645,84 +676,23 @@ func (pq *PlayerQuery) loadSkaterStats(ctx context.Context, query *SkaterStatsQu
 		}
 	}
 	query.withFKs = true
-	query.Where(predicate.SkaterStats(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(player.SkaterStatsColumn), fks...))
+	query.Where(predicate.GameStats(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(player.GameStatsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.player_skater_stats
+		fk := n.game_stats_player
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "player_skater_stats" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "game_stats_player" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "player_skater_stats" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "game_stats_player" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
-	}
-	return nil
-}
-func (pq *PlayerQuery) loadGoalieStats(ctx context.Context, query *GoalieStatsQuery, nodes []*Player, init func(*Player), assign func(*Player, *GoalieStats)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Player)
-	nids := make(map[int]map[*Player]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
-		if init != nil {
-			init(node)
-		}
-	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(player.GoalieStatsTable)
-		s.Join(joinT).On(s.C(goaliestats.FieldID), joinT.C(player.GoalieStatsPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(player.GoalieStatsPrimaryKey[0]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(player.GoalieStatsPrimaryKey[0]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
-	}
-	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
-		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-			assign := spec.Assign
-			values := spec.ScanValues
-			spec.ScanValues = func(columns []string) ([]any, error) {
-				values, err := values(columns[1:])
-				if err != nil {
-					return nil, err
-				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
-			}
-			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
-				if nids[inValue] == nil {
-					nids[inValue] = map[*Player]struct{}{byID[outValue]: {}}
-					return assign(columns[1:], values[1:])
-				}
-				nids[inValue][byID[outValue]] = struct{}{}
-				return nil
-			}
-		})
-	})
-	neighbors, err := withInterceptors[[]*GoalieStats](ctx, query, qr, query.inters)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected "goalieStats" node returned %v`, n.ID)
-		}
-		for kn := range nodes {
-			assign(kn, n)
-		}
 	}
 	return nil
 }

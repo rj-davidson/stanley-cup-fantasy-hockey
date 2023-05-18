@@ -4,10 +4,10 @@ package ent
 
 import (
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/gamestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/schema"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/skaterstats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/stats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
@@ -21,48 +21,52 @@ func init() {
 	gameDescID := gameFields[0].Descriptor()
 	// game.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	game.IDValidator = gameDescID.Validators[0].(func(int) error)
-	goaliestatsFields := schema.GoalieStats{}.Fields()
-	_ = goaliestatsFields
-	// goaliestatsDescGoals is the schema descriptor for goals field.
-	goaliestatsDescGoals := goaliestatsFields[0].Descriptor()
-	// goaliestats.DefaultGoals holds the default value on creation for the goals field.
-	goaliestats.DefaultGoals = goaliestatsDescGoals.Default.(int)
-	// goaliestatsDescAssists is the schema descriptor for assists field.
-	goaliestatsDescAssists := goaliestatsFields[1].Descriptor()
-	// goaliestats.DefaultAssists holds the default value on creation for the assists field.
-	goaliestats.DefaultAssists = goaliestatsDescAssists.Default.(int)
-	// goaliestatsDescWin is the schema descriptor for win field.
-	goaliestatsDescWin := goaliestatsFields[2].Descriptor()
-	// goaliestats.DefaultWin holds the default value on creation for the win field.
-	goaliestats.DefaultWin = goaliestatsDescWin.Default.(bool)
-	// goaliestatsDescLoss is the schema descriptor for loss field.
-	goaliestatsDescLoss := goaliestatsFields[3].Descriptor()
-	// goaliestats.DefaultLoss holds the default value on creation for the loss field.
-	goaliestats.DefaultLoss = goaliestatsDescLoss.Default.(bool)
-	// goaliestatsDescHome is the schema descriptor for home field.
-	goaliestatsDescHome := goaliestatsFields[4].Descriptor()
-	// goaliestats.DefaultHome holds the default value on creation for the home field.
-	goaliestats.DefaultHome = goaliestatsDescHome.Default.(bool)
+	gamestatsFields := schema.GameStats{}.Fields()
+	_ = gamestatsFields
+	// gamestatsDescGoals is the schema descriptor for goals field.
+	gamestatsDescGoals := gamestatsFields[0].Descriptor()
+	// gamestats.DefaultGoals holds the default value on creation for the goals field.
+	gamestats.DefaultGoals = gamestatsDescGoals.Default.(int)
+	// gamestatsDescAssists is the schema descriptor for assists field.
+	gamestatsDescAssists := gamestatsFields[1].Descriptor()
+	// gamestats.DefaultAssists holds the default value on creation for the assists field.
+	gamestats.DefaultAssists = gamestatsDescAssists.Default.(int)
+	// gamestatsDescWin is the schema descriptor for win field.
+	gamestatsDescWin := gamestatsFields[2].Descriptor()
+	// gamestats.DefaultWin holds the default value on creation for the win field.
+	gamestats.DefaultWin = gamestatsDescWin.Default.(bool)
+	// gamestatsDescShutout is the schema descriptor for shutout field.
+	gamestatsDescShutout := gamestatsFields[3].Descriptor()
+	// gamestats.DefaultShutout holds the default value on creation for the shutout field.
+	gamestats.DefaultShutout = gamestatsDescShutout.Default.(bool)
+	// gamestatsDescHomeGame is the schema descriptor for homeGame field.
+	gamestatsDescHomeGame := gamestatsFields[4].Descriptor()
+	// gamestats.DefaultHomeGame holds the default value on creation for the homeGame field.
+	gamestats.DefaultHomeGame = gamestatsDescHomeGame.Default.(bool)
 	playerFields := schema.Player{}.Fields()
 	_ = playerFields
 	// playerDescID is the schema descriptor for id field.
 	playerDescID := playerFields[0].Descriptor()
 	// player.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	player.IDValidator = playerDescID.Validators[0].(func(int) error)
-	skaterstatsFields := schema.SkaterStats{}.Fields()
-	_ = skaterstatsFields
-	// skaterstatsDescGoals is the schema descriptor for goals field.
-	skaterstatsDescGoals := skaterstatsFields[0].Descriptor()
-	// skaterstats.DefaultGoals holds the default value on creation for the goals field.
-	skaterstats.DefaultGoals = skaterstatsDescGoals.Default.(int)
-	// skaterstatsDescAssists is the schema descriptor for assists field.
-	skaterstatsDescAssists := skaterstatsFields[1].Descriptor()
-	// skaterstats.DefaultAssists holds the default value on creation for the assists field.
-	skaterstats.DefaultAssists = skaterstatsDescAssists.Default.(int)
-	// skaterstatsDescHome is the schema descriptor for home field.
-	skaterstatsDescHome := skaterstatsFields[2].Descriptor()
-	// skaterstats.DefaultHome holds the default value on creation for the home field.
-	skaterstats.DefaultHome = skaterstatsDescHome.Default.(bool)
+	statsFields := schema.Stats{}.Fields()
+	_ = statsFields
+	// statsDescGoals is the schema descriptor for goals field.
+	statsDescGoals := statsFields[0].Descriptor()
+	// stats.DefaultGoals holds the default value on creation for the goals field.
+	stats.DefaultGoals = statsDescGoals.Default.(int)
+	// statsDescAssists is the schema descriptor for assists field.
+	statsDescAssists := statsFields[1].Descriptor()
+	// stats.DefaultAssists holds the default value on creation for the assists field.
+	stats.DefaultAssists = statsDescAssists.Default.(int)
+	// statsDescShutouts is the schema descriptor for shutouts field.
+	statsDescShutouts := statsFields[2].Descriptor()
+	// stats.DefaultShutouts holds the default value on creation for the shutouts field.
+	stats.DefaultShutouts = statsDescShutouts.Default.(int)
+	// statsDescWins is the schema descriptor for wins field.
+	statsDescWins := statsFields[3].Descriptor()
+	// stats.DefaultWins holds the default value on creation for the wins field.
+	stats.DefaultWins = statsDescWins.Default.(int)
 	teamFields := schema.Team{}.Fields()
 	_ = teamFields
 	// teamDescEliminated is the schema descriptor for eliminated field.
