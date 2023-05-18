@@ -9,7 +9,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
@@ -24,12 +23,10 @@ type Game struct {
 	AwayScore int `json:"awayScore,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GameQuery when eager-loading is set.
-	Edges                       GameEdges `json:"edges"`
-	player_home_games_as_goalie *int
-	player_away_games_as_goalie *int
-	team_home_games             *int
-	team_away_games             *int
-	selectValues                sql.SelectValues
+	Edges           GameEdges `json:"edges"`
+	team_home_games *int
+	team_away_games *int
+	selectValues    sql.SelectValues
 }
 
 // GameEdges holds the relations/edges for other nodes in the graph.
@@ -38,10 +35,10 @@ type GameEdges struct {
 	AwayTeam *Team `json:"awayTeam,omitempty"`
 	// HomeTeam holds the value of the homeTeam edge.
 	HomeTeam *Team `json:"homeTeam,omitempty"`
-	// AwayGoalie holds the value of the awayGoalie edge.
-	AwayGoalie *Player `json:"awayGoalie,omitempty"`
-	// HomeGoalie holds the value of the homeGoalie edge.
-	HomeGoalie *Player `json:"homeGoalie,omitempty"`
+	// SkaterStats holds the value of the skaterStats edge.
+	SkaterStats []*SkaterStats `json:"skaterStats,omitempty"`
+	// GoalieStats holds the value of the goalieStats edge.
+	GoalieStats []*GoalieStats `json:"goalieStats,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [4]bool
@@ -73,30 +70,22 @@ func (e GameEdges) HomeTeamOrErr() (*Team, error) {
 	return nil, &NotLoadedError{edge: "homeTeam"}
 }
 
-// AwayGoalieOrErr returns the AwayGoalie value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e GameEdges) AwayGoalieOrErr() (*Player, error) {
+// SkaterStatsOrErr returns the SkaterStats value or an error if the edge
+// was not loaded in eager-loading.
+func (e GameEdges) SkaterStatsOrErr() ([]*SkaterStats, error) {
 	if e.loadedTypes[2] {
-		if e.AwayGoalie == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: player.Label}
-		}
-		return e.AwayGoalie, nil
+		return e.SkaterStats, nil
 	}
-	return nil, &NotLoadedError{edge: "awayGoalie"}
+	return nil, &NotLoadedError{edge: "skaterStats"}
 }
 
-// HomeGoalieOrErr returns the HomeGoalie value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e GameEdges) HomeGoalieOrErr() (*Player, error) {
+// GoalieStatsOrErr returns the GoalieStats value or an error if the edge
+// was not loaded in eager-loading.
+func (e GameEdges) GoalieStatsOrErr() ([]*GoalieStats, error) {
 	if e.loadedTypes[3] {
-		if e.HomeGoalie == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: player.Label}
-		}
-		return e.HomeGoalie, nil
+		return e.GoalieStats, nil
 	}
-	return nil, &NotLoadedError{edge: "homeGoalie"}
+	return nil, &NotLoadedError{edge: "goalieStats"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -106,13 +95,9 @@ func (*Game) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case game.FieldID, game.FieldHomeScore, game.FieldAwayScore:
 			values[i] = new(sql.NullInt64)
-		case game.ForeignKeys[0]: // player_home_games_as_goalie
+		case game.ForeignKeys[0]: // team_home_games
 			values[i] = new(sql.NullInt64)
-		case game.ForeignKeys[1]: // player_away_games_as_goalie
-			values[i] = new(sql.NullInt64)
-		case game.ForeignKeys[2]: // team_home_games
-			values[i] = new(sql.NullInt64)
-		case game.ForeignKeys[3]: // team_away_games
+		case game.ForeignKeys[1]: // team_away_games
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -149,26 +134,12 @@ func (ga *Game) assignValues(columns []string, values []any) error {
 			}
 		case game.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field player_home_games_as_goalie", value)
-			} else if value.Valid {
-				ga.player_home_games_as_goalie = new(int)
-				*ga.player_home_games_as_goalie = int(value.Int64)
-			}
-		case game.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field player_away_games_as_goalie", value)
-			} else if value.Valid {
-				ga.player_away_games_as_goalie = new(int)
-				*ga.player_away_games_as_goalie = int(value.Int64)
-			}
-		case game.ForeignKeys[2]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field team_home_games", value)
 			} else if value.Valid {
 				ga.team_home_games = new(int)
 				*ga.team_home_games = int(value.Int64)
 			}
-		case game.ForeignKeys[3]:
+		case game.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field team_away_games", value)
 			} else if value.Valid {
@@ -198,14 +169,14 @@ func (ga *Game) QueryHomeTeam() *TeamQuery {
 	return NewGameClient(ga.config).QueryHomeTeam(ga)
 }
 
-// QueryAwayGoalie queries the "awayGoalie" edge of the Game entity.
-func (ga *Game) QueryAwayGoalie() *PlayerQuery {
-	return NewGameClient(ga.config).QueryAwayGoalie(ga)
+// QuerySkaterStats queries the "skaterStats" edge of the Game entity.
+func (ga *Game) QuerySkaterStats() *SkaterStatsQuery {
+	return NewGameClient(ga.config).QuerySkaterStats(ga)
 }
 
-// QueryHomeGoalie queries the "homeGoalie" edge of the Game entity.
-func (ga *Game) QueryHomeGoalie() *PlayerQuery {
-	return NewGameClient(ga.config).QueryHomeGoalie(ga)
+// QueryGoalieStats queries the "goalieStats" edge of the Game entity.
+func (ga *Game) QueryGoalieStats() *GoalieStatsQuery {
+	return NewGameClient(ga.config).QueryGoalieStats(ga)
 }
 
 // Update returns a builder for updating this Game.

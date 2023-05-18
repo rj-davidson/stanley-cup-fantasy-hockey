@@ -10,7 +10,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/skaterstats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
@@ -61,26 +62,34 @@ func (gc *GameCreate) SetHomeTeam(t *Team) *GameCreate {
 	return gc.SetHomeTeamID(t.ID)
 }
 
-// SetAwayGoalieID sets the "awayGoalie" edge to the Player entity by ID.
-func (gc *GameCreate) SetAwayGoalieID(id int) *GameCreate {
-	gc.mutation.SetAwayGoalieID(id)
+// AddSkaterStatIDs adds the "skaterStats" edge to the SkaterStats entity by IDs.
+func (gc *GameCreate) AddSkaterStatIDs(ids ...int) *GameCreate {
+	gc.mutation.AddSkaterStatIDs(ids...)
 	return gc
 }
 
-// SetAwayGoalie sets the "awayGoalie" edge to the Player entity.
-func (gc *GameCreate) SetAwayGoalie(p *Player) *GameCreate {
-	return gc.SetAwayGoalieID(p.ID)
+// AddSkaterStats adds the "skaterStats" edges to the SkaterStats entity.
+func (gc *GameCreate) AddSkaterStats(s ...*SkaterStats) *GameCreate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return gc.AddSkaterStatIDs(ids...)
 }
 
-// SetHomeGoalieID sets the "homeGoalie" edge to the Player entity by ID.
-func (gc *GameCreate) SetHomeGoalieID(id int) *GameCreate {
-	gc.mutation.SetHomeGoalieID(id)
+// AddGoalieStatIDs adds the "goalieStats" edge to the GoalieStats entity by IDs.
+func (gc *GameCreate) AddGoalieStatIDs(ids ...int) *GameCreate {
+	gc.mutation.AddGoalieStatIDs(ids...)
 	return gc
 }
 
-// SetHomeGoalie sets the "homeGoalie" edge to the Player entity.
-func (gc *GameCreate) SetHomeGoalie(p *Player) *GameCreate {
-	return gc.SetHomeGoalieID(p.ID)
+// AddGoalieStats adds the "goalieStats" edges to the GoalieStats entity.
+func (gc *GameCreate) AddGoalieStats(g ...*GoalieStats) *GameCreate {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return gc.AddGoalieStatIDs(ids...)
 }
 
 // Mutation returns the GameMutation object of the builder.
@@ -133,12 +142,6 @@ func (gc *GameCreate) check() error {
 	}
 	if _, ok := gc.mutation.HomeTeamID(); !ok {
 		return &ValidationError{Name: "homeTeam", err: errors.New(`ent: missing required edge "Game.homeTeam"`)}
-	}
-	if _, ok := gc.mutation.AwayGoalieID(); !ok {
-		return &ValidationError{Name: "awayGoalie", err: errors.New(`ent: missing required edge "Game.awayGoalie"`)}
-	}
-	if _, ok := gc.mutation.HomeGoalieID(); !ok {
-		return &ValidationError{Name: "homeGoalie", err: errors.New(`ent: missing required edge "Game.homeGoalie"`)}
 	}
 	return nil
 }
@@ -214,38 +217,36 @@ func (gc *GameCreate) createSpec() (*Game, *sqlgraph.CreateSpec) {
 		_node.team_home_games = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.AwayGoalieIDs(); len(nodes) > 0 {
+	if nodes := gc.mutation.SkaterStatsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   game.AwayGoalieTable,
-			Columns: []string{game.AwayGoalieColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   game.SkaterStatsTable,
+			Columns: []string{game.SkaterStatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(skaterstats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.player_away_games_as_goalie = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.HomeGoalieIDs(); len(nodes) > 0 {
+	if nodes := gc.mutation.GoalieStatsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   game.HomeGoalieTable,
-			Columns: []string{game.HomeGoalieColumn},
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   game.GoalieStatsTable,
+			Columns: game.GoalieStatsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(player.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(goaliestats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.player_home_games_as_goalie = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

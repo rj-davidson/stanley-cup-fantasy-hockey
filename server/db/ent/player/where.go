@@ -58,26 +58,6 @@ func Name(v string) predicate.Player {
 	return predicate.Player(sql.FieldEQ(FieldName, v))
 }
 
-// Goals applies equality check predicate on the "goals" field. It's identical to GoalsEQ.
-func Goals(v int) predicate.Player {
-	return predicate.Player(sql.FieldEQ(FieldGoals, v))
-}
-
-// Assists applies equality check predicate on the "assists" field. It's identical to AssistsEQ.
-func Assists(v int) predicate.Player {
-	return predicate.Player(sql.FieldEQ(FieldAssists, v))
-}
-
-// Shutouts applies equality check predicate on the "shutouts" field. It's identical to ShutoutsEQ.
-func Shutouts(v int) predicate.Player {
-	return predicate.Player(sql.FieldEQ(FieldShutouts, v))
-}
-
-// Wins applies equality check predicate on the "wins" field. It's identical to WinsEQ.
-func Wins(v int) predicate.Player {
-	return predicate.Player(sql.FieldEQ(FieldWins, v))
-}
-
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Player {
 	return predicate.Player(sql.FieldEQ(FieldName, v))
@@ -163,166 +143,6 @@ func PositionNotIn(vs ...Position) predicate.Player {
 	return predicate.Player(sql.FieldNotIn(FieldPosition, vs...))
 }
 
-// GoalsEQ applies the EQ predicate on the "goals" field.
-func GoalsEQ(v int) predicate.Player {
-	return predicate.Player(sql.FieldEQ(FieldGoals, v))
-}
-
-// GoalsNEQ applies the NEQ predicate on the "goals" field.
-func GoalsNEQ(v int) predicate.Player {
-	return predicate.Player(sql.FieldNEQ(FieldGoals, v))
-}
-
-// GoalsIn applies the In predicate on the "goals" field.
-func GoalsIn(vs ...int) predicate.Player {
-	return predicate.Player(sql.FieldIn(FieldGoals, vs...))
-}
-
-// GoalsNotIn applies the NotIn predicate on the "goals" field.
-func GoalsNotIn(vs ...int) predicate.Player {
-	return predicate.Player(sql.FieldNotIn(FieldGoals, vs...))
-}
-
-// GoalsGT applies the GT predicate on the "goals" field.
-func GoalsGT(v int) predicate.Player {
-	return predicate.Player(sql.FieldGT(FieldGoals, v))
-}
-
-// GoalsGTE applies the GTE predicate on the "goals" field.
-func GoalsGTE(v int) predicate.Player {
-	return predicate.Player(sql.FieldGTE(FieldGoals, v))
-}
-
-// GoalsLT applies the LT predicate on the "goals" field.
-func GoalsLT(v int) predicate.Player {
-	return predicate.Player(sql.FieldLT(FieldGoals, v))
-}
-
-// GoalsLTE applies the LTE predicate on the "goals" field.
-func GoalsLTE(v int) predicate.Player {
-	return predicate.Player(sql.FieldLTE(FieldGoals, v))
-}
-
-// AssistsEQ applies the EQ predicate on the "assists" field.
-func AssistsEQ(v int) predicate.Player {
-	return predicate.Player(sql.FieldEQ(FieldAssists, v))
-}
-
-// AssistsNEQ applies the NEQ predicate on the "assists" field.
-func AssistsNEQ(v int) predicate.Player {
-	return predicate.Player(sql.FieldNEQ(FieldAssists, v))
-}
-
-// AssistsIn applies the In predicate on the "assists" field.
-func AssistsIn(vs ...int) predicate.Player {
-	return predicate.Player(sql.FieldIn(FieldAssists, vs...))
-}
-
-// AssistsNotIn applies the NotIn predicate on the "assists" field.
-func AssistsNotIn(vs ...int) predicate.Player {
-	return predicate.Player(sql.FieldNotIn(FieldAssists, vs...))
-}
-
-// AssistsGT applies the GT predicate on the "assists" field.
-func AssistsGT(v int) predicate.Player {
-	return predicate.Player(sql.FieldGT(FieldAssists, v))
-}
-
-// AssistsGTE applies the GTE predicate on the "assists" field.
-func AssistsGTE(v int) predicate.Player {
-	return predicate.Player(sql.FieldGTE(FieldAssists, v))
-}
-
-// AssistsLT applies the LT predicate on the "assists" field.
-func AssistsLT(v int) predicate.Player {
-	return predicate.Player(sql.FieldLT(FieldAssists, v))
-}
-
-// AssistsLTE applies the LTE predicate on the "assists" field.
-func AssistsLTE(v int) predicate.Player {
-	return predicate.Player(sql.FieldLTE(FieldAssists, v))
-}
-
-// ShutoutsEQ applies the EQ predicate on the "shutouts" field.
-func ShutoutsEQ(v int) predicate.Player {
-	return predicate.Player(sql.FieldEQ(FieldShutouts, v))
-}
-
-// ShutoutsNEQ applies the NEQ predicate on the "shutouts" field.
-func ShutoutsNEQ(v int) predicate.Player {
-	return predicate.Player(sql.FieldNEQ(FieldShutouts, v))
-}
-
-// ShutoutsIn applies the In predicate on the "shutouts" field.
-func ShutoutsIn(vs ...int) predicate.Player {
-	return predicate.Player(sql.FieldIn(FieldShutouts, vs...))
-}
-
-// ShutoutsNotIn applies the NotIn predicate on the "shutouts" field.
-func ShutoutsNotIn(vs ...int) predicate.Player {
-	return predicate.Player(sql.FieldNotIn(FieldShutouts, vs...))
-}
-
-// ShutoutsGT applies the GT predicate on the "shutouts" field.
-func ShutoutsGT(v int) predicate.Player {
-	return predicate.Player(sql.FieldGT(FieldShutouts, v))
-}
-
-// ShutoutsGTE applies the GTE predicate on the "shutouts" field.
-func ShutoutsGTE(v int) predicate.Player {
-	return predicate.Player(sql.FieldGTE(FieldShutouts, v))
-}
-
-// ShutoutsLT applies the LT predicate on the "shutouts" field.
-func ShutoutsLT(v int) predicate.Player {
-	return predicate.Player(sql.FieldLT(FieldShutouts, v))
-}
-
-// ShutoutsLTE applies the LTE predicate on the "shutouts" field.
-func ShutoutsLTE(v int) predicate.Player {
-	return predicate.Player(sql.FieldLTE(FieldShutouts, v))
-}
-
-// WinsEQ applies the EQ predicate on the "wins" field.
-func WinsEQ(v int) predicate.Player {
-	return predicate.Player(sql.FieldEQ(FieldWins, v))
-}
-
-// WinsNEQ applies the NEQ predicate on the "wins" field.
-func WinsNEQ(v int) predicate.Player {
-	return predicate.Player(sql.FieldNEQ(FieldWins, v))
-}
-
-// WinsIn applies the In predicate on the "wins" field.
-func WinsIn(vs ...int) predicate.Player {
-	return predicate.Player(sql.FieldIn(FieldWins, vs...))
-}
-
-// WinsNotIn applies the NotIn predicate on the "wins" field.
-func WinsNotIn(vs ...int) predicate.Player {
-	return predicate.Player(sql.FieldNotIn(FieldWins, vs...))
-}
-
-// WinsGT applies the GT predicate on the "wins" field.
-func WinsGT(v int) predicate.Player {
-	return predicate.Player(sql.FieldGT(FieldWins, v))
-}
-
-// WinsGTE applies the GTE predicate on the "wins" field.
-func WinsGTE(v int) predicate.Player {
-	return predicate.Player(sql.FieldGTE(FieldWins, v))
-}
-
-// WinsLT applies the LT predicate on the "wins" field.
-func WinsLT(v int) predicate.Player {
-	return predicate.Player(sql.FieldLT(FieldWins, v))
-}
-
-// WinsLTE applies the LTE predicate on the "wins" field.
-func WinsLTE(v int) predicate.Player {
-	return predicate.Player(sql.FieldLTE(FieldWins, v))
-}
-
 // HasTeam applies the HasEdge predicate on the "team" edge.
 func HasTeam() predicate.Player {
 	return predicate.Player(func(s *sql.Selector) {
@@ -369,21 +189,21 @@ func HasEntriesWith(preds ...predicate.Entry) predicate.Player {
 	})
 }
 
-// HasHomeGamesAsGoalie applies the HasEdge predicate on the "homeGamesAsGoalie" edge.
-func HasHomeGamesAsGoalie() predicate.Player {
+// HasSkaterStats applies the HasEdge predicate on the "skaterStats" edge.
+func HasSkaterStats() predicate.Player {
 	return predicate.Player(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, HomeGamesAsGoalieTable, HomeGamesAsGoalieColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, SkaterStatsTable, SkaterStatsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasHomeGamesAsGoalieWith applies the HasEdge predicate on the "homeGamesAsGoalie" edge with a given conditions (other predicates).
-func HasHomeGamesAsGoalieWith(preds ...predicate.Game) predicate.Player {
+// HasSkaterStatsWith applies the HasEdge predicate on the "skaterStats" edge with a given conditions (other predicates).
+func HasSkaterStatsWith(preds ...predicate.SkaterStats) predicate.Player {
 	return predicate.Player(func(s *sql.Selector) {
-		step := newHomeGamesAsGoalieStep()
+		step := newSkaterStatsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
@@ -392,21 +212,21 @@ func HasHomeGamesAsGoalieWith(preds ...predicate.Game) predicate.Player {
 	})
 }
 
-// HasAwayGamesAsGoalie applies the HasEdge predicate on the "awayGamesAsGoalie" edge.
-func HasAwayGamesAsGoalie() predicate.Player {
+// HasGoalieStats applies the HasEdge predicate on the "goalieStats" edge.
+func HasGoalieStats() predicate.Player {
 	return predicate.Player(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, AwayGamesAsGoalieTable, AwayGamesAsGoalieColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, GoalieStatsTable, GoalieStatsPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasAwayGamesAsGoalieWith applies the HasEdge predicate on the "awayGamesAsGoalie" edge with a given conditions (other predicates).
-func HasAwayGamesAsGoalieWith(preds ...predicate.Game) predicate.Player {
+// HasGoalieStatsWith applies the HasEdge predicate on the "goalieStats" edge with a given conditions (other predicates).
+func HasGoalieStatsWith(preds ...predicate.GoalieStats) predicate.Player {
 	return predicate.Player(func(s *sql.Selector) {
-		step := newAwayGamesAsGoalieStep()
+		step := newGoalieStatsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

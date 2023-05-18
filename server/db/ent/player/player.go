@@ -18,27 +18,19 @@ const (
 	FieldName = "name"
 	// FieldPosition holds the string denoting the position field in the database.
 	FieldPosition = "position"
-	// FieldGoals holds the string denoting the goals field in the database.
-	FieldGoals = "goals"
-	// FieldAssists holds the string denoting the assists field in the database.
-	FieldAssists = "assists"
-	// FieldShutouts holds the string denoting the shutouts field in the database.
-	FieldShutouts = "shutouts"
-	// FieldWins holds the string denoting the wins field in the database.
-	FieldWins = "wins"
 	// EdgeTeam holds the string denoting the team edge name in mutations.
 	EdgeTeam = "team"
 	// EdgeEntries holds the string denoting the entries edge name in mutations.
 	EdgeEntries = "entries"
-	// EdgeHomeGamesAsGoalie holds the string denoting the homegamesasgoalie edge name in mutations.
-	EdgeHomeGamesAsGoalie = "homeGamesAsGoalie"
-	// EdgeAwayGamesAsGoalie holds the string denoting the awaygamesasgoalie edge name in mutations.
-	EdgeAwayGamesAsGoalie = "awayGamesAsGoalie"
+	// EdgeSkaterStats holds the string denoting the skaterstats edge name in mutations.
+	EdgeSkaterStats = "skaterStats"
+	// EdgeGoalieStats holds the string denoting the goaliestats edge name in mutations.
+	EdgeGoalieStats = "goalieStats"
 	// Table holds the table name of the player in the database.
 	Table = "players"
 	// TeamTable is the table that holds the team relation/edge.
 	TeamTable = "players"
-	// TeamInverseTable is the table name for the TeamID entity.
+	// TeamInverseTable is the table name for the Team entity.
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.
@@ -48,20 +40,18 @@ const (
 	// EntriesInverseTable is the table name for the Entry entity.
 	// It exists in this package in order to avoid circular dependency with the "entry" package.
 	EntriesInverseTable = "entries"
-	// HomeGamesAsGoalieTable is the table that holds the homeGamesAsGoalie relation/edge.
-	HomeGamesAsGoalieTable = "games"
-	// HomeGamesAsGoalieInverseTable is the table name for the Game entity.
-	// It exists in this package in order to avoid circular dependency with the "game" package.
-	HomeGamesAsGoalieInverseTable = "games"
-	// HomeGamesAsGoalieColumn is the table column denoting the homeGamesAsGoalie relation/edge.
-	HomeGamesAsGoalieColumn = "player_home_games_as_goalie"
-	// AwayGamesAsGoalieTable is the table that holds the awayGamesAsGoalie relation/edge.
-	AwayGamesAsGoalieTable = "games"
-	// AwayGamesAsGoalieInverseTable is the table name for the Game entity.
-	// It exists in this package in order to avoid circular dependency with the "game" package.
-	AwayGamesAsGoalieInverseTable = "games"
-	// AwayGamesAsGoalieColumn is the table column denoting the awayGamesAsGoalie relation/edge.
-	AwayGamesAsGoalieColumn = "player_away_games_as_goalie"
+	// SkaterStatsTable is the table that holds the skaterStats relation/edge.
+	SkaterStatsTable = "skater_stats"
+	// SkaterStatsInverseTable is the table name for the SkaterStats entity.
+	// It exists in this package in order to avoid circular dependency with the "skaterstats" package.
+	SkaterStatsInverseTable = "skater_stats"
+	// SkaterStatsColumn is the table column denoting the skaterStats relation/edge.
+	SkaterStatsColumn = "player_skater_stats"
+	// GoalieStatsTable is the table that holds the goalieStats relation/edge. The primary key declared below.
+	GoalieStatsTable = "player_goalieStats"
+	// GoalieStatsInverseTable is the table name for the GoalieStats entity.
+	// It exists in this package in order to avoid circular dependency with the "goaliestats" package.
+	GoalieStatsInverseTable = "goalie_stats"
 )
 
 // Columns holds all SQL columns for player fields.
@@ -69,10 +59,6 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldPosition,
-	FieldGoals,
-	FieldAssists,
-	FieldShutouts,
-	FieldWins,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "players"
@@ -85,6 +71,9 @@ var (
 	// EntriesPrimaryKey and EntriesColumn2 are the table columns denoting the
 	// primary key for the entries relation (M2M).
 	EntriesPrimaryKey = []string{"entry_id", "player_id"}
+	// GoalieStatsPrimaryKey and GoalieStatsColumn2 are the table columns denoting the
+	// primary key for the goalieStats relation (M2M).
+	GoalieStatsPrimaryKey = []string{"player_id", "goalie_stats_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -149,26 +138,6 @@ func ByPosition(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPosition, opts...).ToFunc()
 }
 
-// ByGoals orders the results by the goals field.
-func ByGoals(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldGoals, opts...).ToFunc()
-}
-
-// ByAssists orders the results by the assists field.
-func ByAssists(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAssists, opts...).ToFunc()
-}
-
-// ByShutouts orders the results by the shutouts field.
-func ByShutouts(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldShutouts, opts...).ToFunc()
-}
-
-// ByWins orders the results by the wins field.
-func ByWins(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldWins, opts...).ToFunc()
-}
-
 // ByTeamField orders the results by team field.
 func ByTeamField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -190,31 +159,31 @@ func ByEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByHomeGamesAsGoalieCount orders the results by homeGamesAsGoalie count.
-func ByHomeGamesAsGoalieCount(opts ...sql.OrderTermOption) OrderOption {
+// BySkaterStatsCount orders the results by skaterStats count.
+func BySkaterStatsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newHomeGamesAsGoalieStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newSkaterStatsStep(), opts...)
 	}
 }
 
-// ByHomeGamesAsGoalie orders the results by homeGamesAsGoalie terms.
-func ByHomeGamesAsGoalie(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// BySkaterStats orders the results by skaterStats terms.
+func BySkaterStats(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newHomeGamesAsGoalieStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newSkaterStatsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
-// ByAwayGamesAsGoalieCount orders the results by awayGamesAsGoalie count.
-func ByAwayGamesAsGoalieCount(opts ...sql.OrderTermOption) OrderOption {
+// ByGoalieStatsCount orders the results by goalieStats count.
+func ByGoalieStatsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newAwayGamesAsGoalieStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newGoalieStatsStep(), opts...)
 	}
 }
 
-// ByAwayGamesAsGoalie orders the results by awayGamesAsGoalie terms.
-func ByAwayGamesAsGoalie(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByGoalieStats orders the results by goalieStats terms.
+func ByGoalieStats(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newAwayGamesAsGoalieStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newGoalieStatsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newTeamStep() *sqlgraph.Step {
@@ -231,17 +200,17 @@ func newEntriesStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2M, true, EntriesTable, EntriesPrimaryKey...),
 	)
 }
-func newHomeGamesAsGoalieStep() *sqlgraph.Step {
+func newSkaterStatsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(HomeGamesAsGoalieInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, HomeGamesAsGoalieTable, HomeGamesAsGoalieColumn),
+		sqlgraph.To(SkaterStatsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SkaterStatsTable, SkaterStatsColumn),
 	)
 }
-func newAwayGamesAsGoalieStep() *sqlgraph.Step {
+func newGoalieStatsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(AwayGamesAsGoalieInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, AwayGamesAsGoalieTable, AwayGamesAsGoalieColumn),
+		sqlgraph.To(GoalieStatsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, GoalieStatsTable, GoalieStatsPrimaryKey...),
 	)
 }

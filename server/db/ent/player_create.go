@@ -10,8 +10,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/skaterstats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
@@ -31,30 +32,6 @@ func (pc *PlayerCreate) SetName(s string) *PlayerCreate {
 // SetPosition sets the "position" field.
 func (pc *PlayerCreate) SetPosition(pl player.Position) *PlayerCreate {
 	pc.mutation.SetPosition(pl)
-	return pc
-}
-
-// SetGoals sets the "goals" field.
-func (pc *PlayerCreate) SetGoals(i int) *PlayerCreate {
-	pc.mutation.SetGoals(i)
-	return pc
-}
-
-// SetAssists sets the "assists" field.
-func (pc *PlayerCreate) SetAssists(i int) *PlayerCreate {
-	pc.mutation.SetAssists(i)
-	return pc
-}
-
-// SetShutouts sets the "shutouts" field.
-func (pc *PlayerCreate) SetShutouts(i int) *PlayerCreate {
-	pc.mutation.SetShutouts(i)
-	return pc
-}
-
-// SetWins sets the "wins" field.
-func (pc *PlayerCreate) SetWins(i int) *PlayerCreate {
-	pc.mutation.SetWins(i)
 	return pc
 }
 
@@ -98,34 +75,34 @@ func (pc *PlayerCreate) AddEntries(e ...*Entry) *PlayerCreate {
 	return pc.AddEntryIDs(ids...)
 }
 
-// AddHomeGamesAsGoalieIDs adds the "homeGamesAsGoalie" edge to the Game entity by IDs.
-func (pc *PlayerCreate) AddHomeGamesAsGoalieIDs(ids ...int) *PlayerCreate {
-	pc.mutation.AddHomeGamesAsGoalieIDs(ids...)
+// AddSkaterStatIDs adds the "skaterStats" edge to the SkaterStats entity by IDs.
+func (pc *PlayerCreate) AddSkaterStatIDs(ids ...int) *PlayerCreate {
+	pc.mutation.AddSkaterStatIDs(ids...)
 	return pc
 }
 
-// AddHomeGamesAsGoalie adds the "homeGamesAsGoalie" edges to the Game entity.
-func (pc *PlayerCreate) AddHomeGamesAsGoalie(g ...*Game) *PlayerCreate {
+// AddSkaterStats adds the "skaterStats" edges to the SkaterStats entity.
+func (pc *PlayerCreate) AddSkaterStats(s ...*SkaterStats) *PlayerCreate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return pc.AddSkaterStatIDs(ids...)
+}
+
+// AddGoalieStatIDs adds the "goalieStats" edge to the GoalieStats entity by IDs.
+func (pc *PlayerCreate) AddGoalieStatIDs(ids ...int) *PlayerCreate {
+	pc.mutation.AddGoalieStatIDs(ids...)
+	return pc
+}
+
+// AddGoalieStats adds the "goalieStats" edges to the GoalieStats entity.
+func (pc *PlayerCreate) AddGoalieStats(g ...*GoalieStats) *PlayerCreate {
 	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
-	return pc.AddHomeGamesAsGoalieIDs(ids...)
-}
-
-// AddAwayGamesAsGoalieIDs adds the "awayGamesAsGoalie" edge to the Game entity by IDs.
-func (pc *PlayerCreate) AddAwayGamesAsGoalieIDs(ids ...int) *PlayerCreate {
-	pc.mutation.AddAwayGamesAsGoalieIDs(ids...)
-	return pc
-}
-
-// AddAwayGamesAsGoalie adds the "awayGamesAsGoalie" edges to the Game entity.
-func (pc *PlayerCreate) AddAwayGamesAsGoalie(g ...*Game) *PlayerCreate {
-	ids := make([]int, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
-	}
-	return pc.AddAwayGamesAsGoalieIDs(ids...)
+	return pc.AddGoalieStatIDs(ids...)
 }
 
 // Mutation returns the PlayerMutation object of the builder.
@@ -173,18 +150,6 @@ func (pc *PlayerCreate) check() error {
 			return &ValidationError{Name: "position", err: fmt.Errorf(`ent: validator failed for field "Player.position": %w`, err)}
 		}
 	}
-	if _, ok := pc.mutation.Goals(); !ok {
-		return &ValidationError{Name: "goals", err: errors.New(`ent: missing required field "Player.goals"`)}
-	}
-	if _, ok := pc.mutation.Assists(); !ok {
-		return &ValidationError{Name: "assists", err: errors.New(`ent: missing required field "Player.assists"`)}
-	}
-	if _, ok := pc.mutation.Shutouts(); !ok {
-		return &ValidationError{Name: "shutouts", err: errors.New(`ent: missing required field "Player.shutouts"`)}
-	}
-	if _, ok := pc.mutation.Wins(); !ok {
-		return &ValidationError{Name: "wins", err: errors.New(`ent: missing required field "Player.wins"`)}
-	}
 	if v, ok := pc.mutation.ID(); ok {
 		if err := player.IDValidator(v); err != nil {
 			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Player.id": %w`, err)}
@@ -230,22 +195,6 @@ func (pc *PlayerCreate) createSpec() (*Player, *sqlgraph.CreateSpec) {
 		_spec.SetField(player.FieldPosition, field.TypeEnum, value)
 		_node.Position = value
 	}
-	if value, ok := pc.mutation.Goals(); ok {
-		_spec.SetField(player.FieldGoals, field.TypeInt, value)
-		_node.Goals = value
-	}
-	if value, ok := pc.mutation.Assists(); ok {
-		_spec.SetField(player.FieldAssists, field.TypeInt, value)
-		_node.Assists = value
-	}
-	if value, ok := pc.mutation.Shutouts(); ok {
-		_spec.SetField(player.FieldShutouts, field.TypeInt, value)
-		_node.Shutouts = value
-	}
-	if value, ok := pc.mutation.Wins(); ok {
-		_spec.SetField(player.FieldWins, field.TypeInt, value)
-		_node.Wins = value
-	}
 	if nodes := pc.mutation.TeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -279,15 +228,15 @@ func (pc *PlayerCreate) createSpec() (*Player, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := pc.mutation.HomeGamesAsGoalieIDs(); len(nodes) > 0 {
+	if nodes := pc.mutation.SkaterStatsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   player.HomeGamesAsGoalieTable,
-			Columns: []string{player.HomeGamesAsGoalieColumn},
+			Table:   player.SkaterStatsTable,
+			Columns: []string{player.SkaterStatsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(skaterstats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -295,15 +244,15 @@ func (pc *PlayerCreate) createSpec() (*Player, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := pc.mutation.AwayGamesAsGoalieIDs(); len(nodes) > 0 {
+	if nodes := pc.mutation.GoalieStatsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   player.AwayGamesAsGoalieTable,
-			Columns: []string{player.AwayGamesAsGoalieColumn},
+			Table:   player.GoalieStatsTable,
+			Columns: player.GoalieStatsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(goaliestats.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

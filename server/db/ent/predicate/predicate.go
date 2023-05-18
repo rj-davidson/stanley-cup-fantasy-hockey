@@ -12,11 +12,17 @@ type Entry func(*sql.Selector)
 // Game is the predicate function for game builders.
 type Game func(*sql.Selector)
 
+// GoalieStats is the predicate function for goaliestats builders.
+type GoalieStats func(*sql.Selector)
+
 // League is the predicate function for league builders.
 type League func(*sql.Selector)
 
 // Player is the predicate function for player builders.
 type Player func(*sql.Selector)
+
+// SkaterStats is the predicate function for skaterstats builders.
+type SkaterStats func(*sql.Selector)
 
 // Team is the predicate function for team builders.
 type Team func(*sql.Selector)

@@ -142,17 +142,17 @@ func (tc *TeamCreate) defaults() {
 // check runs all checks and user-defined validators on the builder.
 func (tc *TeamCreate) check() error {
 	if _, ok := tc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "TeamID.name"`)}
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Team.name"`)}
 	}
 	if _, ok := tc.mutation.LogoFilepath(); !ok {
-		return &ValidationError{Name: "logo_filepath", err: errors.New(`ent: missing required field "TeamID.logo_filepath"`)}
+		return &ValidationError{Name: "logo_filepath", err: errors.New(`ent: missing required field "Team.logo_filepath"`)}
 	}
 	if _, ok := tc.mutation.Eliminated(); !ok {
-		return &ValidationError{Name: "eliminated", err: errors.New(`ent: missing required field "TeamID.eliminated"`)}
+		return &ValidationError{Name: "eliminated", err: errors.New(`ent: missing required field "Team.eliminated"`)}
 	}
 	if v, ok := tc.mutation.ID(); ok {
 		if err := team.IDValidator(v); err != nil {
-			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "TeamID.id": %w`, err)}
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Team.id": %w`, err)}
 		}
 	}
 	return nil

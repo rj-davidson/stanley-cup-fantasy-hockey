@@ -158,7 +158,7 @@ func (t *Team) Update() *TeamUpdateOne {
 func (t *Team) Unwrap() *Team {
 	_tx, ok := t.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: TeamID is not a transactional entity")
+		panic("ent: Team is not a transactional entity")
 	}
 	t.config.driver = _tx.drv
 	return t
@@ -167,7 +167,7 @@ func (t *Team) Unwrap() *Team {
 // String implements the fmt.Stringer.
 func (t *Team) String() string {
 	var builder strings.Builder
-	builder.WriteString("TeamID(")
+	builder.WriteString("Team(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", t.ID))
 	builder.WriteString("name=")
 	builder.WriteString(t.Name)

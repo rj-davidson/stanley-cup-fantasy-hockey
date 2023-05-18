@@ -4,8 +4,10 @@ package ent
 
 import (
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/goaliestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/schema"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/skaterstats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
@@ -19,12 +21,48 @@ func init() {
 	gameDescID := gameFields[0].Descriptor()
 	// game.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	game.IDValidator = gameDescID.Validators[0].(func(int) error)
+	goaliestatsFields := schema.GoalieStats{}.Fields()
+	_ = goaliestatsFields
+	// goaliestatsDescGoals is the schema descriptor for goals field.
+	goaliestatsDescGoals := goaliestatsFields[0].Descriptor()
+	// goaliestats.DefaultGoals holds the default value on creation for the goals field.
+	goaliestats.DefaultGoals = goaliestatsDescGoals.Default.(int)
+	// goaliestatsDescAssists is the schema descriptor for assists field.
+	goaliestatsDescAssists := goaliestatsFields[1].Descriptor()
+	// goaliestats.DefaultAssists holds the default value on creation for the assists field.
+	goaliestats.DefaultAssists = goaliestatsDescAssists.Default.(int)
+	// goaliestatsDescWin is the schema descriptor for win field.
+	goaliestatsDescWin := goaliestatsFields[2].Descriptor()
+	// goaliestats.DefaultWin holds the default value on creation for the win field.
+	goaliestats.DefaultWin = goaliestatsDescWin.Default.(bool)
+	// goaliestatsDescLoss is the schema descriptor for loss field.
+	goaliestatsDescLoss := goaliestatsFields[3].Descriptor()
+	// goaliestats.DefaultLoss holds the default value on creation for the loss field.
+	goaliestats.DefaultLoss = goaliestatsDescLoss.Default.(bool)
+	// goaliestatsDescHome is the schema descriptor for home field.
+	goaliestatsDescHome := goaliestatsFields[4].Descriptor()
+	// goaliestats.DefaultHome holds the default value on creation for the home field.
+	goaliestats.DefaultHome = goaliestatsDescHome.Default.(bool)
 	playerFields := schema.Player{}.Fields()
 	_ = playerFields
 	// playerDescID is the schema descriptor for id field.
 	playerDescID := playerFields[0].Descriptor()
 	// player.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	player.IDValidator = playerDescID.Validators[0].(func(int) error)
+	skaterstatsFields := schema.SkaterStats{}.Fields()
+	_ = skaterstatsFields
+	// skaterstatsDescGoals is the schema descriptor for goals field.
+	skaterstatsDescGoals := skaterstatsFields[0].Descriptor()
+	// skaterstats.DefaultGoals holds the default value on creation for the goals field.
+	skaterstats.DefaultGoals = skaterstatsDescGoals.Default.(int)
+	// skaterstatsDescAssists is the schema descriptor for assists field.
+	skaterstatsDescAssists := skaterstatsFields[1].Descriptor()
+	// skaterstats.DefaultAssists holds the default value on creation for the assists field.
+	skaterstats.DefaultAssists = skaterstatsDescAssists.Default.(int)
+	// skaterstatsDescHome is the schema descriptor for home field.
+	skaterstatsDescHome := skaterstatsFields[2].Descriptor()
+	// skaterstats.DefaultHome holds the default value on creation for the home field.
+	skaterstats.DefaultHome = skaterstatsDescHome.Default.(bool)
 	teamFields := schema.Team{}.Fields()
 	_ = teamFields
 	// teamDescEliminated is the schema descriptor for eliminated field.
