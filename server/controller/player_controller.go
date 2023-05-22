@@ -106,19 +106,14 @@ func (ctrl *PlayerController) AddNHLPlayers(teams []*ent.Team) error {
 	return nil
 }
 
-func (ctrl *PlayerController) UpdateStats() error {
-	players, err := ctrl.playerModel.ListPlayers()
-	if err != nil {
-		fmt.Printf("Error listing players: %s\n", err.Error())
-		return err
-	}
+func (ctrl *PlayerController) UpdateStats(players []*ent.Player) error {
 	for _, player := range players {
 		fmt.Printf("Updating stats for player %s\n", player.Name)
-		err = ctrl.HockeyStatModel.UpdatePlayerStats(player, context.Background())
+		err := ctrl.HockeyStatModel.UpdatePlayerStats(player, context.Background())
 		if err != nil {
 			fmt.Printf("Error updating stats for player %s: %s\n", player.Name, err.Error())
 			return err
 		}
 	}
-	return err
+	return nil
 }

@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -77,7 +76,7 @@ func (gsq *GameStatsQuery) QueryGame() *GameQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(gamestats.Table, gamestats.FieldID, selector),
 			sqlgraph.To(game.Table, game.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, gamestats.GameTable, gamestats.GameColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, gamestats.GameTable, gamestats.GameColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gsq.driver.Dialect(), step)
 		return fromU, nil
@@ -413,7 +412,7 @@ func (gsq *GameStatsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*G
 			gsq.withPlayer != nil,
 		}
 	)
-	if gsq.withPlayer != nil {
+	if gsq.withGame != nil || gsq.withPlayer != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -453,30 +452,34 @@ func (gsq *GameStatsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*G
 }
 
 func (gsq *GameStatsQuery) loadGame(ctx context.Context, query *GameQuery, nodes []*GameStats, init func(*GameStats), assign func(*GameStats, *Game)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*GameStats)
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*GameStats)
 	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
+		if nodes[i].game_stats_game == nil {
+			continue
+		}
+		fk := *nodes[i].game_stats_game
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.withFKs = true
-	query.Where(predicate.Game(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(gamestats.GameColumn), fks...))
-	}))
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(game.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.game_stats_game
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "game_stats_game" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "game_stats_game" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "game_stats_game" returned %v`, n.ID)
 		}
-		assign(node, n)
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }

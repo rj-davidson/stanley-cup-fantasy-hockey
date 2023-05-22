@@ -531,7 +531,8 @@ type GameMutation struct {
 	clearedawayTeam  bool
 	homeTeam         *int
 	clearedhomeTeam  bool
-	gameStats        *int
+	gameStats        map[int]struct{}
+	removedgameStats map[int]struct{}
 	clearedgameStats bool
 	done             bool
 	oldValue         func(context.Context) (*Game, error)
@@ -832,9 +833,14 @@ func (m *GameMutation) ResetHomeTeam() {
 	m.clearedhomeTeam = false
 }
 
-// SetGameStatsID sets the "gameStats" edge to the GameStats entity by id.
-func (m *GameMutation) SetGameStatsID(id int) {
-	m.gameStats = &id
+// AddGameStatIDs adds the "gameStats" edge to the GameStats entity by ids.
+func (m *GameMutation) AddGameStatIDs(ids ...int) {
+	if m.gameStats == nil {
+		m.gameStats = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.gameStats[ids[i]] = struct{}{}
+	}
 }
 
 // ClearGameStats clears the "gameStats" edge to the GameStats entity.
@@ -847,20 +853,29 @@ func (m *GameMutation) GameStatsCleared() bool {
 	return m.clearedgameStats
 }
 
-// GameStatsID returns the "gameStats" edge ID in the mutation.
-func (m *GameMutation) GameStatsID() (id int, exists bool) {
-	if m.gameStats != nil {
-		return *m.gameStats, true
+// RemoveGameStatIDs removes the "gameStats" edge to the GameStats entity by IDs.
+func (m *GameMutation) RemoveGameStatIDs(ids ...int) {
+	if m.removedgameStats == nil {
+		m.removedgameStats = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.gameStats, ids[i])
+		m.removedgameStats[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedGameStats returns the removed IDs of the "gameStats" edge to the GameStats entity.
+func (m *GameMutation) RemovedGameStatsIDs() (ids []int) {
+	for id := range m.removedgameStats {
+		ids = append(ids, id)
 	}
 	return
 }
 
 // GameStatsIDs returns the "gameStats" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// GameStatsID instead. It exists only for internal usage by the builders.
 func (m *GameMutation) GameStatsIDs() (ids []int) {
-	if id := m.gameStats; id != nil {
-		ids = append(ids, *id)
+	for id := range m.gameStats {
+		ids = append(ids, id)
 	}
 	return
 }
@@ -869,6 +884,7 @@ func (m *GameMutation) GameStatsIDs() (ids []int) {
 func (m *GameMutation) ResetGameStats() {
 	m.gameStats = nil
 	m.clearedgameStats = false
+	m.removedgameStats = nil
 }
 
 // Where appends a list predicates to the GameMutation builder.
@@ -1074,9 +1090,11 @@ func (m *GameMutation) AddedIDs(name string) []ent.Value {
 			return []ent.Value{*id}
 		}
 	case game.EdgeGameStats:
-		if id := m.gameStats; id != nil {
-			return []ent.Value{*id}
+		ids := make([]ent.Value, 0, len(m.gameStats))
+		for id := range m.gameStats {
+			ids = append(ids, id)
 		}
+		return ids
 	}
 	return nil
 }
@@ -1084,12 +1102,23 @@ func (m *GameMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GameMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 3)
+	if m.removedgameStats != nil {
+		edges = append(edges, game.EdgeGameStats)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *GameMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case game.EdgeGameStats:
+		ids := make([]ent.Value, 0, len(m.removedgameStats))
+		for id := range m.removedgameStats {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
@@ -1131,9 +1160,6 @@ func (m *GameMutation) ClearEdge(name string) error {
 		return nil
 	case game.EdgeHomeTeam:
 		m.ClearHomeTeam()
-		return nil
-	case game.EdgeGameStats:
-		m.ClearGameStats()
 		return nil
 	}
 	return fmt.Errorf("unknown Game unique edge %s", name)

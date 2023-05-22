@@ -527,7 +527,7 @@ func (c *GameClient) QueryGameStats(ga *Game) *GameStatsQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(game.Table, game.FieldID, id),
 			sqlgraph.To(gamestats.Table, gamestats.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, game.GameStatsTable, game.GameStatsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, game.GameStatsTable, game.GameStatsColumn),
 		)
 		fromV = sqlgraph.Neighbors(ga.driver.Dialect(), step)
 		return fromV, nil
@@ -661,7 +661,7 @@ func (c *GameStatsClient) QueryGame(gs *GameStats) *GameQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(gamestats.Table, gamestats.FieldID, id),
 			sqlgraph.To(game.Table, game.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, gamestats.GameTable, gamestats.GameColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, gamestats.GameTable, gamestats.GameColumn),
 		)
 		fromV = sqlgraph.Neighbors(gs.driver.Dialect(), step)
 		return fromV, nil

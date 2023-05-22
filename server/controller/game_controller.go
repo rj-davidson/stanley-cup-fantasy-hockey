@@ -134,16 +134,123 @@ func (ctrl *GameController) fetchBoxscore(gameID int) (map[string]interface{}, e
 	return boxscoreResult, nil
 }
 
+//func (ctrl *GameController) createPlayerGameStats(player interface{}, game *ent.Game, onHomeTeam, win, shutout bool) error {
+//	playerMap := player.(map[string]interface{})
+//	playerID := int(playerMap["person"].(map[string]interface{})["id"].(float64))
+//	playerStatsMap := playerMap["stats"].(map[string]interface{})
+//	var playerStats map[string]interface{}
+//
+//	goalieStats, ok := playerStatsMap["goalieStats"].(map[string]interface{})
+//	if ok && goalieStats != nil {
+//		// If time on ice is 0, goalie did not play
+//		if goalieStats["timeOnIce"].(string) == "0:00" {
+//			return nil
+//		}
+//		playerStats = goalieStats
+//	}
+//
+//	skaterStats, ok := playerStatsMap["skaterStats"].(map[string]interface{})
+//	if ok && skaterStats != nil {
+//		playerStats = skaterStats
+//	}
+//
+//	goals, ok := playerStats["goals"]
+//	if !ok {
+//		return nil
+//	}
+//	assists, ok := playerStats["assists"]
+//	if !ok {
+//		return nil
+//	}
+//
+//	// Create GameStat entity for home team
+//	_, err := ctrl.statsModel.CreateGameStat(game, onHomeTeam, shutout, win, playerID, int(goals.(float64)), int(assists.(float64)), context.Background())
+//	if err != nil {
+//		return fmt.Errorf("error creating game stat entity: %w", err)
+//	}
+//
+//	return nil
+//}
+
+func (ctrl *GameController) createPlayerGameStats(player interface{}, game *ent.Game, onHomeTeam, win, shutout bool) error {
+	playerMap, ok := player.(map[string]interface{})
+	if !ok {
+		fmt.Printf("player not found for game %d\n", game.ID)
+		return nil
+	}
+
+	// Function to handle redundant type assertions and existence check
+	getField := func(source map[string]interface{}, fieldName string) (map[string]interface{}, bool) {
+		if val, ok := source[fieldName]; ok {
+			if result, ok := val.(map[string]interface{}); ok && result != nil {
+				return result, true
+			}
+		}
+		return nil, false
+	}
+
+	person, ok := getField(playerMap, "person")
+	if !ok {
+		fmt.Printf("person not found for player %v\n", playerMap)
+		return nil
+	}
+
+	id, ok := person["id"].(float64)
+	if !ok {
+		fmt.Printf("id not found for player %v\n", person)
+		return nil
+	}
+
+	playerID := int(id)
+
+	playerStatsMap, ok := getField(playerMap, "stats")
+	if !ok {
+		fmt.Printf("stats not found for playerID %d, gameID %d\n", playerID, game.ID)
+	}
+
+	playerStats := make(map[string]interface{})
+	goalieStats, ok := getField(playerStatsMap, "goalieStats")
+	if ok && goalieStats["timeOnIce"].(string) != "0:00" {
+		playerStats = goalieStats
+	}
+
+	skaterStats, ok := getField(playerStatsMap, "skaterStats")
+	if ok {
+		playerStats = skaterStats
+	}
+
+	if playerStats == nil || len(playerStats) == 0 {
+		return nil
+	}
+
+	goals, ok := playerStats["goals"].(float64)
+	if !ok {
+		return fmt.Errorf("goals is not of expected type or not found")
+	}
+
+	assists, ok := playerStats["assists"].(float64)
+	if !ok {
+		return fmt.Errorf("assists is not of expected type or not found")
+	}
+
+	_, err := ctrl.statsModel.CreateGameStat(game, onHomeTeam, shutout, win, playerID, int(goals), int(assists), context.Background())
+	if err != nil {
+		return fmt.Errorf("error creating game stat entity: %w", err)
+	}
+
+	return nil
+}
+
 func (ctrl *GameController) setGameStats(boxscoreData map[string]interface{}, game *ent.Game) error {
 	// Get players for home and away teams
 	homePlayers := boxscoreData["teams"].(map[string]interface{})["home"].(map[string]interface{})["players"].(map[string]interface{})
 	awayPlayers := boxscoreData["teams"].(map[string]interface{})["away"].(map[string]interface{})["players"].(map[string]interface{})
 
 	// Check if home team won the game
-	homeWon := false
+	homeWin := false
 	shutout := false
 	if game.HomeScore > game.AwayScore {
-		homeWon = true
+		homeWin = true
 		if game.AwayScore == 0 {
 			shutout = true
 		}
@@ -153,51 +260,19 @@ func (ctrl *GameController) setGameStats(boxscoreData map[string]interface{}, ga
 		}
 	}
 
-	// Loop through home players
+	// Add home players game stats
 	for _, player := range homePlayers {
-		playerMap := player.(map[string]interface{})
-		playerID := int(playerMap["person"].(map[string]interface{})["id"].(float64))
-		playerPosition := playerMap["position"].(map[string]interface{})["abbreviation"].(string)
-
-		var playerStats map[string]interface{}
-		if playerPosition == "G" {
-			playerStats = playerMap["stats"].(map[string]interface{})["goalieStats"].(map[string]interface{})
-			// If time on ice is 0, goalie did not play
-			if playerStats["timeOnIce"].(string) == "0:00" {
-				continue
-			}
-		} else {
-			playerStats = playerMap["stats"].(map[string]interface{})["skaterStats"].(map[string]interface{})
-		}
-
-		// Create GameStat entity for home team
-		_, err := ctrl.statsModel.CreateGameStat(game, true, shutout, homeWon, playerID, int(playerStats["goals"].(float64)), int(playerStats["assists"].(float64)), context.Background())
+		err := ctrl.createPlayerGameStats(player, game, true, homeWin, shutout)
 		if err != nil {
-			return fmt.Errorf("error creating game stat entity: %w", err)
+			fmt.Printf("error creating player game stats: %s\n", err.Error())
 		}
 	}
 
-	// Loop through away players
+	// Add away players game stats
 	for _, player := range awayPlayers {
-		playerMap := player.(map[string]interface{})
-		playerID := int(playerMap["person"].(map[string]interface{})["id"].(float64))
-		playerPosition := playerMap["position"].(map[string]interface{})["abbreviation"].(string)
-
-		var playerStats map[string]interface{}
-		if playerPosition == "G" {
-			playerStats = playerMap["stats"].(map[string]interface{})["goalieStats"].(map[string]interface{})
-			// If time on ice is 0, goalie did not play
-			if playerStats["timeOnIce"].(string) == "0:00" {
-				continue
-			}
-		} else {
-			playerStats = playerMap["stats"].(map[string]interface{})["skaterStats"].(map[string]interface{})
-		}
-
-		// Create GameStat entity for away team
-		_, err := ctrl.statsModel.CreateGameStat(game, false, shutout, !homeWon, playerID, int(playerStats["goals"].(float64)), int(playerStats["assists"].(float64)), context.Background())
+		err := ctrl.createPlayerGameStats(player, game, false, !homeWin, shutout)
 		if err != nil {
-			return fmt.Errorf("error creating game stat entity: %w", err)
+			fmt.Printf("error creating player game stats: %s\n", err.Error())
 		}
 	}
 

@@ -241,7 +241,7 @@ func (gsc *GameStatsCreate) createSpec() (*GameStats, *sqlgraph.CreateSpec) {
 	}
 	if nodes := gsc.mutation.GameIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   gamestats.GameTable,
 			Columns: []string{gamestats.GameColumn},
@@ -253,6 +253,7 @@ func (gsc *GameStatsCreate) createSpec() (*GameStats, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.game_stats_game = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := gsc.mutation.PlayerIDs(); len(nodes) > 0 {

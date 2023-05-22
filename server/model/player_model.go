@@ -6,6 +6,7 @@ import (
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/entry"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/player"
+	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
 type PlayerModel struct {
@@ -93,6 +94,23 @@ func (pm *PlayerModel) GetPlayersByEntries(entries []*ent.Entry) ([]*ent.Player,
 	players, err := pm.client.Player.
 		Query().
 		Where(player.HasEntriesWith(entry.IDIn(IDs...))).
+		All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return players, nil
+}
+
+// ListPlayersOnTeams returns set of unique players for a list of teams
+func (pm *PlayerModel) ListPlayersOnTeams(teams []*ent.Team) ([]*ent.Player, error) {
+	var IDs []int
+	for _, t := range teams {
+		IDs = append(IDs, t.ID)
+	}
+	players, err := pm.client.Player.
+		Query().
+		Where(player.HasTeamWith(team.IDIn(IDs...))).
 		All(context.Background())
 	if err != nil {
 		return nil, err

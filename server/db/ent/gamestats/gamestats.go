@@ -29,7 +29,7 @@ const (
 	// Table holds the table name of the gamestats in the database.
 	Table = "game_stats"
 	// GameTable is the table that holds the game relation/edge.
-	GameTable = "games"
+	GameTable = "game_stats"
 	// GameInverseTable is the table name for the Game entity.
 	// It exists in this package in order to avoid circular dependency with the "game" package.
 	GameInverseTable = "games"
@@ -57,6 +57,7 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "game_stats"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
+	"game_stats_game",
 	"game_stats_player",
 }
 
@@ -138,7 +139,7 @@ func newGameStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(GameInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, false, GameTable, GameColumn),
+		sqlgraph.Edge(sqlgraph.M2O, false, GameTable, GameColumn),
 	)
 }
 func newPlayerStep() *sqlgraph.Step {

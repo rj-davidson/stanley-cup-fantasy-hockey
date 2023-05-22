@@ -39,7 +39,7 @@ const (
 	// HomeTeamColumn is the table column denoting the homeTeam relation/edge.
 	HomeTeamColumn = "team_home_games"
 	// GameStatsTable is the table that holds the gameStats relation/edge.
-	GameStatsTable = "games"
+	GameStatsTable = "game_stats"
 	// GameStatsInverseTable is the table name for the GameStats entity.
 	// It exists in this package in order to avoid circular dependency with the "gamestats" package.
 	GameStatsInverseTable = "game_stats"
@@ -57,7 +57,6 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "games"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"game_stats_game",
 	"team_home_games",
 	"team_away_games",
 }
@@ -114,10 +113,17 @@ func ByHomeTeamField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// ByGameStatsField orders the results by gameStats field.
-func ByGameStatsField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByGameStatsCount orders the results by gameStats count.
+func ByGameStatsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newGameStatsStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborsCount(s, newGameStatsStep(), opts...)
+	}
+}
+
+// ByGameStats orders the results by gameStats terms.
+func ByGameStats(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newGameStatsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newAwayTeamStep() *sqlgraph.Step {
@@ -138,6 +144,6 @@ func newGameStatsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(GameStatsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, true, GameStatsTable, GameStatsColumn),
+		sqlgraph.Edge(sqlgraph.O2M, true, GameStatsTable, GameStatsColumn),
 	)
 }

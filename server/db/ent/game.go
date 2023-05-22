@@ -9,7 +9,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
-	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/gamestats"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/team"
 )
 
@@ -25,7 +24,6 @@ type Game struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GameQuery when eager-loading is set.
 	Edges           GameEdges `json:"edges"`
-	game_stats_game *int
 	team_home_games *int
 	team_away_games *int
 	selectValues    sql.SelectValues
@@ -38,7 +36,7 @@ type GameEdges struct {
 	// HomeTeam holds the value of the homeTeam edge.
 	HomeTeam *Team `json:"homeTeam,omitempty"`
 	// GameStats holds the value of the gameStats edge.
-	GameStats *GameStats `json:"gameStats,omitempty"`
+	GameStats []*GameStats `json:"gameStats,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [3]bool
@@ -71,13 +69,9 @@ func (e GameEdges) HomeTeamOrErr() (*Team, error) {
 }
 
 // GameStatsOrErr returns the GameStats value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e GameEdges) GameStatsOrErr() (*GameStats, error) {
+// was not loaded in eager-loading.
+func (e GameEdges) GameStatsOrErr() ([]*GameStats, error) {
 	if e.loadedTypes[2] {
-		if e.GameStats == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: gamestats.Label}
-		}
 		return e.GameStats, nil
 	}
 	return nil, &NotLoadedError{edge: "gameStats"}
@@ -90,11 +84,9 @@ func (*Game) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case game.FieldID, game.FieldHomeScore, game.FieldAwayScore:
 			values[i] = new(sql.NullInt64)
-		case game.ForeignKeys[0]: // game_stats_game
+		case game.ForeignKeys[0]: // team_home_games
 			values[i] = new(sql.NullInt64)
-		case game.ForeignKeys[1]: // team_home_games
-			values[i] = new(sql.NullInt64)
-		case game.ForeignKeys[2]: // team_away_games
+		case game.ForeignKeys[1]: // team_away_games
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -131,19 +123,12 @@ func (ga *Game) assignValues(columns []string, values []any) error {
 			}
 		case game.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field game_stats_game", value)
-			} else if value.Valid {
-				ga.game_stats_game = new(int)
-				*ga.game_stats_game = int(value.Int64)
-			}
-		case game.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field team_home_games", value)
 			} else if value.Valid {
 				ga.team_home_games = new(int)
 				*ga.team_home_games = int(value.Int64)
 			}
-		case game.ForeignKeys[2]:
+		case game.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field team_away_games", value)
 			} else if value.Valid {

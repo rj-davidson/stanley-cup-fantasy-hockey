@@ -194,7 +194,7 @@ func HasGameStats() predicate.Game {
 	return predicate.Game(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, GameStatsTable, GameStatsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, GameStatsTable, GameStatsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

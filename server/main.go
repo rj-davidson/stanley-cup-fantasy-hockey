@@ -120,10 +120,6 @@ func updateData(client *ent.Client) {
 	updatePlayerPoints(client)
 	fmt.Println("[Update] player points completed")
 
-	// Update goalie wins and shutouts
-	updateGoalieStats(client)
-	fmt.Println("[Update] goalie stats completed")
-
 	// Update eliminated teams
 	updateTeamEliminated(client)
 	fmt.Println("[Update] eliminated teams completed")
@@ -148,20 +144,21 @@ func updatePlayerPoints(client *ent.Client) {
 		return
 	}
 
-	playerController := controller.NewPlayerController(client)
-	for _, team := range teams {
-		err := playerController.FetchNHLPlayerPoints(team, context.Background())
-		if err != nil {
-			fmt.Printf("Error fetching player points: %s\n", err)
-		}
+	// Get all players on playoff teams
+	playerModel := model.NewPlayerModel(client)
+	players, err := playerModel.ListPlayersOnTeams(teams)
+	if err != nil {
+		fmt.Printf("Error fetching players: %s\n", err)
+		return
 	}
+	updatePlayerStats(client, players)
 }
 
-func updateGoalieStats(client *ent.Client) {
+func updatePlayerStats(client *ent.Client, players []*ent.Player) {
 	playerController := controller.NewPlayerController(client)
-	err := playerController.UpdateGoalieWinsShutouts()
+	err := playerController.UpdateStats(players)
 	if err != nil {
-		fmt.Printf("Error updating goalie stats: %s\n", err)
+		fmt.Printf("Error updating player stats: %s\n", err)
 	}
 }
 

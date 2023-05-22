@@ -34,7 +34,8 @@ func GetLeagueByID(client *ent.Client) fiber.Handler {
 			Where(league.ID(id)).
 			WithEntries(func(query *ent.EntryQuery) {
 				query.WithPlayers(func(query *ent.PlayerQuery) {
-					query.WithTeam()
+					query.WithTeam().
+						WithStats() // This will get the related stats
 				})
 			}).
 			Only(context.Background())
@@ -69,10 +70,10 @@ func GetLeagueByID(client *ent.Client) fiber.Handler {
 					ID:       p.ID,
 					Name:     p.Name,
 					Position: p.Position.String(),
-					Goals:    p.Goals,
-					Assists:  p.Assists,
-					Shutouts: p.Shutouts,
-					Wins:     p.Wins,
+					Goals:    p.Edges.Stats.Goals,
+					Assists:  p.Edges.Stats.Assists,
+					Shutouts: p.Edges.Stats.Shutouts,
+					Wins:     p.Edges.Stats.Wins,
 					TeamID:   p.Edges.Team.ID,
 				}
 				pIDs = append(pIDs, p.ID)

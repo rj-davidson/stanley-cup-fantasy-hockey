@@ -31,6 +31,7 @@ type GameStats struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GameStatsQuery when eager-loading is set.
 	Edges             GameStatsEdges `json:"edges"`
+	game_stats_game   *int
 	game_stats_player *int
 	selectValues      sql.SelectValues
 }
@@ -81,7 +82,9 @@ func (*GameStats) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case gamestats.FieldID, gamestats.FieldGoals, gamestats.FieldAssists:
 			values[i] = new(sql.NullInt64)
-		case gamestats.ForeignKeys[0]: // game_stats_player
+		case gamestats.ForeignKeys[0]: // game_stats_game
+			values[i] = new(sql.NullInt64)
+		case gamestats.ForeignKeys[1]: // game_stats_player
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -135,6 +138,13 @@ func (gs *GameStats) assignValues(columns []string, values []any) error {
 				gs.HomeGame = value.Bool
 			}
 		case gamestats.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field game_stats_game", value)
+			} else if value.Valid {
+				gs.game_stats_game = new(int)
+				*gs.game_stats_game = int(value.Int64)
+			}
+		case gamestats.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field game_stats_player", value)
 			} else if value.Valid {
