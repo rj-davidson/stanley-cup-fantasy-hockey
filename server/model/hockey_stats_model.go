@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/game"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent/gamestats"
@@ -16,8 +17,18 @@ func NewHockeyStatsModel(client *ent.Client) *HockeyStatsModel {
 	return &HockeyStatsModel{client: client}
 }
 
-func (hsm *HockeyStatsModel) CreateGameStat(g *ent.Game, atHome, shutout, win bool, playerID, goals, assists int, ctx context.Context) (*ent.GameStats, error) {
-	p, err := hsm.client.Player.Get(ctx, playerID)
+func (hsm *HockeyStatsModel) CreateGameStat(atHome, shutout, win bool, gameID, playerID, goals, assists int, ctx context.Context) (*ent.GameStats, error) {
+	p, err := hsm.client.Player.Query().Where(player.IDEQ(playerID)).Only(ctx)
+	if err != nil {
+		fmt.Printf("error getting player %d: %v\n", playerID, err)
+		return nil, err
+	}
+
+	g, err := hsm.client.Game.Query().Where(game.IDEQ(gameID)).Only(ctx)
+	if err != nil {
+		fmt.Printf("error getting game %d: %v\n", gameID, err)
+		return nil, err
+	}
 
 	gameStat, err := hsm.client.GameStats.
 		Create().

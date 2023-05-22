@@ -65,13 +65,14 @@ func fetchNHLPlayers(teamID int) ([]NHLPlayer, error) {
 type PlayerController struct {
 	playerModel     *model.PlayerModel
 	gameModel       *model.GameModel
-	HockeyStatModel *model.HockeyStatsModel
+	hockeyStatModel *model.HockeyStatsModel
 }
 
 func NewPlayerController(client *ent.Client) *PlayerController {
 	return &PlayerController{
-		playerModel: model.NewPlayerModel(client),
-		gameModel:   model.NewGameModel(client),
+		playerModel:     model.NewPlayerModel(client),
+		gameModel:       model.NewGameModel(client),
+		hockeyStatModel: model.NewHockeyStatsModel(client),
 	}
 }
 
@@ -109,7 +110,7 @@ func (ctrl *PlayerController) AddNHLPlayers(teams []*ent.Team) error {
 func (ctrl *PlayerController) UpdateStats(players []*ent.Player) error {
 	for _, player := range players {
 		fmt.Printf("Updating stats for player %s\n", player.Name)
-		err := ctrl.HockeyStatModel.UpdatePlayerStats(player, context.Background())
+		err := ctrl.hockeyStatModel.UpdatePlayerStats(player, context.Background())
 		if err != nil {
 			fmt.Printf("Error updating stats for player %s: %s\n", player.Name, err.Error())
 			return err
