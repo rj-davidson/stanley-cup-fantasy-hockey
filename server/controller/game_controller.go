@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/rj-davidson/stanley-cup-fantasy-hockey/db/ent"
@@ -14,6 +15,7 @@ type GameController struct {
 	gameModel   *model.GameModel
 	playerModel *model.PlayerModel
 	teamModel   *model.TeamModel
+	statsModel  *model.HockeyStatsModel
 }
 
 func NewGameController(client *ent.Client) *GameController {
@@ -21,6 +23,7 @@ func NewGameController(client *ent.Client) *GameController {
 		gameModel:   model.NewGameModel(client),
 		playerModel: model.NewPlayerModel(client),
 		teamModel:   model.NewTeamModel(client),
+		statsModel:  model.NewHockeyStatsModel(client),
 	}
 }
 
@@ -78,7 +81,24 @@ func (ctrl *GameController) FetchPostSeasonGames() error {
 					return fmt.Errorf("error setting away team as playoff competitor: %w", err)
 				}
 
-				err = ctrl.fetchBoxscore(gameID, homeScore, awayScore, homeTeam, awayTeam)
+				// Create Game Entity
+				// Create game entity
+				g, err := ctrl.gameModel.CreateGame(gameID, homeScore, awayScore, homeTeam, awayTeam)
+				if err != nil {
+					fmt.Printf("Error creating game entity: %v\n", err)
+					return err
+				}
+				fmt.Printf("Fetched game %d\n", gameID)
+
+				boxscoreData, err := ctrl.fetchBoxscore(gameID)
+				if err != nil {
+					return fmt.Errorf("error fetching boxscore data: %w", err)
+				}
+				err = ctrl.setGameStats(boxscoreData, g)
+				if err != nil {
+					return fmt.Errorf("error upserting game stats: %w", err)
+				}
+
 				if err != nil {
 					return fmt.Errorf("error fetching game data %d: %w", gameID, err)
 				}
@@ -91,39 +111,95 @@ func (ctrl *GameController) FetchPostSeasonGames() error {
 	return nil
 }
 
-func (ctrl *GameController) fetchBoxscore(gameID, homeScore, awayScore int, homeTeam, awayTeam *ent.Team) error {
+func (ctrl *GameController) fetchBoxscore(gameID int) (map[string]interface{}, error) {
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 	const nhlApiBoxScoreURLFormat = "https://statsapi.web.nhl.com/api/v1/game/%d/boxscore"
 	boxScoreURL := fmt.Sprintf(nhlApiBoxScoreURLFormat, gameID)
 	resp, err := httpClient.Get(boxScoreURL)
 	if err != nil {
 		fmt.Printf("Error fetching box score for game %d: %s\n", gameID, err.Error())
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("Error reading response body for game %d: %s\n", gameID, err.Error())
-		return err
+		return nil, err
 	}
 
 	var boxscoreResult map[string]interface{}
 	json.Unmarshal([]byte(body), &boxscoreResult)
 
-	//homeGoalieID := int(boxscoreResult["teams"].(map[string]interface{})["home"].(map[string]interface{})["goalies"].([]interface{})[0].(float64))
+	return boxscoreResult, nil
+}
 
-	// Create game entity
-	game, err = ctrl.gameModel.CreateGame(gameID, homeScore, awayScore, homeTeam, awayTeam)
-	if err != nil {
-		fmt.Printf("Error creating game entity: %v\n", err)
-		return err
+func (ctrl *GameController) setGameStats(boxscoreData map[string]interface{}, game *ent.Game) error {
+	// Get players for home and away teams
+	homePlayers := boxscoreData["teams"].(map[string]interface{})["home"].(map[string]interface{})["players"].(map[string]interface{})
+	awayPlayers := boxscoreData["teams"].(map[string]interface{})["away"].(map[string]interface{})["players"].(map[string]interface{})
+
+	// Check if home team won the game
+	homeWon := false
+	shutout := false
+	if game.HomeScore > game.AwayScore {
+		homeWon = true
+		if game.AwayScore == 0 {
+			shutout = true
+		}
+	} else {
+		if game.HomeScore == 0 {
+			shutout = true
+		}
 	}
-	fmt.Printf("Fetched game %d\n", gameID)
 
-	// Create gameStats for home and away teams using playerID
-	homeSkaterIDs := boxscoreResult["teams"].(map[string]interface{})["home"].(map[string]interface{})["skaters"].([]interface{})
-	awaySkaterIDs := boxscoreResult["teams"].(map[string]interface{})["away"].(map[string]interface{})["skaters"].([]interface{})
+	// Loop through home players
+	for _, player := range homePlayers {
+		playerMap := player.(map[string]interface{})
+		playerID := int(playerMap["person"].(map[string]interface{})["id"].(float64))
+		playerPosition := playerMap["position"].(map[string]interface{})["abbreviation"].(string)
+
+		var playerStats map[string]interface{}
+		if playerPosition == "G" {
+			playerStats = playerMap["stats"].(map[string]interface{})["goalieStats"].(map[string]interface{})
+			// If time on ice is 0, goalie did not play
+			if playerStats["timeOnIce"].(string) == "0:00" {
+				continue
+			}
+		} else {
+			playerStats = playerMap["stats"].(map[string]interface{})["skaterStats"].(map[string]interface{})
+		}
+
+		// Create GameStat entity for home team
+		_, err := ctrl.statsModel.CreateGameStat(game, true, shutout, homeWon, playerID, int(playerStats["goals"].(float64)), int(playerStats["assists"].(float64)), context.Background())
+		if err != nil {
+			return fmt.Errorf("error creating game stat entity: %w", err)
+		}
+	}
+
+	// Loop through away players
+	for _, player := range awayPlayers {
+		playerMap := player.(map[string]interface{})
+		playerID := int(playerMap["person"].(map[string]interface{})["id"].(float64))
+		playerPosition := playerMap["position"].(map[string]interface{})["abbreviation"].(string)
+
+		var playerStats map[string]interface{}
+		if playerPosition == "G" {
+			playerStats = playerMap["stats"].(map[string]interface{})["goalieStats"].(map[string]interface{})
+			// If time on ice is 0, goalie did not play
+			if playerStats["timeOnIce"].(string) == "0:00" {
+				continue
+			}
+		} else {
+			playerStats = playerMap["stats"].(map[string]interface{})["skaterStats"].(map[string]interface{})
+		}
+
+		// Create GameStat entity for away team
+		_, err := ctrl.statsModel.CreateGameStat(game, false, shutout, !homeWon, playerID, int(playerStats["goals"].(float64)), int(playerStats["assists"].(float64)), context.Background())
+		if err != nil {
+			return fmt.Errorf("error creating game stat entity: %w", err)
+		}
+	}
 
 	return nil
 }
