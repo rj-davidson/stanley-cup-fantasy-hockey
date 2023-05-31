@@ -212,21 +212,22 @@ func (ctrl *GameController) setGameStats(boxscoreData map[string]interface{}, ga
 
 	// Check if home team won the game
 	homeWin := false
-	shutout := false
+	homeShutout := false
+	awayShutout := false
 	if homeScore > awayScore {
 		homeWin = true
 		if awayScore == 0 {
-			shutout = true
+			homeShutout = true
 		}
 	} else {
 		if homeScore == 0 {
-			shutout = true
+			awayShutout = true
 		}
 	}
 
 	// Add home players game stats
 	for _, player := range homePlayers {
-		err := ctrl.createPlayerGameStats(player, gameID, true, homeWin, shutout)
+		err := ctrl.createPlayerGameStats(player, gameID, true, homeWin, homeShutout)
 		if err != nil {
 			fmt.Printf("error creating player game stats: %s\n", err.Error())
 		}
@@ -234,7 +235,7 @@ func (ctrl *GameController) setGameStats(boxscoreData map[string]interface{}, ga
 
 	// Add away players game stats
 	for _, player := range awayPlayers {
-		err := ctrl.createPlayerGameStats(player, gameID, false, !homeWin, shutout)
+		err := ctrl.createPlayerGameStats(player, gameID, false, !homeWin, awayShutout)
 		if err != nil {
 			fmt.Printf("error creating player game stats: %s\n", err.Error())
 		}
